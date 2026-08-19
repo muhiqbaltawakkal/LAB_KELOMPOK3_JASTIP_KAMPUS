@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: API Kelompok (ganti nama temamu)
+  version: 0.1.0
+  description: Kontrak API lapisan Microservices. Tumbuh tiap pertemuan.
+servers:
+  - url: http://localhost:3001
+paths:
+  /items:
+    get:
+      summary: Ambil daftar item (katalog/event/toko/stasiun)
+      responses:
+        "200":
+          description: Daftar item
+  /health:
+    get:
+      summary: Cek layanan hidup
+      responses:
+        "200":
+          description: Layanan sehat
