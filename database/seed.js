@@ -31,7 +31,7 @@ async function connect(url) {
 // ── CATALOG ────────────────────────────────────────────────
 async function seedCatalog() {
   const db = await connect(DB.catalog);
-  console.log("🗄️  Seeding catalog_db...");
+  console.log("Seeding catalog_db...");
   try {
     await db.query("BEGIN");
 
@@ -60,7 +60,7 @@ async function seedCatalog() {
     }
 
     await db.query("COMMIT");
-    console.log(`   ✅ ${catalog.toko.length} toko, ${catalog.barang.length} barang, ${catalog.satuan.length} satuan`);
+    console.log(`   OK: ${catalog.toko.length} toko, ${catalog.barang.length} barang, ${catalog.satuan.length} satuan`);
   } catch (e) {
     await db.query("ROLLBACK");
     throw e;
@@ -72,7 +72,7 @@ async function seedCatalog() {
 // ── ORDER ──────────────────────────────────────────────────
 async function seedOrder() {
   const db = await connect(DB.order);
-  console.log("🗄️  Seeding order_db...");
+  console.log("Seeding order_db...");
   try {
     await db.query("BEGIN");
 
@@ -93,7 +93,7 @@ async function seedOrder() {
     }
 
     await db.query("COMMIT");
-    console.log(`   ✅ ${order.sesi_jastip.length} sesi jastip, ${order.titipan.length} titipan`);
+    console.log(`   OK: ${order.sesi_jastip.length} sesi jastip, ${order.titipan.length} titipan`);
   } catch (e) {
     await db.query("ROLLBACK");
     throw e;
@@ -105,7 +105,7 @@ async function seedOrder() {
 // ── PAYMENT ────────────────────────────────────────────────
 async function seedPayment() {
   const db = await connect(DB.payment);
-  console.log("🗄️  Seeding payment_db...");
+  console.log("Seeding payment_db...");
   try {
     await db.query("BEGIN");
 
@@ -135,7 +135,7 @@ async function seedPayment() {
     }
 
     await db.query("COMMIT");
-    console.log(`   ✅ ${payment.transaksi.length} transaksi, ${payment.saldo_tertahan.length} saldo tertahan, ${payment.riwayat_pelepasan.length} pelepasan`);
+    console.log(`   OK: ${payment.transaksi.length} transaksi, ${payment.saldo_tertahan.length} saldo tertahan, ${payment.riwayat_pelepasan.length} pelepasan`);
   } catch (e) {
     await db.query("ROLLBACK");
     throw e;
@@ -147,7 +147,7 @@ async function seedPayment() {
 // ── TRACKING ───────────────────────────────────────────────
 async function seedTracking() {
   const db = await connect(DB.tracking);
-  console.log("🗄️  Seeding tracking_db...");
+  console.log("Seeding tracking_db...");
   try {
     await db.query("BEGIN");
 
@@ -160,7 +160,7 @@ async function seedTracking() {
     }
 
     await db.query("COMMIT");
-    console.log(`   ✅ ${tracking.riwayat_status.length} riwayat status`);
+    console.log(`   OK: ${tracking.riwayat_status.length} riwayat status`);
   } catch (e) {
     await db.query("ROLLBACK");
     throw e;
@@ -176,9 +176,9 @@ async function seedTracking() {
     await seedOrder();
     await seedPayment();
     await seedTracking();
-    console.log("\n🎉 Semua database berhasil di-seed!");
+    console.log("\nSemua database berhasil di-seed!");
   } catch (err) {
-    console.error("❌ Seed gagal:", err.message);
+    console.error("Seed gagal:", err.message);
     process.exit(1);
   }
 })();

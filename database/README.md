@@ -7,11 +7,11 @@ Folder ini berisi semua artefak **Data & Persistence Engineer** untuk sistem Jas
 ```
 database/
 ├── migrations/
-│   ├── 001_catalog_schema.sql    ← tabel: satuan, toko, barang
-│   ├── 002_order_schema.sql      ← tabel: sesi_jastip, titipan
-│   ├── 003_payment_schema.sql    ← tabel: transaksi, saldo_tertahan, riwayat_pelepasan
-│   └── 004_tracking_schema.sql   ← tabel: riwayat_status
-└── seed.js                       ← insert dataset/*.json ke semua DB
+│ ├── 001_catalog_schema.sql ← tabel: satuan, toko, barang
+│ ├── 002_order_schema.sql ← tabel: sesi_jastip, titipan
+│ ├── 003_payment_schema.sql ← tabel: transaksi, saldo_tertahan, riwayat_pelepasan
+│ └── 004_tracking_schema.sql ← tabel: riwayat_status
+└── seed.js ← insert dataset/*.json ke semua DB
 ```
 
 ## Prinsip Desain

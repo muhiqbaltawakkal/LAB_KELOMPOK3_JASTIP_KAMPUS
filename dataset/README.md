@@ -1,6 +1,6 @@
 # Dataset — Jastip Kampus
 
-Folder ini berisi seed data (data awal) untuk seluruh microservice.  
+Folder ini berisi seed data (data awal) untuk seluruh microservice. 
 Data ini digunakan langsung dari memori pada **Lapisan 1** dan akan dipindahkan ke database pada **Lapisan 2**.
 
 | File | Service | Isi |
