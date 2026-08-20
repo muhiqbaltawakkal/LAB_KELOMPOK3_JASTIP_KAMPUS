@@ -92,4 +92,4 @@ Data yang dimiliki:
 | saldo tertahan    |  | dan riwayat       |
 +-------------------+  +-------------------+
 
-![Flowchart Alur Jastip Kampus](Flowchart.jpeg)
+![Flowchart Alur Jastip Kampus2](Flowchart.jpeg)
