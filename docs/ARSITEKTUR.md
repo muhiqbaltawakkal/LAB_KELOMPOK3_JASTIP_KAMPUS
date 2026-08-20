@@ -91,3 +91,5 @@ Data yang dimiliki:
 | pembayaran,       |  | status titipan    |
 | saldo tertahan    |  | dan riwayat       |
 +-------------------+  +-------------------+
+
+docs/Flowchart.jpeg
