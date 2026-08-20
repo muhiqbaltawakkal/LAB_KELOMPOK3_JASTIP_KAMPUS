@@ -2,7 +2,7 @@
 
 > Catatan riwayat penggunaan AI oleh seluruh anggota tim selama pengembangan sistem Jastip Kampus.
 
----
+----
 
 ## 📋 Informasi Proyek
 
