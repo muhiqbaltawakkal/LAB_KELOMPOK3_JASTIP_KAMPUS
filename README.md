@@ -1,576 +1,358 @@
-# Jastip Kampus
+🛍️ Jastip Kampus
 
-## Sistem Titip-Beli Antar Mahasiswa
+Sistem Titip-Beli Antar Mahasiswa berbasis Microservices
 
-Jastip Kampus adalah sistem layanan titip-beli antar mahasiswa yang memungkinkan mahasiswa membuka layanan jastip, memilih barang yang ingin dititipkan, melakukan pembayaran, serta melacak proses titipan sampai barang diterima.
+Jastip Kampus adalah platform layanan titip-beli antar mahasiswa. Mahasiswa dapat membuka layanan jastip, memilih barang yang ingin dititipkan, melakukan pembayaran, serta melacak status titipan hingga barang diterima.
 
-Sistem ini dirancang menggunakan pendekatan **Microservices Architecture** dengan beberapa layanan yang memiliki tanggung jawab dan data masing-masing.
+Sistem dirancang menggunakan pendekatan Microservices Architecture — setiap layanan memiliki tanggung jawab dan data masing-masing.
 
----
 
-## Tujuan Sistem
 
-Sistem Jastip Kampus bertujuan untuk:
+📋 Daftar Isi
 
-* Memudahkan mahasiswa membuka layanan jastip.
-* Memudahkan mahasiswa lain mencari dan memilih layanan jastip.
-* Menampilkan informasi toko, barang, harga acuan, dan satuan.
-* Memungkinkan penitip mengajukan tawaran harga atau jasa titip.
-* Mengelola pembayaran penitip.
-* Melacak status titipan dari awal sampai barang diterima.
-* Menjaga kapasitas jastip agar tidak melebihi batas yang ditentukan penjastip.
+Tujuan Sistem
+Arsitektur Microservices
+Alur Sistem
+Peran dalam Sistem
+Proses Tawar
+Proses Pembayaran
+Tracking Titipan
+Endpoint Kritis
+Struktur Repository
+Menjalankan Catalog Service
+Pengujian API
+OpenAPI
+Aturan Penting Sistem
+Teknologi
+Status Pengembangan
 
----
 
-## Sumber Daya Rebutan
 
-### Kapasitas bawaan penjastip — tidak boleh melebihi batas
+🎯 Tujuan Sistem
 
-Sumber daya utama yang harus dijaga konsistensinya adalah **kapasitas titipan yang dimiliki oleh penjastip**.
+Memudahkan mahasiswa membuka layanan jastip.
+Memudahkan mahasiswa lain mencari dan memilih layanan jastip.
+Menampilkan informasi toko, barang, harga acuan, dan satuan.
+Memungkinkan penitip mengajukan tawaran harga atau jasa titip.
+Mengelola pembayaran penitip.
+Melacak status titipan dari awal sampai barang diterima.
+Menjaga kapasitas jastip agar tidak melebihi batas yang ditentukan penjastip.
 
-Contoh:
 
-```text
-Kapasitas jastip = 10 titipan
-```
 
-Ketika banyak mahasiswa melakukan titip-beli secara bersamaan, jumlah titipan yang berhasil diterima tidak boleh melebihi kapasitas tersebut.
-
-```text
-Kapasitas = 10
-Titipan berhasil = maksimal 10
-Titipan ke-11 = ditolak
-```
-
-### Prinsip Konsistensi
-
-> **Sistem kami menjaga agar kapasitas bawaan penjastip tetap konsisten dan tidak melebihi batas walaupun ribuan mahasiswa melakukan titip-beli secara bersamaan.**
-
-Aturan kapasitas ini terutama ditangani oleh **order-service**.
-
----
-
-# Arsitektur Microservices
+🏗️ Arsitektur Microservices
 
 Sistem terdiri dari empat layanan utama:
 
-| Layanan | Tanggung Jawab | Data yang Dimiliki |
-| ------------------ | ---------------------------------------------------- | --------------------------------------------------- |
-| `order-service` | Mengelola sesi jastip, buka/tutup titipan, kapasitas | Sesi jastip, daftar titipan, batas waktu, kapasitas |
-| `catalog-service` | Mengelola toko, barang, harga acuan, dan satuan | Toko, barang, harga acuan, satuan |
-| `payment-service` | Mengelola pembayaran dan pelepasan dana | Transaksi, saldo tertahan, riwayat pelepasan dana |
-| `tracking-service` | Mengelola status perjalanan titipan | Riwayat status titipan dan waktu |
+Layanan
+Tanggung Jawab
+Data yang Dimiliki
+order-service
+Mengelola sesi jastip, buka/tutup titipan, kapasitas
+Sesi jastip, daftar titipan, batas waktu, kapasitas
+catalog-service
+Mengelola toko, barang, harga acuan, dan satuan
+Toko, barang, harga acuan, satuan
+payment-service
+Mengelola pembayaran dan pelepasan dana
+Transaksi, saldo tertahan, riwayat pelepasan dana
+tracking-service
+Mengelola status perjalanan titipan
+Riwayat status titipan dan waktu
 
-### Prinsip Microservices
+Prinsip: Setiap service memiliki data dan tanggung jawab sendiri. Service lain tidak diperbolehkan mengakses database service secara langsung — komunikasi antar-service dilakukan melalui API atau event.
 
-Setiap service memiliki data dan tanggung jawab sendiri.
+⚠️ Sumber Daya Rebutan: Kapasitas Penjastip
 
-Service lain tidak diperbolehkan mengakses database service secara langsung. Komunikasi antar-service dilakukan melalui **API atau event**.
+Sumber daya utama yang harus dijaga konsistensinya adalah kapasitas titipan milik penjastip.
 
----
+Kapasitas = 10
+Titipan berhasil = maksimal 10
+Titipan ke-11   = ditolak
 
-# Alur Sistem
+Sistem menjaga agar kapasitas penjastip tetap konsisten dan tidak terlampaui walaupun ribuan mahasiswa melakukan titip-beli secara bersamaan.
 
-Alur utama sistem Jastip Kampus:
+Aturan kapasitas ini ditangani oleh order-service.
 
-```text
-Pengguna
-│
-▼
-Daftar Akun
-│
-▼
-Isi Data Akun
-│
-▼
-Akun Berhasil Dibuat
-│
-▼
-Login
-│
-▼
-Masuk Beranda
-│
-▼
-Pilih Peran
-│
-├──────────────────────┐
-│ │
-▼ ▼
-Penjastip Penitip
-│ │
-▼ ▼
-Buka Sesi Jastip Lihat Daftar Jastip
-│ │
-▼ ▼
-Simpan Toko, Lihat Katalog
-Batas Waktu, Toko & Barang
-Kapasitas │
-│ ▼
-▼ Pilih Jastip
-Jastip Tampil │
-di Aplikasi ▼
-Isi Detail
-Titipan
-│
-▼
-Cek Sesi & Kapasitas
-│
-▼
-Ambil Harga Acuan
-│
-▼
-Ingin Tawar Harga?
-/ \
-Ya Tidak
-│ │
-▼ │
-Proses Tawar │
-│ │
-▼ │
-Persetujuan │
-│ │
-└──────┬─────┘
-▼
-Tetapkan Total Titipan
-│
-▼
-Penitip Bayar
-│
-▼
-Saldo Pembayaran
-Ditahan
-│
-▼
-Konfirmasi Titipan
-│
-▼
-Status: Dititip
-│
-▼
-Penjastip Beli Barang
-│
-▼
-Status: Dibelanjakan
-│
-▼
-Penjastip Antar Barang
-│
-▼
-Status: Diantar
-│
-▼
-Penitip Konfirmasi
-Barang Diterima
-│
-▼
-Status: Diterima
-│
-▼
-Dana Dilepaskan
-ke Penjastip
-│
-▼
-TRANSAKSI SELESAI
-```
-## Flowchart Sistem
 
-Flowchart berikut menggambarkan alur lengkap sistem Jastip Kampus mulai dari pengguna membuka aplikasi, memilih peran sebagai penjastip atau penitip, proses pemilihan barang, tawar-menawar, pembayaran, tracking, hingga transaksi selesai.
+
+🔄 Alur Sistem
 
 ![Flowchart Alur Jastip Kampus](docs/Flowchart.jpeg)
----
 
-# Peran dalam Sistem
 
-## 1. Penjastip
 
-Penjastip adalah mahasiswa yang membuka layanan titip-beli.
+👥 Peran dalam Sistem
 
-Penjastip dapat:
+1. Penjastip
 
-* Membuka sesi jastip.
-* Menentukan toko atau lokasi pembelian.
-* Menentukan batas waktu.
-* Menentukan kapasitas titipan.
-* Melihat dan merespons tawaran.
-* Membeli barang.
-* Mengantarkan barang kepada penitip.
+Mahasiswa yang membuka layanan titip-beli.
 
----
+Aksi
+Keterangan
+Buka sesi jastip
+Menentukan toko, batas waktu, dan kapasitas
+Respons tawaran
+Menyetujui atau menolak tawaran penitip
+Beli barang
+Membeli barang sesuai titipan
+Antar barang
+Mengantarkan barang kepada penitip
 
-## 2. Penitip
+2. Penitip
 
-Penitip adalah mahasiswa yang menggunakan layanan jastip.
+Mahasiswa yang menggunakan layanan jastip.
 
-Penitip dapat:
+Aksi
+Keterangan
+Pilih jastip
+Mencari dan memilih penjastip yang tersedia
+Pesan barang
+Memilih barang, jumlah, varian, dan catatan
+Tawar harga
+Mengajukan tawaran harga atau jasa titip
+Bayar
+Melakukan pembayaran titipan
+Konfirmasi terima
+Mengonfirmasi barang sudah diterima
 
-* Melihat daftar jastip.
-* Melihat katalog barang.
-* Memilih jastip.
-* Memilih barang.
-* Mengisi jumlah dan varian.
-* Memberikan catatan.
-* Mengajukan tawaran harga/jasa titip.
-* Melakukan pembayaran.
-* Mengonfirmasi barang diterima.
 
----
 
-# Proses Tawar
+💬 Proses Tawar
 
-Jika penitip ingin melakukan tawar harga atau jasa titip, sistem masuk ke proses tawar.
+Jika penitip ingin melakukan tawar harga:
 
-```text
 Penitip mengajukan tawaran
 │
 ▼
 Order-service menyimpan tawaran
 │
 ▼
-Penjastip menyetujui tawaran?
-/ \
-Ya Tidak
-│ │
-▼ ▼
-Lanjut ke proses Penitip mengubah
-jastip tawaran / batal
-│
-▼
-Lanjut titipan?
-/ \
-Ya Tidak
-│ │
-└───► ▼
-Titipan dibatalkan
-```
+Penjastip menyetujui?
+     /         \
+   Ya           Tidak
+   │               │
+   ▼               ▼
+Lanjut ke       Penitip ubah tawaran
+proses jastip   atau batalkan titipan
 
-Jika tawaran disetujui, proses dilanjutkan ke pembayaran.
 
-Jika tawaran tidak disetujui, penitip dapat mengubah tawaran atau membatalkan titipan.
 
----
+💳 Proses Pembayaran
 
-# Proses Pembayaran
+Pembayaran ditangani oleh payment-service dengan sistem dana tertahan (escrow).
 
-Pembayaran ditangani oleh `payment-service`.
-
-Alur pembayaran:
-
-```text
 Penitip bayar
 │
 ▼
-payment-service
-│
-▼
-Saldo pembayaran ditahan
+payment-service → Saldo ditahan
 │
 ▼
 order-service konfirmasi titipan
-```
-
-Dana tidak langsung diberikan kepada penjastip. Dana ditahan terlebih dahulu sampai proses titipan selesai.
-
-Setelah penitip mengonfirmasi barang telah diterima:
-
-```text
-Barang diterima
+│
+  ··· proses titipan berjalan ···
 │
 ▼
-payment-service
+Barang diterima penitip
 │
 ▼
-Dana dilepaskan
-│
-▼
-Penjastip menerima dana
-```
+payment-service → Dana dilepaskan ke penjastip
 
----
+Dana tidak langsung diberikan kepada penjastip. Dana ditahan sampai penitip mengonfirmasi barang telah diterima.
 
-# Tracking Titipan
 
-Status titipan dicatat oleh `tracking-service`.
 
-Urutan status:
+📦 Tracking Titipan
 
-```text
+Status titipan dicatat oleh tracking-service.
+
+DITITIP  →  DIBELANJAKAN  →  DIANTAR  →  DITERIMA
+
+Status
+Keterangan
 DITITIP
-│
-▼
+Titipan telah dikonfirmasi
 DIBELANJAKAN
-│
-▼
+Penjastip telah membeli barang
 DIANTAR
-│
-▼
+Barang sedang diantarkan kepada penitip
 DITERIMA
-```
+Penitip telah mengonfirmasi barang diterima
 
-Detail:
 
-1. **Dititip** — titipan telah dikonfirmasi.
-2. **Dibelanjakan** — penjastip telah membeli barang.
-3. **Diantar** — barang sedang diantarkan kepada penitip.
-4. **Diterima** — penitip telah mengonfirmasi barang diterima.
 
----
+🔌 Endpoint Kritis
 
-# Endpoint Kritis
-
-Endpoint yang menjadi perhatian utama sistem:
-
-| Endpoint | Service | Fungsi |
-| ---------------- | ----------------- | ---------------------------------------------- |
-| `GET /catalog` | `catalog-service` | Mengambil daftar toko, barang, dan harga acuan |
-| `POST /titipan` | `order-service` | Membuat titipan baru |
-| `POST /payments` | `payment-service` | Membuat transaksi pembayaran |
-
-### Endpoint paling kritis
-
-```text
+Endpoint
+Service
+Fungsi
+GET /catalog
+catalog-service
+Mengambil daftar toko, barang, dan harga acuan
 POST /titipan
-```
+order-service
+Membuat titipan baru
+POST /payments
+payment-service
+Membuat transaksi pembayaran
 
-Endpoint ini berkaitan langsung dengan sumber daya rebutan, yaitu **kapasitas penjastip**.
+⚡ Endpoint Paling Kritis: POST /titipan
 
-Ketika banyak mahasiswa mengirim permintaan secara bersamaan, sistem harus memastikan:
+Endpoint ini berkaitan langsung dengan kapasitas penjastip (sumber daya rebutan).
 
-```text
-jumlah titipan ≤ kapasitas
-```
+Sistem wajib memastikan:
 
-dan tidak boleh terjadi:
+jumlah titipan ≤ kapasitas  ✅
+jumlah titipan > kapasitas  ❌ DITOLAK
 
-```text
-jumlah titipan > kapasitas
-```
 
----
 
-# Struktur Repository
+📁 Struktur Repository
 
-```text
 jastip-kampus/
-│
 ├── .gitignore
-│
 ├── README.md
-│
 ├── openapi.yaml
-│
 ├── docs/
-│ ├── ARSITEKTUR.md
-│ └── ENDPOINTS.md
-│
+│   ├── ARSITEKTUR.md
+│   ├── ENDPOINTS.md
+│   └── Flowchart.jpeg
 └── services/
-│
-└── catalog-service/
-├── index.js
-├── package.json
-├── package-lock.json
-└── node_modules/
-```
+    └── catalog-service/
+        ├── index.js
+        ├── package.json
+        └── package-lock.json
 
-> `node_modules/` tidak disimpan di Git karena sudah dimasukkan ke `.gitignore`.
+node_modules/ tidak disimpan di Git (sudah dimasukkan ke .gitignore).
 
----
 
-# Catalog Service
 
-`catalog-service` merupakan layanan penyedia data katalog.
+🚀 Menjalankan Catalog Service
 
-Pada tahap awal, data masih disimpan di memori menggunakan array JavaScript.
+1. Masuk ke folder service:
 
-Data sementara:
-
-```javascript
-const items = [
-{
-id: 1,
-nama: "Item A",
-harga: 15000,
-sisa: 500
-},
-{
-id: 2,
-nama: "Item B",
-harga: 25000,
-sisa: 500
-}
-];
-```
-
-Pada tahap berikutnya, data akan dipindahkan ke database.
-
----
-
-# Menjalankan Catalog Service
-
-Masuk ke folder:
-
-```bash
 cd services/catalog-service
-```
 
-Install dependency:
+2. Install dependency:
 
-```bash
 npm install
-```
 
-Jalankan service:
+3. Jalankan service:
 
-```bash
 node index.js
-```
 
-Jika berhasil:
+Output jika berhasil:
 
-```text
 catalog-service berjalan di :3001
-```
 
----
 
-# Pengujian API
 
-## Health Check
+🧪 Pengujian API
 
-```bash
-curl.exe http://localhost:3001/health
-```
+Health Check
 
-Response:
+curl http://localhost:3001/health
 
-```json
 {
-"status": "ok",
-"service": "catalog-service"
+  "status": "ok",
+  "service": "catalog-service"
 }
-```
 
----
+Mengambil Semua Item
 
-## Mengambil Semua Item
+curl http://localhost:3001/items
 
-```bash
-curl.exe http://localhost:3001/items
-```
+Mengambil Item Berdasarkan ID
 
----
+curl http://localhost:3001/items/1
 
-## Mengambil Item Berdasarkan ID
 
-```bash
-curl.exe http://localhost:3001/items/1
-```
 
----
+📄 OpenAPI
 
-# OpenAPI
+Kontrak API tersimpan di file:
 
-Kontrak API disimpan pada:
-
-```text
 openapi.yaml
-```
 
-OpenAPI digunakan sebagai kontrak antara layanan backend dan aplikasi yang akan menggunakan API.
+Untuk memeriksa dokumentasi API secara visual, gunakan Swagger Editor:
 
-Dokumentasi API dapat diperiksa menggunakan Swagger Editor:
+🔗 https://editor.swagger.io/
 
-https://editor.swagger.io/
 
----
 
-# Aturan Penting Sistem
+📏 Aturan Penting Sistem
 
-Sistem harus menjaga beberapa aturan utama:
-
-### 1. Kapasitas tidak boleh terlampaui
-
-```text
+#
+Aturan
+Kondisi
+1
+Kapasitas tidak boleh terlampaui
 jumlah titipan ≤ kapasitas
-```
-
-### 2. Titipan hanya dapat dilakukan ketika sesi masih terbuka
-
-```text
+2
+Titipan hanya saat sesi terbuka
 sesi = OPEN
-```
-
-### 3. Kapasitas harus tersedia
-
-```text
+3
+Kapasitas harus tersedia
 kapasitas tersisa > 0
-```
+4
+Pembayaran ditahan sampai selesai
+Dana dilepas setelah konfirmasi terima
+5
+Status tracking harus berurutan
+DITITIP → DIBELANJAKAN → DIANTAR → DITERIMA
 
-### 4. Pembayaran ditahan sampai transaksi selesai
 
-Dana tidak langsung dilepaskan kepada penjastip.
 
-### 5. Status tracking harus mengikuti urutan proses
+🛠️ Teknologi
 
-```text
-DITITIP
-→ DIBELANJAKAN
-→ DIANTAR
-→ DITERIMA
-```
-
----
-
-# Teknologi
-
-Teknologi yang digunakan pada tahap awal:
-
-* **Node.js**
-* **Express.js**
-* **REST API**
-* **OpenAPI 3.0.3**
-* **Git**
-* **GitHub**
-* **Visual Studio Code**
+Kategori
+Teknologi
+Runtime
+Node.js
+Framework
+Express.js
+API Style
+REST API
+API Contract
+OpenAPI 3.0.3
+Version Control
+Git + GitHub
+Editor
+Visual Studio Code
 
 Database dan komponen scalability akan dikembangkan pada tahap berikutnya.
 
----
 
-# Status Pengembangan
 
-### Pertemuan 1
+📈 Status Pengembangan
 
-* [x] Repository dibuat
-* [x] Branch `setup-awal`
-* [x] Struktur folder `services`
-* [x] `catalog-service`
-* [x] Express.js
-* [x] Endpoint `/items`
-* [x] Endpoint `/items/:id`
-* [x] Endpoint `/health`
-* [x] Model DDD
-* [x] Bounded Context
-* [x] Endpoint kritis
-* [x] `openapi.yaml`
-* [x] Dokumentasi arsitektur
+✅ Pertemuan 1 — Setup Awal
 
-### Tahap Berikutnya
+Repository dibuat
+Branch setup-awal
+Struktur folder services/
+catalog-service dengan Express.js
+Endpoint /items, /items/:id, /health
+Model DDD & Bounded Context
+Identifikasi endpoint kritis
+openapi.yaml
+Dokumentasi arsitektur
 
-* [ ] Database
-* [ ] `order-service`
-* [ ] `payment-service`
-* [ ] `tracking-service`
-* [ ] Komunikasi antar-service
-* [ ] Pengamanan kapasitas
-* [ ] Concurrency handling
-* [ ] Load testing
-* [ ] Scalability testing
+🔲 Tahap Berikutnya
 
----
+Database (PostgreSQL / MySQL)
+order-service
+payment-service
+tracking-service
+Komunikasi antar-service (event / API)
+Pengamanan kapasitas (concurrency handling)
+Load testing
+Scalability testing
 
-# ‍ Pengembangan
 
-Project ini dikembangkan sebagai proyek pembelajaran arsitektur **Microservices** dengan studi kasus **Jastip Kampus**.
 
-Fokus utama sistem adalah menjaga konsistensi **kapasitas titipan penjastip** ketika terjadi banyak permintaan secara bersamaan.
+👨‍💻 Pengembangan
+
+Project ini dikembangkan sebagai proyek pembelajaran arsitektur Microservices dengan studi kasus Jastip Kampus.
+
+Fokus utama sistem adalah menjaga konsistensi kapasitas titipan penjastip ketika terjadi banyak permintaan secara bersamaan.
