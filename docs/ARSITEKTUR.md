@@ -13,7 +13,7 @@ Kapasitas bawaan penjastip — tidak boleh melebihi batas.
 Sistem kami menjaga agar kapasitas bawaan penjastip tetap konsisten dan tidak melebihi batas walaupun ribuan mahasiswa melakukan titip-beli secara bersamaan.
 
 ## Bounded Context
-
+![Flowchart Alur Jastip Kampus2](Flowchart.jpeg)
 ### 1. order-service
 
 Tanggung jawab:
@@ -92,4 +92,4 @@ Data yang dimiliki:
 | saldo tertahan    |  | dan riwayat       |
 +-------------------+  +-------------------+
 
-![Flowchart Alur Jastip Kampus2](Flowchart.jpeg)
+
