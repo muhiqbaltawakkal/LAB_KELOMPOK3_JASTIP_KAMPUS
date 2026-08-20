@@ -1,0 +1,71 @@
+{
+  "transaksi": [
+    {
+      "id": "TRX-001",
+      "titipan_id": "TIT-004",
+      "sesi_id": "SJ-002",
+      "pemesan": "user_mahasiswa_08",
+      "jumlah_bayar": 25000,
+      "metode": "transfer_bank",
+      "status": "tertahan",
+      "waktu_bayar": "2026-08-20T09:15:00+08:00",
+      "catatan": "Transfer BCA a/n Rizki Amalia"
+    },
+    {
+      "id": "TRX-002",
+      "titipan_id": "TIT-005",
+      "sesi_id": "SJ-002",
+      "pemesan": "user_mahasiswa_09",
+      "jumlah_bayar": 13500,
+      "metode": "dompet_digital",
+      "status": "tertahan",
+      "waktu_bayar": "2026-08-20T09:30:00+08:00",
+      "catatan": "GoPay"
+    },
+    {
+      "id": "TRX-003",
+      "titipan_id": "TIT-006",
+      "sesi_id": "SJ-003",
+      "pemesan": "user_mahasiswa_10",
+      "jumlah_bayar": 20000,
+      "metode": "tunai",
+      "status": "dilepas",
+      "waktu_bayar": "2026-08-19T13:05:00+08:00",
+      "waktu_dilepas": "2026-08-19T14:00:00+08:00",
+      "catatan": ""
+    },
+    {
+      "id": "TRX-004",
+      "titipan_id": "TIT-007",
+      "sesi_id": "SJ-003",
+      "pemesan": "user_mahasiswa_11",
+      "jumlah_bayar": 12000,
+      "metode": "dompet_digital",
+      "status": "dilepas",
+      "waktu_bayar": "2026-08-19T12:50:00+08:00",
+      "waktu_dilepas": "2026-08-19T14:00:00+08:00",
+      "catatan": "OVO"
+    },
+    {
+      "id": "TRX-005",
+      "titipan_id": "TIT-008",
+      "sesi_id": "SJ-004",
+      "pemesan": "user_mahasiswa_12",
+      "jumlah_bayar": 16000,
+      "metode": "transfer_bank",
+      "status": "dilepas",
+      "waktu_bayar": "2026-08-18T15:45:00+08:00",
+      "waktu_dilepas": "2026-08-18T16:30:00+08:00",
+      "catatan": ""
+    }
+  ],
+  "saldo_tertahan": [
+    { "id": "SAL-001", "transaksi_id": "TRX-001", "pemesan": "user_mahasiswa_08", "jumlah": 25000, "status": "tertahan" },
+    { "id": "SAL-002", "transaksi_id": "TRX-002", "pemesan": "user_mahasiswa_09", "jumlah": 13500, "status": "tertahan" }
+  ],
+  "riwayat_pelepasan": [
+    { "id": "REL-001", "transaksi_id": "TRX-003", "dilepas_ke": "user_mahasiswa_03", "jumlah": 20000, "waktu": "2026-08-19T14:00:00+08:00" },
+    { "id": "REL-002", "transaksi_id": "TRX-004", "dilepas_ke": "user_mahasiswa_03", "jumlah": 12000, "waktu": "2026-08-19T14:00:00+08:00" },
+    { "id": "REL-003", "transaksi_id": "TRX-005", "dilepas_ke": "user_mahasiswa_04", "jumlah": 16000, "waktu": "2026-08-18T16:30:00+08:00" }
+  ]
+}

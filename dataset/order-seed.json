@@ -1,0 +1,50 @@
+{
+  "sesi_jastip": [
+    {
+      "id": "SJ-001",
+      "judul": "Jastip Snack Kantin A – Sesi Pagi",
+      "pembuka": "user_mahasiswa_01",
+      "status": "buka",
+      "batas_waktu": "2026-08-20T10:00:00+08:00",
+      "kapasitas_maksimal": 10,
+      "deskripsi": "Buka jastip ke kantin Gedung A untuk snack dan minuman ringan."
+    },
+    {
+      "id": "SJ-002",
+      "judul": "Jastip Alat Tulis Koperasi FT",
+      "pembuka": "user_mahasiswa_02",
+      "status": "buka",
+      "batas_waktu": "2026-08-20T12:00:00+08:00",
+      "kapasitas_maksimal": 15,
+      "deskripsi": "Jastip ke koperasi FT untuk alat tulis dan perlengkapan kuliah."
+    },
+    {
+      "id": "SJ-003",
+      "judul": "Jastip Minuman Kantin C – Siang",
+      "pembuka": "user_mahasiswa_03",
+      "status": "tutup",
+      "batas_waktu": "2026-08-19T13:00:00+08:00",
+      "kapasitas_maksimal": 8,
+      "deskripsi": "Jastip minuman segar dari kantin C."
+    },
+    {
+      "id": "SJ-004",
+      "judul": "Jastip Serba Ada – Sore",
+      "pembuka": "user_mahasiswa_04",
+      "status": "selesai",
+      "batas_waktu": "2026-08-18T16:00:00+08:00",
+      "kapasitas_maksimal": 12,
+      "deskripsi": "Jastip gabungan dari kantin dan koperasi."
+    }
+  ],
+  "titipan": [
+    { "id": "TIT-001", "sesi_id": "SJ-001", "pemesan": "user_mahasiswa_05", "barang_id": 1, "nama_barang": "Chitato Original 68g", "jumlah": 2, "harga_satuan": 12000, "total": 24000, "catatan": "", "status": "diproses" },
+    { "id": "TIT-002", "sesi_id": "SJ-001", "pemesan": "user_mahasiswa_06", "barang_id": 2, "nama_barang": "Indomie Goreng", "jumlah": 3, "harga_satuan": 3500, "total": 10500, "catatan": "Tanpa bumbu pedas kalau ada", "status": "diproses" },
+    { "id": "TIT-003", "sesi_id": "SJ-001", "pemesan": "user_mahasiswa_07", "barang_id": 7, "nama_barang": "Aqua 600ml", "jumlah": 2, "harga_satuan": 4000, "total": 8000, "catatan": "", "status": "diproses" },
+    { "id": "TIT-004", "sesi_id": "SJ-002", "pemesan": "user_mahasiswa_08", "barang_id": 4, "nama_barang": "Pulpen Pilot BPS-GP", "jumlah": 5, "harga_satuan": 5000, "total": 25000, "catatan": "Warna biru", "status": "menunggu_pembayaran" },
+    { "id": "TIT-005", "sesi_id": "SJ-002", "pemesan": "user_mahasiswa_09", "barang_id": 5, "nama_barang": "Buku Tulis Sidu 40 Lembar", "jumlah": 3, "harga_satuan": 4500, "total": 13500, "catatan": "", "status": "menunggu_pembayaran" },
+    { "id": "TIT-006", "sesi_id": "SJ-003", "pemesan": "user_mahasiswa_10", "barang_id": 8, "nama_barang": "Teh Botol Sosro 350ml", "jumlah": 4, "harga_satuan": 5000, "total": 20000, "catatan": "", "status": "selesai" },
+    { "id": "TIT-007", "sesi_id": "SJ-003", "pemesan": "user_mahasiswa_11", "barang_id": 9, "nama_barang": "Kopi Kapal Api Sachet", "jumlah": 6, "harga_satuan": 2000, "total": 12000, "catatan": "Extra 1 sachet gula", "status": "selesai" },
+    { "id": "TIT-008", "sesi_id": "SJ-004", "pemesan": "user_mahasiswa_12", "barang_id": 3, "nama_barang": "Biskuit Roma Kelapa", "jumlah": 2, "harga_satuan": 8000, "total": 16000, "catatan": "", "status": "selesai" }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "riwayat_status": [
+    {
+      "id": "TRK-001",
+      "titipan_id": "TIT-001",
+      "status": "diterima",
+      "waktu": "2026-08-20T08:00:00+08:00",
+      "keterangan": "Titipan diterima oleh pembuka jastip"
+    },
+    {
+      "id": "TRK-002",
+      "titipan_id": "TIT-001",
+      "status": "dibelikan",
+      "waktu": "2026-08-20T09:45:00+08:00",
+      "keterangan": "Barang sudah dibeli di kantin Gedung A"
+    },
+    {
+      "id": "TRK-003",
+      "titipan_id": "TIT-001",
+      "status": "dalam_perjalanan",
+      "waktu": "2026-08-20T09:50:00+08:00",
+      "keterangan": "Dalam perjalanan menuju pemesan"
+    },
+    {
+      "id": "TRK-004",
+      "titipan_id": "TIT-002",
+      "status": "diterima",
+      "waktu": "2026-08-20T08:05:00+08:00",
+      "keterangan": "Titipan diterima oleh pembuka jastip"
+    },
+    {
+      "id": "TRK-005",
+      "titipan_id": "TIT-002",
+      "status": "dibelikan",
+      "waktu": "2026-08-20T09:45:00+08:00",
+      "keterangan": "Barang sudah dibeli"
+    },
+    {
+      "id": "TRK-006",
+      "titipan_id": "TIT-003",
+      "status": "diterima",
+      "waktu": "2026-08-20T08:10:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-007",
+      "titipan_id": "TIT-004",
+      "status": "diterima",
+      "waktu": "2026-08-20T09:00:00+08:00",
+      "keterangan": "Titipan diterima oleh pembuka jastip"
+    },
+    {
+      "id": "TRK-008",
+      "titipan_id": "TIT-005",
+      "status": "diterima",
+      "waktu": "2026-08-20T09:00:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-009",
+      "titipan_id": "TIT-006",
+      "status": "diterima",
+      "waktu": "2026-08-19T12:00:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-010",
+      "titipan_id": "TIT-006",
+      "status": "dibelikan",
+      "waktu": "2026-08-19T12:45:00+08:00",
+      "keterangan": "Barang sudah dibeli di kantin C"
+    },
+    {
+      "id": "TRK-011",
+      "titipan_id": "TIT-006",
+      "status": "dalam_perjalanan",
+      "waktu": "2026-08-19T12:50:00+08:00",
+      "keterangan": "Dalam perjalanan"
+    },
+    {
+      "id": "TRK-012",
+      "titipan_id": "TIT-006",
+      "status": "selesai",
+      "waktu": "2026-08-19T13:10:00+08:00",
+      "keterangan": "Barang telah diterima pemesan"
+    },
+    {
+      "id": "TRK-013",
+      "titipan_id": "TIT-007",
+      "status": "diterima",
+      "waktu": "2026-08-19T12:05:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-014",
+      "titipan_id": "TIT-007",
+      "status": "dibelikan",
+      "waktu": "2026-08-19T12:45:00+08:00",
+      "keterangan": "Barang sudah dibeli"
+    },
+    {
+      "id": "TRK-015",
+      "titipan_id": "TIT-007",
+      "status": "selesai",
+      "waktu": "2026-08-19T13:15:00+08:00",
+      "keterangan": "Barang telah diterima pemesan"
+    },
+    {
+      "id": "TRK-016",
+      "titipan_id": "TIT-008",
+      "status": "diterima",
+      "waktu": "2026-08-18T15:00:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-017",
+      "titipan_id": "TIT-008",
+      "status": "dibelikan",
+      "waktu": "2026-08-18T15:30:00+08:00",
+      "keterangan": "Barang sudah dibeli"
+    },
+    {
+      "id": "TRK-018",
+      "titipan_id": "TIT-008",
+      "status": "selesai",
+      "waktu": "2026-08-18T15:50:00+08:00",
+      "keterangan": "Barang telah diterima pemesan"
+    }
+  ]
+}

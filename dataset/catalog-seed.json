@@ -1,0 +1,29 @@
+{
+  "toko": [
+    { "id": 1, "nama": "Toko Snack Murah", "pemilik": "Andi Saputra", "lokasi": "Kantin Gedung A", "aktif": true },
+    { "id": 2, "nama": "Toko Alat Tulis Lengkap", "pemilik": "Siti Rahayu", "lokasi": "Koperasi FT", "aktif": true },
+    { "id": 3, "nama": "Toko Minuman Segar", "pemilik": "Budi Hartono", "lokasi": "Kantin Gedung C", "aktif": true },
+    { "id": 4, "nama": "Toko Elektronik Mini", "pemilik": "Dewi Lestari", "lokasi": "Lobby FIK", "aktif": false }
+  ],
+  "barang": [
+    { "id": 1, "toko_id": 1, "nama": "Chitato Original 68g", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 12000, "stok": 150 },
+    { "id": 2, "toko_id": 1, "nama": "Indomie Goreng", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 3500, "stok": 300 },
+    { "id": 3, "toko_id": 1, "nama": "Biskuit Roma Kelapa", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 8000, "stok": 200 },
+    { "id": 4, "toko_id": 2, "nama": "Pulpen Pilot BPS-GP", "kategori": "Alat Tulis", "satuan": "pcs", "harga_acuan": 5000, "stok": 500 },
+    { "id": 5, "toko_id": 2, "nama": "Buku Tulis Sidu 40 Lembar", "kategori": "Alat Tulis", "satuan": "pcs", "harga_acuan": 4500, "stok": 400 },
+    { "id": 6, "toko_id": 2, "nama": "Spidol Snowman Whiteboard", "kategori": "Alat Tulis", "satuan": "set", "harga_acuan": 18000, "stok": 120 },
+    { "id": 7, "toko_id": 3, "nama": "Aqua 600ml", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 4000, "stok": 600 },
+    { "id": 8, "toko_id": 3, "nama": "Teh Botol Sosro 350ml", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 5000, "stok": 400 },
+    { "id": 9, "toko_id": 3, "nama": "Kopi Kapal Api Sachet", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 2000, "stok": 700 },
+    { "id": 10, "toko_id": 4, "nama": "Kabel USB Type-C 1m", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 25000, "stok": 80 },
+    { "id": 11, "toko_id": 4, "nama": "Earphone Basic", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 35000, "stok": 50 },
+    { "id": 12, "toko_id": 4, "nama": "Powerbank 5000mAh", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 150000, "stok": 30 }
+  ],
+  "satuan": [
+    { "id": 1, "kode": "pcs", "nama": "Pieces", "keterangan": "Satuan per buah" },
+    { "id": 2, "kode": "set", "nama": "Set", "keterangan": "Satuan per set/paket" },
+    { "id": 3, "kode": "lusin", "nama": "Lusin", "keterangan": "Satuan per 12 buah" },
+    { "id": 4, "kode": "box", "nama": "Box", "keterangan": "Satuan per kotak" },
+    { "id": 5, "kode": "kg", "nama": "Kilogram", "keterangan": "Satuan berat" }
+  ]
+}
