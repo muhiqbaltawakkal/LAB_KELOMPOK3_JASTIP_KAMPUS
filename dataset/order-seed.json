@@ -2,49 +2,49 @@
   "sesi_jastip": [
     {
       "id": "SJ-001",
-      "judul": "Jastip Snack Kantin A – Sesi Pagi",
-      "pembuka": "user_mahasiswa_01",
+      "judul": "Jastip Chatime Losari – Sore",
+      "pembuka": "user_andi_unhas",
       "status": "buka",
-      "batas_waktu": "2026-08-20T10:00:00+08:00",
+      "batas_waktu": "2026-08-20T16:30:00+08:00",
       "kapasitas_maksimal": 10,
-      "deskripsi": "Buka jastip ke kantin Gedung A untuk snack dan minuman ringan."
+      "deskripsi": "Berangkat ke Chatime Losari sekitar jam 16.00 WITA. Min order 1 cup."
     },
     {
       "id": "SJ-002",
-      "judul": "Jastip Alat Tulis Koperasi FT",
-      "pembuka": "user_mahasiswa_02",
+      "judul": "Jastip Gramedia Karebosi – Siang",
+      "pembuka": "user_siti_unhas",
       "status": "buka",
-      "batas_waktu": "2026-08-20T12:00:00+08:00",
+      "batas_waktu": "2026-08-20T13:00:00+08:00",
       "kapasitas_maksimal": 15,
-      "deskripsi": "Jastip ke koperasi FT untuk alat tulis dan perlengkapan kuliah."
+      "deskripsi": "Ke Gramedia Karebosi Link untuk beli alat tulis dan buku kuliah."
     },
     {
       "id": "SJ-003",
-      "judul": "Jastip Minuman Kantin C – Siang",
-      "pembuka": "user_mahasiswa_03",
+      "judul": "Jastip Mie Titi – Makan Malam",
+      "pembuka": "user_budi_unhas",
       "status": "tutup",
-      "batas_waktu": "2026-08-19T13:00:00+08:00",
+      "batas_waktu": "2026-08-19T19:00:00+08:00",
       "kapasitas_maksimal": 8,
-      "deskripsi": "Jastip minuman segar dari kantin C."
+      "deskripsi": "Jastip mie titi Jl. Irian buat makan malam. Bayar di depan."
     },
     {
       "id": "SJ-004",
-      "judul": "Jastip Serba Ada – Sore",
-      "pembuka": "user_mahasiswa_04",
+      "judul": "Jastip Pisang Ijo Bu Budi – Sore",
+      "pembuka": "user_dewi_unhas",
       "status": "selesai",
-      "batas_waktu": "2026-08-18T16:00:00+08:00",
+      "batas_waktu": "2026-08-18T15:30:00+08:00",
       "kapasitas_maksimal": 12,
-      "deskripsi": "Jastip gabungan dari kantin dan koperasi."
+      "deskripsi": "Jastip pisang ijo khas Makassar dari warung Bu Budi di Losari."
     }
   ],
   "titipan": [
-    { "id": "TIT-001", "sesi_id": "SJ-001", "pemesan": "user_mahasiswa_05", "barang_id": 1, "nama_barang": "Chitato Original 68g", "jumlah": 2, "harga_satuan": 12000, "total": 24000, "catatan": "", "status": "diproses" },
-    { "id": "TIT-002", "sesi_id": "SJ-001", "pemesan": "user_mahasiswa_06", "barang_id": 2, "nama_barang": "Indomie Goreng", "jumlah": 3, "harga_satuan": 3500, "total": 10500, "catatan": "Tanpa bumbu pedas kalau ada", "status": "diproses" },
-    { "id": "TIT-003", "sesi_id": "SJ-001", "pemesan": "user_mahasiswa_07", "barang_id": 7, "nama_barang": "Aqua 600ml", "jumlah": 2, "harga_satuan": 4000, "total": 8000, "catatan": "", "status": "diproses" },
-    { "id": "TIT-004", "sesi_id": "SJ-002", "pemesan": "user_mahasiswa_08", "barang_id": 4, "nama_barang": "Pulpen Pilot BPS-GP", "jumlah": 5, "harga_satuan": 5000, "total": 25000, "catatan": "Warna biru", "status": "menunggu_pembayaran" },
-    { "id": "TIT-005", "sesi_id": "SJ-002", "pemesan": "user_mahasiswa_09", "barang_id": 5, "nama_barang": "Buku Tulis Sidu 40 Lembar", "jumlah": 3, "harga_satuan": 4500, "total": 13500, "catatan": "", "status": "menunggu_pembayaran" },
-    { "id": "TIT-006", "sesi_id": "SJ-003", "pemesan": "user_mahasiswa_10", "barang_id": 8, "nama_barang": "Teh Botol Sosro 350ml", "jumlah": 4, "harga_satuan": 5000, "total": 20000, "catatan": "", "status": "selesai" },
-    { "id": "TIT-007", "sesi_id": "SJ-003", "pemesan": "user_mahasiswa_11", "barang_id": 9, "nama_barang": "Kopi Kapal Api Sachet", "jumlah": 6, "harga_satuan": 2000, "total": 12000, "catatan": "Extra 1 sachet gula", "status": "selesai" },
-    { "id": "TIT-008", "sesi_id": "SJ-004", "pemesan": "user_mahasiswa_12", "barang_id": 3, "nama_barang": "Biskuit Roma Kelapa", "jumlah": 2, "harga_satuan": 8000, "total": 16000, "catatan": "", "status": "selesai" }
+    { "id": "TIT-001", "sesi_id": "SJ-001", "pemesan": "user_nurdian_unhas", "barang_id": 1, "nama_barang": "Brown Sugar Boba Milk Tea (L)", "jumlah": 2, "harga_satuan": 42000, "total": 84000, "catatan": "Less sugar", "status": "diproses" },
+    { "id": "TIT-002", "sesi_id": "SJ-001", "pemesan": "user_rizki_unhas", "barang_id": 2, "nama_barang": "Matcha Latte (M)", "jumlah": 1, "harga_satuan": 35000, "total": 35000, "catatan": "Normal sugar, less ice", "status": "diproses" },
+    { "id": "TIT-003", "sesi_id": "SJ-001", "pemesan": "user_syarifa_unhas", "barang_id": 3, "nama_barang": "Classic Milk Tea (L)", "jumlah": 2, "harga_satuan": 32000, "total": 64000, "catatan": "Full sugar", "status": "diproses" },
+    { "id": "TIT-004", "sesi_id": "SJ-002", "pemesan": "user_nurdian_unhas", "barang_id": 8, "nama_barang": "Pulpen Faber-Castell 0.5mm Hitam", "jumlah": 5, "harga_satuan": 7000, "total": 35000, "catatan": "", "status": "menunggu_pembayaran" },
+    { "id": "TIT-005", "sesi_id": "SJ-002", "pemesan": "user_rizki_unhas", "barang_id": 9, "nama_barang": "Stabilo Boss Highlighter (Set 4 Warna)", "jumlah": 2, "harga_satuan": 28000, "total": 56000, "catatan": "", "status": "menunggu_pembayaran" },
+    { "id": "TIT-006", "sesi_id": "SJ-003", "pemesan": "user_syarifa_unhas", "barang_id": 4, "nama_barang": "Mie Titi Original (Porsi Reguler)", "jumlah": 2, "harga_satuan": 35000, "total": 70000, "catatan": "Extra kuah", "status": "selesai" },
+    { "id": "TIT-007", "sesi_id": "SJ-003", "pemesan": "user_nurdian_unhas", "barang_id": 5, "nama_barang": "Mie Titi Udang", "jumlah": 1, "harga_satuan": 45000, "total": 45000, "catatan": "", "status": "selesai" },
+    { "id": "TIT-008", "sesi_id": "SJ-004", "pemesan": "user_rizki_unhas", "barang_id": 18, "nama_barang": "Pisang Ijo Original (1 Porsi)", "jumlah": 3, "harga_satuan": 20000, "total": 60000, "catatan": "Pisangnya yang matang", "status": "selesai" }
   ]
 }

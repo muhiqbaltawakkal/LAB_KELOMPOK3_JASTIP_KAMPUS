@@ -1,23 +1,75 @@
 {
   "toko": [
-    { "id": 1, "nama": "Toko Snack Murah", "pemilik": "Andi Saputra", "lokasi": "Kantin Gedung A", "aktif": true },
-    { "id": 2, "nama": "Toko Alat Tulis Lengkap", "pemilik": "Siti Rahayu", "lokasi": "Koperasi FT", "aktif": true },
-    { "id": 3, "nama": "Toko Minuman Segar", "pemilik": "Budi Hartono", "lokasi": "Kantin Gedung C", "aktif": true },
-    { "id": 4, "nama": "Toko Elektronik Mini", "pemilik": "Dewi Lestari", "lokasi": "Lobby FIK", "aktif": false }
+    {
+      "id": 1,
+      "nama": "Chatime Losari",
+      "pemilik": "PT Pangan Lestari",
+      "lokasi": "Pantai Losari, Jl. Penghibur No.1, Makassar",
+      "kategori": "Minuman Kekinian",
+      "aktif": true
+    },
+    {
+      "id": 2,
+      "nama": "Mie Titi Makassar",
+      "pemilik": "Keluarga Titi",
+      "lokasi": "Jl. Irian No.18, Makassar",
+      "kategori": "Makanan Khas",
+      "aktif": true
+    },
+    {
+      "id": 3,
+      "nama": "Gramedia Karebosi",
+      "pemilik": "PT Gramedia Asri Media",
+      "lokasi": "Mall Karebosi Link Lt.2, Jl. Jend. Ahmad Yani, Makassar",
+      "kategori": "Buku & Alat Tulis",
+      "aktif": true
+    },
+    {
+      "id": 4,
+      "nama": "Erafone Trans Studio Mall",
+      "pemilik": "PT Erafone Artha Retailindo",
+      "lokasi": "Trans Studio Mall Lt.1, Jl. Metro Tanjung Bunga, Makassar",
+      "kategori": "Elektronik & Gadget",
+      "aktif": true
+    },
+    {
+      "id": 5,
+      "nama": "Indomaret Tamalanrea",
+      "pemilik": "PT Indomarco Prismatama",
+      "lokasi": "Jl. Perintis Kemerdekaan KM.10, Tamalanrea, Makassar",
+      "kategori": "Minimarket",
+      "aktif": true
+    },
+    {
+      "id": 6,
+      "nama": "Pisang Ijo Bu Budi",
+      "pemilik": "Hj. Budi Rahayu",
+      "lokasi": "Jl. Penghibur No.48A, Pantai Losari, Makassar",
+      "kategori": "Kuliner Khas",
+      "aktif": true
+    }
   ],
   "barang": [
-    { "id": 1, "toko_id": 1, "nama": "Chitato Original 68g", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 12000, "stok": 150 },
-    { "id": 2, "toko_id": 1, "nama": "Indomie Goreng", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 3500, "stok": 300 },
-    { "id": 3, "toko_id": 1, "nama": "Biskuit Roma Kelapa", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 8000, "stok": 200 },
-    { "id": 4, "toko_id": 2, "nama": "Pulpen Pilot BPS-GP", "kategori": "Alat Tulis", "satuan": "pcs", "harga_acuan": 5000, "stok": 500 },
-    { "id": 5, "toko_id": 2, "nama": "Buku Tulis Sidu 40 Lembar", "kategori": "Alat Tulis", "satuan": "pcs", "harga_acuan": 4500, "stok": 400 },
-    { "id": 6, "toko_id": 2, "nama": "Spidol Snowman Whiteboard", "kategori": "Alat Tulis", "satuan": "set", "harga_acuan": 18000, "stok": 120 },
-    { "id": 7, "toko_id": 3, "nama": "Aqua 600ml", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 4000, "stok": 600 },
-    { "id": 8, "toko_id": 3, "nama": "Teh Botol Sosro 350ml", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 5000, "stok": 400 },
-    { "id": 9, "toko_id": 3, "nama": "Kopi Kapal Api Sachet", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 2000, "stok": 700 },
-    { "id": 10, "toko_id": 4, "nama": "Kabel USB Type-C 1m", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 25000, "stok": 80 },
-    { "id": 11, "toko_id": 4, "nama": "Earphone Basic", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 35000, "stok": 50 },
-    { "id": 12, "toko_id": 4, "nama": "Powerbank 5000mAh", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 150000, "stok": 30 }
+    { "id": 1,  "toko_id": 1, "nama": "Brown Sugar Boba Milk Tea (L)", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 42000, "stok": 100 },
+    { "id": 2,  "toko_id": 1, "nama": "Matcha Latte (M)", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 35000, "stok": 100 },
+    { "id": 3,  "toko_id": 1, "nama": "Classic Milk Tea (L)", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 32000, "stok": 100 },
+    { "id": 4,  "toko_id": 2, "nama": "Mie Titi Original (Porsi Reguler)", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 35000, "stok": 50 },
+    { "id": 5,  "toko_id": 2, "nama": "Mie Titi Udang", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 45000, "stok": 50 },
+    { "id": 6,  "toko_id": 2, "nama": "Es Teh Manis", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 8000, "stok": 100 },
+    { "id": 7,  "toko_id": 3, "nama": "Buku Tulis Sinardunia A5 40 Lembar", "kategori": "Alat Tulis", "satuan": "pcs", "harga_acuan": 5500, "stok": 300 },
+    { "id": 8,  "toko_id": 3, "nama": "Pulpen Faber-Castell 0.5mm Hitam", "kategori": "Alat Tulis", "satuan": "pcs", "harga_acuan": 7000, "stok": 400 },
+    { "id": 9,  "toko_id": 3, "nama": "Stabilo Boss Highlighter (Set 4 Warna)", "kategori": "Alat Tulis", "satuan": "set", "harga_acuan": 28000, "stok": 150 },
+    { "id": 10, "toko_id": 3, "nama": "Sticky Notes Post-it 3x3", "kategori": "Alat Tulis", "satuan": "pcs", "harga_acuan": 18000, "stok": 200 },
+    { "id": 11, "toko_id": 4, "nama": "Samsung Galaxy A15 (4/128GB)", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 2199000, "stok": 20 },
+    { "id": 12, "toko_id": 4, "nama": "Kabel Data Anker USB-C 1m", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 89000, "stok": 80 },
+    { "id": 13, "toko_id": 4, "nama": "Earphone Samsung AKG Type-C", "kategori": "Elektronik", "satuan": "pcs", "harga_acuan": 150000, "stok": 60 },
+    { "id": 14, "toko_id": 5, "nama": "Aqua 600ml", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 4500, "stok": 500 },
+    { "id": 15, "toko_id": 5, "nama": "Indomie Goreng", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 3500, "stok": 400 },
+    { "id": 16, "toko_id": 5, "nama": "Chitato Sapi Panggang 68g", "kategori": "Makanan", "satuan": "pcs", "harga_acuan": 12000, "stok": 200 },
+    { "id": 17, "toko_id": 5, "nama": "Good Day Cappuccino Sachet", "kategori": "Minuman", "satuan": "pcs", "harga_acuan": 3000, "stok": 600 },
+    { "id": 18, "toko_id": 6, "nama": "Pisang Ijo Original (1 Porsi)", "kategori": "Kuliner", "satuan": "pcs", "harga_acuan": 20000, "stok": 60 },
+    { "id": 19, "toko_id": 6, "nama": "Pisang Ijo Durian (1 Porsi)", "kategori": "Kuliner", "satuan": "pcs", "harga_acuan": 25000, "stok": 40 },
+    { "id": 20, "toko_id": 6, "nama": "Es Pisang Ijo (Paket 2 Porsi)", "kategori": "Kuliner", "satuan": "set", "harga_acuan": 45000, "stok": 30 }
   ],
   "satuan": [
     { "id": 1, "kode": "pcs", "nama": "Pieces", "keterangan": "Satuan per buah" },
