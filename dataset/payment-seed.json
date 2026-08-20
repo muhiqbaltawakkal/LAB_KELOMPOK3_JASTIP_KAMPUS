@@ -1,0 +1,97 @@
+{
+  "transaksi": [
+    { "id": "TRX-001", "titipan_id": "TIT-004", "sesi_id": "SJ-002", "pemesan": "user_nurdian_unhas",  "jumlah_bayar": 35000,  "metode": "transfer_bank",   "status": "tertahan", "waktu_bayar": "2026-08-20T09:15:00+08:00", "catatan": "BCA – Pulpen Faber-Castell 5 pcs" },
+    { "id": "TRX-002", "titipan_id": "TIT-005", "sesi_id": "SJ-002", "pemesan": "user_rizki_unhas",    "jumlah_bayar": 56000,  "metode": "dompet_digital",  "status": "tertahan", "waktu_bayar": "2026-08-20T09:30:00+08:00", "catatan": "GoPay – Stabilo 2 set" },
+    { "id": "TRX-003", "titipan_id": "TIT-006", "sesi_id": "SJ-003", "pemesan": "user_syarifa_unhas",  "jumlah_bayar": 70000,  "metode": "tunai",           "status": "dilepas",  "waktu_bayar": "2026-08-19T18:50:00+08:00", "waktu_dilepas": "2026-08-19T20:00:00+08:00", "catatan": "Mie Titi Original 2 porsi" },
+    { "id": "TRX-004", "titipan_id": "TIT-007", "sesi_id": "SJ-003", "pemesan": "user_nurdian_unhas",  "jumlah_bayar": 45000,  "metode": "dompet_digital",  "status": "dilepas",  "waktu_bayar": "2026-08-19T18:55:00+08:00", "waktu_dilepas": "2026-08-19T20:00:00+08:00", "catatan": "OVO – Mie Titi Udang" },
+    { "id": "TRX-005", "titipan_id": "TIT-008", "sesi_id": "SJ-004", "pemesan": "user_rizki_unhas",    "jumlah_bayar": 60000,  "metode": "transfer_bank",   "status": "dilepas",  "waktu_bayar": "2026-08-18T15:10:00+08:00", "waktu_dilepas": "2026-08-18T16:00:00+08:00", "catatan": "BRI – Pisang Ijo Bu Budi 3 porsi" },
+    { "id": "TRX-006", "titipan_id": "TIT-009", "sesi_id": "SJ-004", "pemesan": "user_andi_unhas",     "jumlah_bayar": 50000,  "metode": "dompet_digital",  "status": "dilepas",  "waktu_bayar": "2026-08-18T15:05:00+08:00", "waktu_dilepas": "2026-08-18T16:00:00+08:00", "catatan": "Dana – Pisang Ijo Durian 2 porsi" },
+    { "id": "TRX-007", "titipan_id": "TIT-014", "sesi_id": "SJ-007", "pemesan": "user_budi_unhas",     "jumlah_bayar": 110000, "metode": "transfer_bank",   "status": "dilepas",  "waktu_bayar": "2026-08-19T19:30:00+08:00", "waktu_dilepas": "2026-08-19T21:00:00+08:00", "catatan": "BNI – Konro Bakar 2 porsi" },
+    { "id": "TRX-008", "titipan_id": "TIT-015", "sesi_id": "SJ-007", "pemesan": "user_dewi_unhas",     "jumlah_bayar": 60000,  "metode": "dompet_digital",  "status": "dilepas",  "waktu_bayar": "2026-08-19T19:35:00+08:00", "waktu_dilepas": "2026-08-19T21:00:00+08:00", "catatan": "ShopeePay – Sup Konro" },
+    { "id": "TRX-009", "titipan_id": "TIT-016", "sesi_id": "SJ-008", "pemesan": "user_nurdian_unhas",  "jumlah_bayar": 110000, "metode": "transfer_bank",   "status": "dilepas",  "waktu_bayar": "2026-08-18T18:45:00+08:00", "waktu_dilepas": "2026-08-18T20:00:00+08:00", "catatan": "Mandiri – KFC 2 paket" },
+    { "id": "TRX-010", "titipan_id": "TIT-017", "sesi_id": "SJ-009", "pemesan": "user_syarifa_unhas",  "jumlah_bayar": 50000,  "metode": "dompet_digital",  "status": "dilepas",  "waktu_bayar": "2026-08-17T08:30:00+08:00", "waktu_dilepas": "2026-08-17T09:30:00+08:00", "catatan": "OVO – Kopi Kanneng 2 cup" }
+  ],
+  "saldo_tertahan": [
+    { "id": "SAL-001", "transaksi_id": "TRX-001", "pemesan": "user_nurdian_unhas", "jumlah": 35000,  "status": "tertahan" },
+    { "id": "SAL-002", "transaksi_id": "TRX-002", "pemesan": "user_rizki_unhas",   "jumlah": 56000,  "status": "tertahan" }
+  ],
+  "riwayat_pelepasan": [
+    { "id": "REL-001", "transaksi_id": "TRX-003", "dilepas_ke": "user_budi_unhas",    "jumlah": 70000,  "waktu": "2026-08-19T20:00:00+08:00" },
+    { "id": "REL-002", "transaksi_id": "TRX-004", "dilepas_ke": "user_budi_unhas",    "jumlah": 45000,  "waktu": "2026-08-19T20:00:00+08:00" },
+    { "id": "REL-003", "transaksi_id": "TRX-005", "dilepas_ke": "user_dewi_unhas",    "jumlah": 60000,  "waktu": "2026-08-18T16:00:00+08:00" },
+    { "id": "REL-004", "transaksi_id": "TRX-006", "dilepas_ke": "user_dewi_unhas",    "jumlah": 50000,  "waktu": "2026-08-18T16:00:00+08:00" },
+    { "id": "REL-005", "transaksi_id": "TRX-007", "dilepas_ke": "user_syarifa_unhas", "jumlah": 110000, "waktu": "2026-08-19T21:00:00+08:00" },
+    { "id": "REL-006", "transaksi_id": "TRX-008", "dilepas_ke": "user_syarifa_unhas", "jumlah": 60000,  "waktu": "2026-08-19T21:00:00+08:00" },
+    { "id": "REL-007", "transaksi_id": "TRX-009", "dilepas_ke": "user_andi_unhas",    "jumlah": 110000, "waktu": "2026-08-18T20:00:00+08:00" },
+    { "id": "REL-008", "transaksi_id": "TRX-010", "dilepas_ke": "user_siti_unhas",    "jumlah": 50000,  "waktu": "2026-08-17T09:30:00+08:00" }
+  ]
+}
+    {
+      "id": "TRX-001",
+      "titipan_id": "TIT-004",
+      "sesi_id": "SJ-002",
+      "pemesan": "user_nurdian_unhas",
+      "jumlah_bayar": 35000,
+      "metode": "transfer_bank",
+      "status": "tertahan",
+      "waktu_bayar": "2026-08-20T09:15:00+08:00",
+      "catatan": "Transfer BCA – Pulpen Faber-Castell 5 pcs"
+    },
+    {
+      "id": "TRX-002",
+      "titipan_id": "TIT-005",
+      "sesi_id": "SJ-002",
+      "pemesan": "user_rizki_unhas",
+      "jumlah_bayar": 56000,
+      "metode": "dompet_digital",
+      "status": "tertahan",
+      "waktu_bayar": "2026-08-20T09:30:00+08:00",
+      "catatan": "GoPay – Stabilo 2 set"
+    },
+    {
+      "id": "TRX-003",
+      "titipan_id": "TIT-006",
+      "sesi_id": "SJ-003",
+      "pemesan": "user_syarifa_unhas",
+      "jumlah_bayar": 70000,
+      "metode": "tunai",
+      "status": "dilepas",
+      "waktu_bayar": "2026-08-19T18:50:00+08:00",
+      "waktu_dilepas": "2026-08-19T20:00:00+08:00",
+      "catatan": "Mie Titi Original 2 porsi"
+    },
+    {
+      "id": "TRX-004",
+      "titipan_id": "TIT-007",
+      "sesi_id": "SJ-003",
+      "pemesan": "user_nurdian_unhas",
+      "jumlah_bayar": 45000,
+      "metode": "dompet_digital",
+      "status": "dilepas",
+      "waktu_bayar": "2026-08-19T18:55:00+08:00",
+      "waktu_dilepas": "2026-08-19T20:00:00+08:00",
+      "catatan": "OVO – Mie Titi Udang 1 porsi"
+    },
+    {
+      "id": "TRX-005",
+      "titipan_id": "TIT-008",
+      "sesi_id": "SJ-004",
+      "pemesan": "user_rizki_unhas",
+      "jumlah_bayar": 60000,
+      "metode": "transfer_bank",
+      "status": "dilepas",
+      "waktu_bayar": "2026-08-18T15:10:00+08:00",
+      "waktu_dilepas": "2026-08-18T16:00:00+08:00",
+      "catatan": "BRI – Pisang Ijo Bu Budi 3 porsi"
+    }
+  ],
+  "saldo_tertahan": [
+    { "id": "SAL-001", "transaksi_id": "TRX-001", "pemesan": "user_nurdian_unhas", "jumlah": 35000, "status": "tertahan" },
+    { "id": "SAL-002", "transaksi_id": "TRX-002", "pemesan": "user_rizki_unhas", "jumlah": 56000, "status": "tertahan" }
+  ],
+  "riwayat_pelepasan": [
+    { "id": "REL-001", "transaksi_id": "TRX-003", "dilepas_ke": "user_budi_unhas", "jumlah": 70000, "waktu": "2026-08-19T20:00:00+08:00" },
+    { "id": "REL-002", "transaksi_id": "TRX-004", "dilepas_ke": "user_budi_unhas", "jumlah": 45000, "waktu": "2026-08-19T20:00:00+08:00" },
+    { "id": "REL-003", "transaksi_id": "TRX-005", "dilepas_ke": "user_dewi_unhas", "jumlah": 60000, "waktu": "2026-08-18T16:00:00+08:00" }
+  ]
+}

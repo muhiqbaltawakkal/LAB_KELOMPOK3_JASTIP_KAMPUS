@@ -1,0 +1,186 @@
+{
+  "riwayat_status": [
+    { "id": "TRK-001", "titipan_id": "TIT-001", "status": "diterima",         "waktu": "2026-08-20T15:00:00+08:00", "keterangan": "Titipan diterima – Jastip Chatime Losari" },
+    { "id": "TRK-002", "titipan_id": "TIT-001", "status": "dibelikan",        "waktu": "2026-08-20T16:10:00+08:00", "keterangan": "Brown Sugar Boba selesai dibuat di Chatime Losari" },
+    { "id": "TRK-003", "titipan_id": "TIT-001", "status": "dalam_perjalanan", "waktu": "2026-08-20T16:20:00+08:00", "keterangan": "Dalam perjalanan menuju kampus UNHAS" },
+    { "id": "TRK-004", "titipan_id": "TIT-002", "status": "diterima",         "waktu": "2026-08-20T15:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-005", "titipan_id": "TIT-002", "status": "dibelikan",        "waktu": "2026-08-20T16:12:00+08:00", "keterangan": "Matcha Latte selesai dibuat" },
+    { "id": "TRK-006", "titipan_id": "TIT-003", "status": "diterima",         "waktu": "2026-08-20T15:10:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-007", "titipan_id": "TIT-004", "status": "diterima",         "waktu": "2026-08-20T09:00:00+08:00", "keterangan": "Titipan diterima – Jastip Gramedia Karebosi" },
+    { "id": "TRK-008", "titipan_id": "TIT-005", "status": "diterima",         "waktu": "2026-08-20T09:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-009", "titipan_id": "TIT-006", "status": "diterima",         "waktu": "2026-08-19T18:00:00+08:00", "keterangan": "Titipan diterima – Jastip Mie Titi Jl. Irian" },
+    { "id": "TRK-010", "titipan_id": "TIT-006", "status": "dibelikan",        "waktu": "2026-08-19T19:15:00+08:00", "keterangan": "Mie Titi 2 porsi sudah dipesan" },
+    { "id": "TRK-011", "titipan_id": "TIT-006", "status": "dalam_perjalanan", "waktu": "2026-08-19T19:30:00+08:00", "keterangan": "Dalam perjalanan menuju Tamalanrea" },
+    { "id": "TRK-012", "titipan_id": "TIT-006", "status": "selesai",          "waktu": "2026-08-19T19:50:00+08:00", "keterangan": "Barang diterima pemesan" },
+    { "id": "TRK-013", "titipan_id": "TIT-007", "status": "diterima",         "waktu": "2026-08-19T18:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-014", "titipan_id": "TIT-007", "status": "dibelikan",        "waktu": "2026-08-19T19:15:00+08:00", "keterangan": "Mie Titi Udang sudah dipesan" },
+    { "id": "TRK-015", "titipan_id": "TIT-007", "status": "selesai",          "waktu": "2026-08-19T19:52:00+08:00", "keterangan": "Barang diterima pemesan" },
+    { "id": "TRK-016", "titipan_id": "TIT-008", "status": "diterima",         "waktu": "2026-08-18T14:30:00+08:00", "keterangan": "Titipan diterima – Jastip Pisang Ijo Bu Budi" },
+    { "id": "TRK-017", "titipan_id": "TIT-008", "status": "dibelikan",        "waktu": "2026-08-18T15:20:00+08:00", "keterangan": "Pisang Ijo 3 porsi dibeli di Bu Budi Losari" },
+    { "id": "TRK-018", "titipan_id": "TIT-008", "status": "selesai",          "waktu": "2026-08-18T15:45:00+08:00", "keterangan": "Barang diterima pemesan di Perintis KM.10" },
+    { "id": "TRK-019", "titipan_id": "TIT-009", "status": "diterima",         "waktu": "2026-08-18T14:35:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-020", "titipan_id": "TIT-009", "status": "dibelikan",        "waktu": "2026-08-18T15:20:00+08:00", "keterangan": "Pisang Ijo Durian 2 porsi dibeli" },
+    { "id": "TRK-021", "titipan_id": "TIT-009", "status": "selesai",          "waktu": "2026-08-18T15:50:00+08:00", "keterangan": "Barang diterima pemesan" },
+    { "id": "TRK-022", "titipan_id": "TIT-010", "status": "diterima",         "waktu": "2026-08-20T10:30:00+08:00", "keterangan": "Titipan diterima – Jastip Coto Nusantara" },
+    { "id": "TRK-023", "titipan_id": "TIT-011", "status": "diterima",         "waktu": "2026-08-20T10:35:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-024", "titipan_id": "TIT-012", "status": "diterima",         "waktu": "2026-08-20T14:00:00+08:00", "keterangan": "Titipan diterima – Jastip J.CO TSM" },
+    { "id": "TRK-025", "titipan_id": "TIT-013", "status": "diterima",         "waktu": "2026-08-20T14:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-026", "titipan_id": "TIT-014", "status": "diterima",         "waktu": "2026-08-19T19:00:00+08:00", "keterangan": "Titipan diterima – Jastip Konro Bakar" },
+    { "id": "TRK-027", "titipan_id": "TIT-014", "status": "dibelikan",        "waktu": "2026-08-19T19:50:00+08:00", "keterangan": "Konro Bakar 2 porsi sudah siap" },
+    { "id": "TRK-028", "titipan_id": "TIT-014", "status": "dalam_perjalanan", "waktu": "2026-08-19T20:00:00+08:00", "keterangan": "Dalam perjalanan ke kos pemesan" },
+    { "id": "TRK-029", "titipan_id": "TIT-014", "status": "selesai",          "waktu": "2026-08-19T20:30:00+08:00", "keterangan": "Barang diterima pemesan" },
+    { "id": "TRK-030", "titipan_id": "TIT-015", "status": "diterima",         "waktu": "2026-08-19T19:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-031", "titipan_id": "TIT-015", "status": "dibelikan",        "waktu": "2026-08-19T19:50:00+08:00", "keterangan": "Sup Konro sudah siap" },
+    { "id": "TRK-032", "titipan_id": "TIT-015", "status": "selesai",          "waktu": "2026-08-19T20:35:00+08:00", "keterangan": "Barang diterima pemesan" },
+    { "id": "TRK-033", "titipan_id": "TIT-016", "status": "diterima",         "waktu": "2026-08-18T18:00:00+08:00", "keterangan": "Titipan diterima – Jastip KFC Panakkukang" },
+    { "id": "TRK-034", "titipan_id": "TIT-016", "status": "dibelikan",        "waktu": "2026-08-18T19:10:00+08:00", "keterangan": "KFC 2 paket sudah dibeli" },
+    { "id": "TRK-035", "titipan_id": "TIT-016", "status": "selesai",          "waktu": "2026-08-18T19:40:00+08:00", "keterangan": "Barang diterima pemesan" },
+    { "id": "TRK-036", "titipan_id": "TIT-017", "status": "diterima",         "waktu": "2026-08-17T08:00:00+08:00", "keterangan": "Titipan diterima – Jastip Kopi Kanneng" },
+    { "id": "TRK-037", "titipan_id": "TIT-017", "status": "dibelikan",        "waktu": "2026-08-17T09:00:00+08:00", "keterangan": "Kopi Susu Kanneng 2 cup sudah dibuat" },
+    { "id": "TRK-038", "titipan_id": "TIT-017", "status": "selesai",          "waktu": "2026-08-17T09:20:00+08:00", "keterangan": "Barang diterima pemesan di kampus" },
+    { "id": "TRK-039", "titipan_id": "TIT-018", "status": "diterima",         "waktu": "2026-08-20T20:00:00+08:00", "keterangan": "Titipan diterima – Jastip Alfamart Perintis" },
+    { "id": "TRK-040", "titipan_id": "TIT-019", "status": "diterima",         "waktu": "2026-08-20T20:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-041", "titipan_id": "TIT-020", "status": "diterima",         "waktu": "2026-08-20T20:05:00+08:00", "keterangan": "Titipan diterima" }
+  ]
+}
+    { "id": "TRK-001", "titipan_id": "TIT-001", "status": "diterima", "waktu": "2026-08-20T15:00:00+08:00", "keterangan": "Titipan diterima – Jastip Chatime Losari" },
+    { "id": "TRK-002", "titipan_id": "TIT-001", "status": "dibelikan", "waktu": "2026-08-20T16:10:00+08:00", "keterangan": "Pesanan sudah dibuat di Chatime Losari" },
+    { "id": "TRK-003", "titipan_id": "TIT-001", "status": "dalam_perjalanan", "waktu": "2026-08-20T16:20:00+08:00", "keterangan": "Dalam perjalanan menuju kampus" },
+    { "id": "TRK-004", "titipan_id": "TIT-002", "status": "diterima", "waktu": "2026-08-20T15:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-005", "titipan_id": "TIT-002", "status": "dibelikan", "waktu": "2026-08-20T16:12:00+08:00", "keterangan": "Matcha Latte selesai dibuat" },
+    { "id": "TRK-006", "titipan_id": "TIT-003", "status": "diterima", "waktu": "2026-08-20T15:10:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-007", "titipan_id": "TIT-004", "status": "diterima", "waktu": "2026-08-20T09:00:00+08:00", "keterangan": "Titipan diterima – Jastip Gramedia Karebosi" },
+    { "id": "TRK-008", "titipan_id": "TIT-005", "status": "diterima", "waktu": "2026-08-20T09:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-009", "titipan_id": "TIT-006", "status": "diterima", "waktu": "2026-08-19T18:00:00+08:00", "keterangan": "Titipan diterima – Jastip Mie Titi Jl. Irian" },
+    { "id": "TRK-010", "titipan_id": "TIT-006", "status": "dibelikan", "waktu": "2026-08-19T19:15:00+08:00", "keterangan": "Mie Titi 2 porsi sudah dipesan ke warung" },
+    { "id": "TRK-011", "titipan_id": "TIT-006", "status": "dalam_perjalanan", "waktu": "2026-08-19T19:30:00+08:00", "keterangan": "Dalam perjalanan menuju kos pemesan" },
+    { "id": "TRK-012", "titipan_id": "TIT-006", "status": "selesai", "waktu": "2026-08-19T19:50:00+08:00", "keterangan": "Barang diterima pemesan di Tamalanrea" },
+    { "id": "TRK-013", "titipan_id": "TIT-007", "status": "diterima", "waktu": "2026-08-19T18:05:00+08:00", "keterangan": "Titipan diterima" },
+    { "id": "TRK-014", "titipan_id": "TIT-007", "status": "dibelikan", "waktu": "2026-08-19T19:15:00+08:00", "keterangan": "Mie Titi Udang sudah dipesan" },
+    { "id": "TRK-015", "titipan_id": "TIT-007", "status": "selesai", "waktu": "2026-08-19T19:52:00+08:00", "keterangan": "Barang diterima pemesan" },
+    { "id": "TRK-016", "titipan_id": "TIT-008", "status": "diterima", "waktu": "2026-08-18T14:30:00+08:00", "keterangan": "Titipan diterima – Jastip Pisang Ijo Bu Budi" },
+    { "id": "TRK-017", "titipan_id": "TIT-008", "status": "dibelikan", "waktu": "2026-08-18T15:20:00+08:00", "keterangan": "Pisang Ijo 3 porsi sudah dibeli di Bu Budi Losari" },
+    { "id": "TRK-018", "titipan_id": "TIT-008", "status": "selesai", "waktu": "2026-08-18T15:45:00+08:00", "keterangan": "Barang diterima pemesan di Perintis KM.10" }
+  ]
+}
+    {
+      "id": "TRK-002",
+      "titipan_id": "TIT-001",
+      "status": "dibelikan",
+      "waktu": "2026-08-20T09:45:00+08:00",
+      "keterangan": "Barang sudah dibeli di kantin Gedung A"
+    },
+    {
+      "id": "TRK-003",
+      "titipan_id": "TIT-001",
+      "status": "dalam_perjalanan",
+      "waktu": "2026-08-20T09:50:00+08:00",
+      "keterangan": "Dalam perjalanan menuju pemesan"
+    },
+    {
+      "id": "TRK-004",
+      "titipan_id": "TIT-002",
+      "status": "diterima",
+      "waktu": "2026-08-20T08:05:00+08:00",
+      "keterangan": "Titipan diterima oleh pembuka jastip"
+    },
+    {
+      "id": "TRK-005",
+      "titipan_id": "TIT-002",
+      "status": "dibelikan",
+      "waktu": "2026-08-20T09:45:00+08:00",
+      "keterangan": "Barang sudah dibeli"
+    },
+    {
+      "id": "TRK-006",
+      "titipan_id": "TIT-003",
+      "status": "diterima",
+      "waktu": "2026-08-20T08:10:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-007",
+      "titipan_id": "TIT-004",
+      "status": "diterima",
+      "waktu": "2026-08-20T09:00:00+08:00",
+      "keterangan": "Titipan diterima oleh pembuka jastip"
+    },
+    {
+      "id": "TRK-008",
+      "titipan_id": "TIT-005",
+      "status": "diterima",
+      "waktu": "2026-08-20T09:00:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-009",
+      "titipan_id": "TIT-006",
+      "status": "diterima",
+      "waktu": "2026-08-19T12:00:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-010",
+      "titipan_id": "TIT-006",
+      "status": "dibelikan",
+      "waktu": "2026-08-19T12:45:00+08:00",
+      "keterangan": "Barang sudah dibeli di kantin C"
+    },
+    {
+      "id": "TRK-011",
+      "titipan_id": "TIT-006",
+      "status": "dalam_perjalanan",
+      "waktu": "2026-08-19T12:50:00+08:00",
+      "keterangan": "Dalam perjalanan"
+    },
+    {
+      "id": "TRK-012",
+      "titipan_id": "TIT-006",
+      "status": "selesai",
+      "waktu": "2026-08-19T13:10:00+08:00",
+      "keterangan": "Barang telah diterima pemesan"
+    },
+    {
+      "id": "TRK-013",
+      "titipan_id": "TIT-007",
+      "status": "diterima",
+      "waktu": "2026-08-19T12:05:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-014",
+      "titipan_id": "TIT-007",
+      "status": "dibelikan",
+      "waktu": "2026-08-19T12:45:00+08:00",
+      "keterangan": "Barang sudah dibeli"
+    },
+    {
+      "id": "TRK-015",
+      "titipan_id": "TIT-007",
+      "status": "selesai",
+      "waktu": "2026-08-19T13:15:00+08:00",
+      "keterangan": "Barang telah diterima pemesan"
+    },
+    {
+      "id": "TRK-016",
+      "titipan_id": "TIT-008",
+      "status": "diterima",
+      "waktu": "2026-08-18T15:00:00+08:00",
+      "keterangan": "Titipan diterima"
+    },
+    {
+      "id": "TRK-017",
+      "titipan_id": "TIT-008",
+      "status": "dibelikan",
+      "waktu": "2026-08-18T15:30:00+08:00",
+      "keterangan": "Barang sudah dibeli"
+    },
+    {
+      "id": "TRK-018",
+      "titipan_id": "TIT-008",
+      "status": "selesai",
+      "waktu": "2026-08-18T15:50:00+08:00",
+      "keterangan": "Barang telah diterima pemesan"
+    }
+  ]
+}
