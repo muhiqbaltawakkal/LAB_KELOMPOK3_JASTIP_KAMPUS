@@ -102,36 +102,41 @@ app.get("/v1/catalog", async (req, res) => {
 
 // POST /v1/orders — buat order dengan kurangi stok atomik di catalog
 app.post("/v1/orders", butuhAuth, async (req, res) => {
-  const { itemId, qty } = req.body;
-  if (!Number.isInteger(itemId) || !Number.isInteger(Number(qty)) || qty < 1) {
-    return res.status(400).json({ error: "itemId dan qty wajib angka, qty minimal 1" });
+  try {
+    const { itemId, qty } = req.body;
+    if (!Number.isInteger(itemId) || !Number.isInteger(Number(qty)) || qty < 1) {
+      return res.status(400).json({ error: "itemId dan qty wajib angka, qty minimal 1" });
+    }
+
+    // Kurangi stok di catalog (atomik)
+    const hasil = await lewatBreaker(
+      `${CATALOG_URL}/v1/items/${itemId}/ambil`,
+      { method: "POST", headers: { "Content-Type": "application/json", "x-request-id": req.rid } }
+    );
+
+    if (hasil === null) {
+      log("warn", "catalog tidak tersedia saat order", { rid: req.rid, itemId });
+      return res.status(503).json({ error: "catalog tidak tersedia, coba lagi nanti" });
+    }
+    if (hasil._status === 404) return res.status(404).json({ error: "barang tidak ditemukan" });
+    if (hasil._status === 409) return res.status(409).json({ error: "stok habis" });
+
+    // Ambil detail barang untuk harga
+    const item = await panggilTahan(`${CATALOG_URL}/v1/items/${itemId}`);
+    const harga = item ? item.harga : 0;
+    const namaBarang = item ? item.nama : `barang #${itemId}`;
+    const total = harga * qty;
+
+    const result = db.prepare(
+      "INSERT INTO orders (barang_id, nama_barang, qty, total) VALUES (?,?,?,?)"
+    ).run(itemId, namaBarang, qty, total);
+
+    log("info", "order dibuat", { rid: req.rid, orderId: result.lastInsertRowid, itemId, total });
+    res.status(201).json({ orderId: result.lastInsertRowid, barangId: itemId, namaBarang, qty, total, status: "pending" });
+  } catch (err) {
+    log("error", "order gagal", { rid: req.rid, err: err.message });
+    res.status(500).json({ error: "terjadi kesalahan internal, coba lagi" });
   }
-
-  // Kurangi stok di catalog (atomik)
-  const hasil = await lewatBreaker(
-    `${CATALOG_URL}/v1/items/${itemId}/ambil`,
-    { method: "POST", headers: { "Content-Type": "application/json", "x-request-id": req.rid } }
-  );
-
-  if (hasil === null) {
-    log("warn", "catalog tidak tersedia saat order", { rid: req.rid, itemId });
-    return res.status(503).json({ error: "catalog tidak tersedia, coba lagi nanti" });
-  }
-  if (hasil._status === 404) return res.status(404).json({ error: "barang tidak ditemukan" });
-  if (hasil._status === 409) return res.status(409).json({ error: "stok habis" });
-
-  // Ambil detail barang untuk harga
-  const item = await panggilTahan(`${CATALOG_URL}/v1/items/${itemId}`);
-  const harga = item ? item.harga : 0;
-  const namaBarang = item ? item.nama : `barang #${itemId}`;
-  const total = harga * qty;
-
-  const result = db.prepare(
-    "INSERT INTO orders (barang_id, nama_barang, qty, total) VALUES (?,?,?,?)"
-  ).run(itemId, namaBarang, qty, total);
-
-  log("info", "order dibuat", { rid: req.rid, orderId: result.lastInsertRowid, itemId, total });
-  res.status(201).json({ orderId: result.lastInsertRowid, barangId: itemId, namaBarang, qty, total, status: "pending" });
 });
 
 // GET /health
