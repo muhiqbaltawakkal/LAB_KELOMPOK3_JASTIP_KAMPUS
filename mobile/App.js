@@ -117,44 +117,81 @@ function capitalizeWords(teks = "") {
     .join(" ");
 }
 
-function getProductImageKeyword(name = "", category = "") {
-  const teks = `${name} ${category}`.toLowerCase();
-  if (teks.includes("boba")) return "bubble,tea";
-  if (teks.includes("matcha")) return "matcha,latte";
-  if (teks.includes("milk tea")) return "milk,tea";
-  if (teks.includes("mie")) return "noodle,food";
-  if (teks.includes("teh")) return "iced,tea";
-  if (teks.includes("novel")) return "novel,book";
-  if (teks.includes("buku")) return "textbook,book";
-  if (teks.includes("pulpen")) return "stationery,pen";
-  if (teks.includes("galaxy") || teks.includes("samsung")) return "smartphone,gadget";
-  if (teks.includes("charger")) return "charger,tech";
-  if (teks.includes("indomie")) return "instant,noodle";
-  if (teks.includes("aqua")) return "water,bottle";
-  if (teks.includes("pisang")) return "banana,dessert";
-  if (teks.includes("coto")) return "soup,food";
-  if (teks.includes("konro")) return "beef,food";
-  if (teks.includes("kopi")) return "coffee,cup";
-  if (teks.includes("donut")) return "donut,coffee";
-  if (teks.includes("minyak")) return "cooking,oil";
-  if (teks.includes("buds") || teks.includes("earphone")) return "earbuds,tech";
-  if (teks.includes("whopper") || teks.includes("burger")) return "burger,fastfood";
-  if (teks.includes("kfc") || teks.includes("ayam")) return "fried,chicken";
-  if (teks.includes("tumbler")) return "tumbler,bottle";
-  if (teks.includes("pallubasa")) return "beef,soup";
-  if (teks.includes("paracetamol")) return "medicine,tablets";
-  if (teks.includes("vitamin")) return "vitamin,supplement";
-  if (teks.includes("masker")) return "medical,mask";
-  if (category === "Elektronik") return "electronics,gadget";
-  if (category === "Buku & Alat Tulis") return "books,stationery";
-  if (category === "Minuman Kekinian") return "drinks,cafe";
-  if (category === "Fast Food") return "fastfood,meal";
-  return "shopping,product";
+function escapeSvg(teks = "") {
+  return String(teks)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function makeTitleLines(text = "", maxLength = 18) {
+  const kata = text.split(" ");
+  const lines = [];
+  let current = "";
+  for (const part of kata) {
+    const next = current ? `${current} ${part}` : part;
+    if (next.length <= maxLength) {
+      current = next;
+    } else {
+      if (current) lines.push(current);
+      current = part;
+    }
+  }
+  if (current) lines.push(current);
+  return lines.slice(0, 3);
+}
+
+function getThemeByCategory(category = "") {
+  const tema = {
+    "Minuman Kekinian": { top: "#0B63CE", bottom: "#5CA8FF", accent: "#D8ECFF" },
+    "Makanan Khas": { top: "#145AA8", bottom: "#3C8BE2", accent: "#D9E9FF" },
+    "Buku & Alat Tulis": { top: "#0A4F97", bottom: "#2B73C9", accent: "#E2EEFF" },
+    Elektronik: { top: "#0A3E7C", bottom: "#1665BF", accent: "#D5E7FF" },
+    Minimarket: { top: "#0B63CE", bottom: "#2479D6", accent: "#E0EEFF" },
+    "Kuliner Khas": { top: "#1259A5", bottom: "#458FDF", accent: "#D6E8FF" },
+    "Kafe & Kopi": { top: "#0D4A8C", bottom: "#2C78CC", accent: "#D8EAFF" },
+    "Fast Food": { top: "#0B5DB8", bottom: "#4A97EA", accent: "#D8EAFF" },
+    "Lifestyle & Aksesoris": { top: "#1358A1", bottom: "#4E92D9", accent: "#DDEBFF" },
+    "Apotek & Kesehatan": { top: "#0A4E96", bottom: "#3581D5", accent: "#D9EBFF" },
+    Umum: { top: "#0A4E96", bottom: "#4A97EA", accent: "#DDEBFF" },
+  };
+  return tema[category] || tema.Umum;
 }
 
 function buildMarketplaceImageUrl(item, category) {
-  const keyword = getProductImageKeyword(item.nama, category);
-  return `https://loremflickr.com/640/480/${keyword}?lock=${item.id}`;
+  const lines = makeTitleLines(item.nama);
+  const theme = getThemeByCategory(category);
+  const titleSvg = lines
+    .map(
+      (line, index) =>
+        `<text x="34" y="${240 + index * 34}" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#FFFFFF">${escapeSvg(line)}</text>`
+    )
+    .join("");
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+      <defs>
+        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="${theme.top}" />
+          <stop offset="100%" stop-color="${theme.bottom}" />
+        </linearGradient>
+      </defs>
+      <rect width="640" height="480" rx="34" fill="url(#bg)" />
+      <rect x="30" y="28" width="170" height="42" rx="21" fill="rgba(255,255,255,0.18)" />
+      <text x="56" y="56" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#EAF4FF">${escapeSvg(category)}</text>
+      <rect x="420" y="32" width="182" height="36" rx="18" fill="${theme.accent}" opacity="0.92" />
+      <text x="455" y="56" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#0A3E7C">${escapeSvg(item.toko_nama || "Jastip Kampus")}</text>
+      <circle cx="540" cy="360" r="112" fill="rgba(255,255,255,0.10)" />
+      <circle cx="588" cy="114" r="54" fill="rgba(255,255,255,0.14)" />
+      <rect x="34" y="108" width="178" height="96" rx="28" fill="rgba(255,255,255,0.13)" />
+      <text x="74" y="172" font-family="Arial, Helvetica, sans-serif" font-size="58">${escapeSvg(item.kategoriIkon || "📦")}</text>
+      ${titleSvg}
+      <text x="36" y="390" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="600" fill="#D9E9FF">${escapeSvg(item.satuan || "pcs")} • stok ${escapeSvg(item.stok ?? 0)}</text>
+      <text x="36" y="434" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="800" fill="#FFFFFF">${escapeSvg(formatRupiah(item.harga))}</text>
+    </svg>
+  `;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 function buildItemViewModel(items, tokoList) {
@@ -273,8 +310,6 @@ function AuthScreen({ navigation }) {
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <ScrollView contentContainerStyle={auth.scroll} showsVerticalScrollIndicator={false}>
         <View style={auth.heroCard}>
-          <View style={auth.heroBubbleLeft} />
-          <View style={auth.heroBubbleRight} />
           <Text style={auth.heroEmoji}>🎓</Text>
           <Text style={auth.heroTitle}>Jastip Kampus</Text>
           <Text style={auth.heroSubtitle}>
@@ -948,24 +983,6 @@ const auth = StyleSheet.create({
     alignItems: "center",
     overflow: "hidden",
     marginBottom: 18,
-  },
-  heroBubbleLeft: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: "rgba(255,255,255,0.16)",
-    top: -20,
-    left: -10,
-  },
-  heroBubbleRight: {
-    position: "absolute",
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    bottom: -25,
-    right: -15,
   },
   heroEmoji: { fontSize: 48, marginBottom: 10 },
   heroTitle: { color: "#FFFFFF", fontSize: 30, fontWeight: "800" },
