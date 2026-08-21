@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { getDaftarBarang, login } from "./api/endpoints";
+import { getDaftarBarang } from "./api/endpoints";
 import TransaksiScreen from "./screens/TransaksiScreen";
 import SuksesScreen from "./screens/SuksesScreen";
 
@@ -56,14 +56,11 @@ function LoginScreen({ navigation }) {
   async function masuk(peran) {
     setMemuat(true);
     setGalat(null);
-    try {
-      await login(peran === "penjastip" ? "jastip" : "mhs");
-      navigation.replace("Beranda", { peran });
-    } catch {
-      setGalat("Gagal terhubung ke server. Coba lagi.");
-    } finally {
+    // Tidak perlu panggil API saat login — token JWT diambil saat buat order
+    setTimeout(() => {
       setMemuat(false);
-    }
+      navigation.replace("Beranda", { peran });
+    }, 300);
   }
 
   return (
