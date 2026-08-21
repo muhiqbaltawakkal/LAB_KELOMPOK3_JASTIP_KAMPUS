@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 18, paddingBottom: 32 },
   heroCard: {
-    backgroundColor: "#EAF4FF",
+    backgroundColor: C.pink,
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     width: 94,
     height: 94,
     borderRadius: 47,
-    backgroundColor: "#EEF6FF",
+    backgroundColor: "#DCEAFF",
     borderWidth: 3,
     borderColor: "#C3DCF7",
     alignItems: "center",
@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   successCheck: { color: C.success, fontSize: 40, fontWeight: "800" },
-  heroTitle: { color: C.text, fontSize: 26, fontWeight: "800", textAlign: "center" },
-  heroSubtitle: { color: C.textSoft, marginTop: 8, lineHeight: 22, textAlign: "center" },
+  heroTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800", textAlign: "center" },
+  heroSubtitle: { color: "#DCEAFF", marginTop: 8, lineHeight: 22, textAlign: "center" },
   summaryCard: {
     marginTop: 16,
     backgroundColor: C.surface,

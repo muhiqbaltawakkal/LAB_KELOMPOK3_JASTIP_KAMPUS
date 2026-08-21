@@ -73,20 +73,6 @@ const KATEGORI_IKON = {
   Umum: "🎁",
 };
 
-const CATEGORY_IMAGES = {
-  "Minuman Kekinian": "https://images.unsplash.com/photo-1558857563-b371033873b8?auto=format&fit=crop&w=900&q=80",
-  "Makanan Khas": "https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?auto=format&fit=crop&w=900&q=80",
-  "Buku & Alat Tulis": "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80",
-  Elektronik: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
-  Minimarket: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80",
-  "Kuliner Khas": "https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=900&q=80",
-  "Kafe & Kopi": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80",
-  "Fast Food": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=900&q=80",
-  "Lifestyle & Aksesoris": "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=80",
-  "Apotek & Kesehatan": "https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=900&q=80",
-  Umum: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80",
-};
-
 const REGISTER_DEFAULT = {
   nama: "",
   email: "",
@@ -131,6 +117,46 @@ function capitalizeWords(teks = "") {
     .join(" ");
 }
 
+function getProductImageKeyword(name = "", category = "") {
+  const teks = `${name} ${category}`.toLowerCase();
+  if (teks.includes("boba")) return "bubble,tea";
+  if (teks.includes("matcha")) return "matcha,latte";
+  if (teks.includes("milk tea")) return "milk,tea";
+  if (teks.includes("mie")) return "noodle,food";
+  if (teks.includes("teh")) return "iced,tea";
+  if (teks.includes("novel")) return "novel,book";
+  if (teks.includes("buku")) return "textbook,book";
+  if (teks.includes("pulpen")) return "stationery,pen";
+  if (teks.includes("galaxy") || teks.includes("samsung")) return "smartphone,gadget";
+  if (teks.includes("charger")) return "charger,tech";
+  if (teks.includes("indomie")) return "instant,noodle";
+  if (teks.includes("aqua")) return "water,bottle";
+  if (teks.includes("pisang")) return "banana,dessert";
+  if (teks.includes("coto")) return "soup,food";
+  if (teks.includes("konro")) return "beef,food";
+  if (teks.includes("kopi")) return "coffee,cup";
+  if (teks.includes("donut")) return "donut,coffee";
+  if (teks.includes("minyak")) return "cooking,oil";
+  if (teks.includes("buds") || teks.includes("earphone")) return "earbuds,tech";
+  if (teks.includes("whopper") || teks.includes("burger")) return "burger,fastfood";
+  if (teks.includes("kfc") || teks.includes("ayam")) return "fried,chicken";
+  if (teks.includes("tumbler")) return "tumbler,bottle";
+  if (teks.includes("pallubasa")) return "beef,soup";
+  if (teks.includes("paracetamol")) return "medicine,tablets";
+  if (teks.includes("vitamin")) return "vitamin,supplement";
+  if (teks.includes("masker")) return "medical,mask";
+  if (category === "Elektronik") return "electronics,gadget";
+  if (category === "Buku & Alat Tulis") return "books,stationery";
+  if (category === "Minuman Kekinian") return "drinks,cafe";
+  if (category === "Fast Food") return "fastfood,meal";
+  return "shopping,product";
+}
+
+function buildMarketplaceImageUrl(item, category) {
+  const keyword = getProductImageKeyword(item.nama, category);
+  return `https://loremflickr.com/640/480/${keyword}?lock=${item.id}`;
+}
+
 function buildItemViewModel(items, tokoList) {
   const tokoMap = new Map((tokoList || []).map((toko) => [toko.id, toko]));
   return (items || []).map((item) => {
@@ -142,7 +168,7 @@ function buildItemViewModel(items, tokoList) {
       toko_nama: toko.nama || `Toko #${item.toko_id}`,
       toko_alamat: toko.alamat || "-",
       kategoriIkon: KATEGORI_IKON[kategori] || KATEGORI_IKON.Umum,
-      imageUrl: CATEGORY_IMAGES[kategori] || CATEGORY_IMAGES.Umum,
+      imageUrl: buildMarketplaceImageUrl(item, kategori),
     };
   });
 }
@@ -424,6 +450,8 @@ function PenitipDashboard({
   navigation,
   filteredItems,
   tokoList,
+  selectedStoreId,
+  setSelectedStoreId,
   kategoriAktif,
   setKategoriAktif,
   daftarKategori,
@@ -432,7 +460,7 @@ function PenitipDashboard({
   modeDemo,
   demoReason,
 }) {
-  const tokoUnggulan = tokoList.slice(0, 5);
+  const tokoUnggulan = [{ id: "Semua", nama: "Semua Toko", kategori: "Semua katalog" }, ...tokoList.slice(0, 5)];
 
   const header = (
     <View>
@@ -489,7 +517,7 @@ function PenitipDashboard({
             ]}
             onPress={() => setKategoriAktif(kategori)}
           >
-            <Text style={shared.categoryChipText}>
+            <Text style={[shared.categoryChipText, kategoriAktif === kategori && shared.categoryChipTextActive]}>
               {kategori === "Semua" ? "📚" : KATEGORI_IKON[kategori] || "🎁"} {kategori}
             </Text>
           </TouchableOpacity>
@@ -508,17 +536,22 @@ function PenitipDashboard({
         contentContainerStyle={penitip.storeRow}
       >
         {tokoUnggulan.map((toko, index) => (
-          <View
+          <TouchableOpacity
             key={toko.id}
             style={[
               penitip.storeCard,
-              { backgroundColor: [C.surfaceAlt, "#F2F7FF", "#EEF6FF", "#EAF4FF", "#F7FBFF"][index % 5] },
+              { backgroundColor: [C.surfaceAlt, "#F2F7FF", "#EEF6FF", "#EAF4FF", "#F7FBFF", "#EEF6FF"][index % 6] },
+              selectedStoreId === String(toko.id) && penitip.storeCardActive,
             ]}
+            onPress={() => setSelectedStoreId(String(toko.id))}
+            activeOpacity={0.9}
           >
-            <Text style={penitip.storeEmoji}>{KATEGORI_IKON[toko.kategori] || "🏪"}</Text>
-            <Text style={penitip.storeName}>{toko.nama}</Text>
-            <Text style={penitip.storeCategory}>{toko.kategori}</Text>
-          </View>
+            <Text style={penitip.storeEmoji}>
+              {toko.id === "Semua" ? "🏬" : KATEGORI_IKON[toko.kategori] || "🏪"}
+            </Text>
+            <Text style={[penitip.storeName, selectedStoreId === String(toko.id) && penitip.storeNameActive]}>{toko.nama}</Text>
+            <Text style={[penitip.storeCategory, selectedStoreId === String(toko.id) && penitip.storeCategoryActive]}>{toko.kategori}</Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
@@ -759,6 +792,7 @@ function BerandaScreen({ route, navigation }) {
     route.params?.demoAuth ? "Login backend tidak merespons, jadi tampilan demo tetap dibuka." : ""
   );
   const [cari, setCari] = useState("");
+  const [selectedStoreId, setSelectedStoreId] = useState("Semua");
   const [kategoriAktif, setKategoriAktif] = useState("Semua");
   const [sesiForm, setSesiForm] = useState({ tokoId: "", kapasitas: "5", batasWaktu: "18:00" });
   const [sesiAktif, setSesiAktif] = useState(null);
@@ -806,6 +840,9 @@ function BerandaScreen({ route, navigation }) {
     if (kategoriAktif !== "Semua") {
       hasil = hasil.filter((item) => item.kategori === kategoriAktif);
     }
+    if (selectedStoreId !== "Semua") {
+      hasil = hasil.filter((item) => String(item.toko_id) === selectedStoreId);
+    }
     if (cari.trim()) {
       const q = cari.toLowerCase();
       hasil = hasil.filter(
@@ -816,7 +853,7 @@ function BerandaScreen({ route, navigation }) {
       );
     }
     return hasil;
-  }, [items, kategoriAktif, cari]);
+  }, [items, kategoriAktif, cari, selectedStoreId]);
 
   if (memuat) {
     return (
@@ -864,6 +901,8 @@ function BerandaScreen({ route, navigation }) {
       navigation={navigation}
       filteredItems={filteredItems}
       tokoList={tokoList}
+      selectedStoreId={selectedStoreId}
+      setSelectedStoreId={setSelectedStoreId}
       kategoriAktif={kategoriAktif}
       setKategoriAktif={setKategoriAktif}
       daftarKategori={daftarKategori}
@@ -901,11 +940,11 @@ const auth = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 20, paddingBottom: 36 },
   heroCard: {
-    backgroundColor: C.surfaceAlt,
+    backgroundColor: C.pink,
     borderRadius: 28,
     padding: 24,
     borderWidth: 1,
-    borderColor: C.border,
+    borderColor: C.pink,
     alignItems: "center",
     overflow: "hidden",
     marginBottom: 18,
@@ -915,7 +954,7 @@ const auth = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#D7EAFF",
+    backgroundColor: "rgba(255,255,255,0.16)",
     top: -20,
     left: -10,
   },
@@ -924,13 +963,13 @@ const auth = StyleSheet.create({
     width: 110,
     height: 110,
     borderRadius: 55,
-    backgroundColor: "#E6F4FF",
+    backgroundColor: "rgba(255,255,255,0.12)",
     bottom: -25,
     right: -15,
   },
   heroEmoji: { fontSize: 48, marginBottom: 10 },
-  heroTitle: { color: C.text, fontSize: 30, fontWeight: "800" },
-  heroSubtitle: { color: C.textSoft, fontSize: 14, lineHeight: 22, textAlign: "center", marginTop: 8 },
+  heroTitle: { color: "#FFFFFF", fontSize: 30, fontWeight: "800" },
+  heroSubtitle: { color: "#DCEAFF", fontSize: 14, lineHeight: 22, textAlign: "center", marginTop: 8 },
   tabRow: {
     flexDirection: "row",
     backgroundColor: "#DDEEFF",
@@ -939,9 +978,9 @@ const auth = StyleSheet.create({
     marginBottom: 16,
   },
   tabButton: { flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
-  tabButtonActive: { backgroundColor: C.surface },
-  tabText: { color: C.textSoft, fontWeight: "700" },
-  tabTextActive: { color: C.pinkDark },
+  tabButtonActive: { backgroundColor: C.pink },
+  tabText: { color: C.pinkDark, fontWeight: "700" },
+  tabTextActive: { color: "#FFFFFF" },
   formCard: {
     backgroundColor: C.surface,
     borderRadius: 24,
@@ -1090,8 +1129,9 @@ const shared = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
   },
-  categoryChipActive: { backgroundColor: "#EAF4FF", borderColor: C.pink },
+  categoryChipActive: { backgroundColor: C.pink, borderColor: C.pink },
   categoryChipText: { color: C.text, fontWeight: "700", fontSize: 12 },
+  categoryChipTextActive: { color: "#FFFFFF" },
   gridRow: { justifyContent: "space-between", marginBottom: 14 },
   statCard: {
     flex: 1,
@@ -1106,11 +1146,11 @@ const shared = StyleSheet.create({
 
 const penitip = StyleSheet.create({
   heroCard: {
-    backgroundColor: "#EAF4FF",
+    backgroundColor: C.pink,
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
-    borderColor: C.borderStrong,
+    borderColor: C.pink,
   },
   heroTag: {
     alignSelf: "flex-start",
@@ -1121,8 +1161,8 @@ const penitip = StyleSheet.create({
     marginBottom: 12,
   },
   heroTagText: { color: C.pinkDark, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
-  heroTitle: { color: C.text, fontSize: 28, fontWeight: "800" },
-  heroSubtitle: { color: C.textSoft, lineHeight: 22, marginTop: 8 },
+  heroTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "800" },
+  heroSubtitle: { color: "#DCEAFF", lineHeight: 22, marginTop: 8 },
   heroStatsRow: { flexDirection: "row", marginTop: 16, marginHorizontal: -4 },
   storeRow: { gap: 12, paddingBottom: 4 },
   storeCard: {
@@ -1132,9 +1172,15 @@ const penitip = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.border,
   },
+  storeCardActive: {
+    backgroundColor: C.pink,
+    borderColor: C.pink,
+  },
   storeEmoji: { fontSize: 28, marginBottom: 8 },
   storeName: { color: C.text, fontWeight: "800", fontSize: 15 },
   storeCategory: { color: C.textSoft, marginTop: 4, lineHeight: 20 },
+  storeNameActive: { color: "#FFFFFF" },
+  storeCategoryActive: { color: "#DCEAFF" },
   itemCard: {
     width: "48.3%",
     backgroundColor: C.surface,
@@ -1192,11 +1238,11 @@ const penitip = StyleSheet.create({
 
 const penjastip = StyleSheet.create({
   heroCard: {
-    backgroundColor: "#EEF5FF",
+    backgroundColor: C.pink,
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
-    borderColor: "#BCD7F6",
+    borderColor: C.pink,
   },
   heroBadge: {
     alignSelf: "flex-start",
@@ -1206,9 +1252,9 @@ const penjastip = StyleSheet.create({
     paddingVertical: 7,
     marginBottom: 12,
   },
-  heroBadgeText: { color: C.purple, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
-  heroTitle: { color: C.text, fontSize: 28, fontWeight: "800" },
-  heroSubtitle: { color: C.textSoft, lineHeight: 22, marginTop: 8 },
+  heroBadgeText: { color: C.pinkDark, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
+  heroTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "800" },
+  heroSubtitle: { color: "#DCEAFF", lineHeight: 22, marginTop: 8 },
   statRow: { flexDirection: "row", marginTop: 16, marginHorizontal: -4 },
   sessionCard: {
     backgroundColor: C.surface,

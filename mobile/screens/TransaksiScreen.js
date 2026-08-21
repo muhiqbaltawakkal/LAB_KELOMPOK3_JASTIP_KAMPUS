@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 18, paddingBottom: 32 },
   heroCard: {
-    backgroundColor: "#EAF4FF",
+    backgroundColor: C.pink,
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
@@ -224,9 +224,9 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     marginBottom: 12,
   },
-  rolePillText: { color: C.pink, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
-  heroTitle: { color: C.text, fontSize: 26, fontWeight: "800" },
-  heroSubtitle: { color: C.textSoft, marginTop: 8, lineHeight: 22 },
+  rolePillText: { color: C.pinkDark, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
+  heroTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800" },
+  heroSubtitle: { color: "#DCEAFF", marginTop: 8, lineHeight: 22 },
   productCard: {
     marginTop: 16,
     backgroundColor: C.surface,
