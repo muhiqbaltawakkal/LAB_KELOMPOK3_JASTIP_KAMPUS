@@ -12,8 +12,11 @@ services:
 
   catalog-service:
     build: ./services/catalog-service
+    volumes:
+      - ./dataset:/dataset:ro
     environment:
       REDIS_URL: redis://redis:6379
+      SEED_PATH: /dataset/catalog-seed.json
     depends_on:
       redis:
         condition: service_healthy

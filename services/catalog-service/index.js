@@ -48,7 +48,7 @@ db.exec(`
 // Seed data dari JSON jika tabel kosong
 const jumlahToko = db.prepare("SELECT COUNT(*) AS n FROM toko").get();
 if (jumlahToko.n === 0) {
-  const seedPath = path.join(__dirname, "../../dataset/catalog-seed.json");
+  const seedPath = process.env.SEED_PATH || path.join(__dirname, "../../dataset/catalog-seed.json");
   if (fs.existsSync(seedPath)) {
     const seed = JSON.parse(fs.readFileSync(seedPath, "utf-8"));
     const insToko = db.prepare("INSERT OR IGNORE INTO toko (id, nama, alamat, kategori) VALUES (?,?,?,?)");
