@@ -6,9 +6,9 @@ export function login(user = "mhs") {
   return api.post("/v1/login", { user });
 }
 
-// Katalog — daftar sesi/barang jastip
-export function getDaftarBarang(page = 1) {
-  return api.get(`/v1/catalog?page=${page}`);
+// Katalog — daftar barang jastip langsung dari catalog-service
+export function getDaftarBarang() {
+  return api.get("/v1/items");
 }
 
 export function getDetailBarang(itemId) {
