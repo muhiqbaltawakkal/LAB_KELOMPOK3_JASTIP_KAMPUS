@@ -9,6 +9,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { buatTitipan, login } from "../api/endpoints";
@@ -34,6 +35,8 @@ function formatRupiah(angka = 0) {
 }
 
 export default function TransaksiScreen({ route, navigation }) {
+  const { width } = useWindowDimensions();
+  const isWide = width >= 1100;
   const { item, peran, profil } = route.params;
   const [qty, setQty] = useState("1");
   const [varian, setVarian] = useState("");
@@ -90,117 +93,125 @@ export default function TransaksiScreen({ route, navigation }) {
     <SafeAreaView style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroCard}>
-          <View style={styles.rolePill}>
-            <Text style={styles.rolePillText}>Flow Penitip</Text>
+        <View style={styles.page}>
+          <View style={styles.heroCard}>
+            <View style={styles.rolePill}>
+              <Text style={styles.rolePillText}>Flow Penitip</Text>
+            </View>
+            <Text style={styles.heroTitle}>Lengkapi detail titipanmu</Text>
+            <Text style={styles.heroSubtitle}>
+              Isi jumlah, varian, dan catatan agar penjastip bisa memahami kebutuhanmu dengan jelas.
+            </Text>
           </View>
-          <Text style={styles.heroTitle}>Lengkapi detail titipanmu</Text>
-          <Text style={styles.heroSubtitle}>
-            Isi jumlah, varian, dan catatan agar penjastip bisa memahami kebutuhanmu dengan jelas.
-          </Text>
-        </View>
 
-        <View style={styles.productCard}>
-          <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
-          <View style={styles.productTop}>
-            <Text style={styles.productEmoji}>{item.kategoriIkon || "🎁"}</Text>
-            <View style={styles.stockPill}>
-              <Text style={styles.stockPillText}>Stok {item.stok}</Text>
+          <View style={[styles.bodyGrid, isWide && styles.bodyGridWide]}>
+            <View style={styles.mainColumn}>
+              <View style={styles.productCard}>
+                <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
+                <View style={styles.productTop}>
+                  <Text style={styles.productEmoji}>{item.kategoriIkon || "🎁"}</Text>
+                  <View style={styles.stockPill}>
+                    <Text style={styles.stockPillText}>Stok {item.stok}</Text>
+                  </View>
+                </View>
+                <Text style={styles.productStore}>{item.toko_nama || "Toko pilihan"}</Text>
+                <Text style={styles.productName}>{item.nama}</Text>
+                <Text style={styles.productMeta}>
+                  {item.kategori || "Umum"} • {item.satuan || "pcs"}
+                </Text>
+                <Text style={styles.productPrice}>{formatRupiah(item.harga)}</Text>
+              </View>
+
+              <View style={styles.formCard}>
+                <Text style={styles.sectionLabel}>Detail barang</Text>
+
+                <Text style={styles.inputLabel}>Jumlah</Text>
+                <View style={styles.qtyRow}>
+                  <TouchableOpacity
+                    style={styles.qtyButton}
+                    onPress={() => setQty(String(Math.max(1, jumlahQty - 1 || 1)))}
+                  >
+                    <Text style={styles.qtyButtonText}>-</Text>
+                  </TouchableOpacity>
+                  <TextInput
+                    style={styles.qtyInput}
+                    value={qty}
+                    onChangeText={setQty}
+                    keyboardType="numeric"
+                    editable={!memuat}
+                  />
+                  <TouchableOpacity
+                    style={styles.qtyButton}
+                    onPress={() => setQty(String(Math.min(item.stok, (jumlahQty || 0) + 1)))}
+                  >
+                    <Text style={styles.qtyButtonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.inputLabel}>Varian / ukuran</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Contoh: Matcha, ukuran large, warna pink"
+                  placeholderTextColor={C.textSoft}
+                  value={varian}
+                  onChangeText={setVarian}
+                />
+
+                <Text style={styles.inputLabel}>Catatan tambahan</Text>
+                <TextInput
+                  style={[styles.input, styles.textArea]}
+                  placeholder="Contoh: tanpa es, kemasan gift, minta struk pembelian"
+                  placeholderTextColor={C.textSoft}
+                  multiline
+                  numberOfLines={4}
+                  value={catatan}
+                  onChangeText={setCatatan}
+                />
+              </View>
+            </View>
+
+            <View style={styles.sideColumn}>
+              <View style={styles.summaryCard}>
+                <Text style={styles.sectionLabel}>Ringkasan pembayaran</Text>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Barang x {jumlahQty || 0}</Text>
+                  <Text style={styles.summaryValue}>{formatRupiah(subtotal)}</Text>
+                </View>
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Biaya jasa</Text>
+                  <Text style={styles.summaryHint}>Dikonfirmasi penjastip</Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.summaryRow}>
+                  <Text style={styles.totalLabel}>Estimasi subtotal</Text>
+                  <Text style={styles.totalValue}>{formatRupiah(subtotal)}</Text>
+                </View>
+              </View>
+
+              {galat ? (
+                <View style={styles.errorBox}>
+                  <Text style={styles.errorText}>{galat}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[styles.primaryButton, memuat && styles.buttonDisabled]}
+                onPress={pesan}
+                disabled={memuat}
+              >
+                {memuat ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.primaryButtonText}>Kirim Titipan</Text>
+                )}
+              </TouchableOpacity>
+
+              <Text style={styles.footerNote}>
+                Setelah terkirim, order-service akan menyimpan permintaan dan statusnya akan masuk ke tracking.
+              </Text>
             </View>
           </View>
-          <Text style={styles.productStore}>{item.toko_nama || "Toko pilihan"}</Text>
-          <Text style={styles.productName}>{item.nama}</Text>
-          <Text style={styles.productMeta}>
-            {item.kategori || "Umum"} • {item.satuan || "pcs"}
-          </Text>
-          <Text style={styles.productPrice}>{formatRupiah(item.harga)}</Text>
         </View>
-
-        <View style={styles.formCard}>
-          <Text style={styles.sectionLabel}>Detail barang</Text>
-
-          <Text style={styles.inputLabel}>Jumlah</Text>
-          <View style={styles.qtyRow}>
-            <TouchableOpacity
-              style={styles.qtyButton}
-              onPress={() => setQty(String(Math.max(1, jumlahQty - 1 || 1)))}
-            >
-              <Text style={styles.qtyButtonText}>-</Text>
-            </TouchableOpacity>
-            <TextInput
-              style={styles.qtyInput}
-              value={qty}
-              onChangeText={setQty}
-              keyboardType="numeric"
-              editable={!memuat}
-            />
-            <TouchableOpacity
-              style={styles.qtyButton}
-              onPress={() => setQty(String(Math.min(item.stok, (jumlahQty || 0) + 1)))}
-            >
-              <Text style={styles.qtyButtonText}>+</Text>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.inputLabel}>Varian / ukuran</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Contoh: Matcha, ukuran large, warna pink"
-            placeholderTextColor={C.textSoft}
-            value={varian}
-            onChangeText={setVarian}
-          />
-
-          <Text style={styles.inputLabel}>Catatan tambahan</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Contoh: tanpa es, kemasan gift, minta struk pembelian"
-            placeholderTextColor={C.textSoft}
-            multiline
-            numberOfLines={4}
-            value={catatan}
-            onChangeText={setCatatan}
-          />
-        </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.sectionLabel}>Ringkasan pembayaran</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Barang x {jumlahQty || 0}</Text>
-            <Text style={styles.summaryValue}>{formatRupiah(subtotal)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Biaya jasa</Text>
-            <Text style={styles.summaryHint}>Dikonfirmasi penjastip</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.summaryRow}>
-            <Text style={styles.totalLabel}>Estimasi subtotal</Text>
-            <Text style={styles.totalValue}>{formatRupiah(subtotal)}</Text>
-          </View>
-        </View>
-
-        {galat ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{galat}</Text>
-          </View>
-        ) : null}
-
-        <TouchableOpacity
-          style={[styles.primaryButton, memuat && styles.buttonDisabled]}
-          onPress={pesan}
-          disabled={memuat}
-        >
-          {memuat ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.primaryButtonText}>Kirim Titipan</Text>
-          )}
-        </TouchableOpacity>
-
-        <Text style={styles.footerNote}>
-          Setelah terkirim, order-service akan menyimpan permintaan dan statusnya akan masuk ke tracking.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -209,12 +220,18 @@ export default function TransaksiScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 18, paddingBottom: 32 },
+  page: { width: "100%", maxWidth: 1180, alignSelf: "center" },
   heroCard: {
     backgroundColor: C.pink,
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
     borderColor: C.border,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   rolePill: {
     alignSelf: "flex-start",
@@ -227,13 +244,21 @@ const styles = StyleSheet.create({
   rolePillText: { color: C.pinkDark, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
   heroTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800" },
   heroSubtitle: { color: "#DCEAFF", marginTop: 8, lineHeight: 22 },
+  bodyGrid: { marginTop: 16, gap: 16 },
+  bodyGridWide: { flexDirection: "row", alignItems: "flex-start" },
+  mainColumn: { flex: 1.18, gap: 16 },
+  sideColumn: { flex: 0.82, gap: 16 },
   productCard: {
-    marginTop: 16,
     backgroundColor: C.surface,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
     borderColor: C.border,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   productImage: {
     width: "100%",
@@ -262,12 +287,16 @@ const styles = StyleSheet.create({
   productMeta: { color: C.textSoft, marginTop: 6, lineHeight: 20 },
   productPrice: { color: C.purple, fontSize: 22, fontWeight: "800", marginTop: 14 },
   formCard: {
-    marginTop: 16,
     backgroundColor: C.surface,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
     borderColor: C.border,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   sectionLabel: {
     color: C.text,
@@ -314,7 +343,6 @@ const styles = StyleSheet.create({
   },
   textArea: { minHeight: 96, textAlignVertical: "top" },
   summaryCard: {
-    marginTop: 16,
     backgroundColor: "#EEF6FF",
     borderRadius: 24,
     padding: 18,
@@ -329,7 +357,6 @@ const styles = StyleSheet.create({
   totalLabel: { color: C.text, fontSize: 15, fontWeight: "800" },
   totalValue: { color: C.purple, fontSize: 20, fontWeight: "800" },
   errorBox: {
-    marginTop: 16,
     backgroundColor: "#FDEFF2",
     borderRadius: 18,
     padding: 14,
@@ -338,7 +365,6 @@ const styles = StyleSheet.create({
   },
   errorText: { color: C.danger, fontWeight: "700", lineHeight: 20 },
   primaryButton: {
-    marginTop: 18,
     backgroundColor: C.pink,
     borderRadius: 18,
     paddingVertical: 16,
@@ -346,5 +372,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   primaryButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
-  footerNote: { color: C.textSoft, textAlign: "center", marginTop: 14, lineHeight: 20, fontSize: 12 },
+  footerNote: { color: C.textSoft, textAlign: "center", lineHeight: 20, fontSize: 12 },
 });
