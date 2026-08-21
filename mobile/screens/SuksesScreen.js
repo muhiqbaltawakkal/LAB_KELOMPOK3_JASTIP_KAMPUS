@@ -1,4 +1,4 @@
-import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 const C = {
   bg: "#F4F9FF",
@@ -17,94 +17,104 @@ function formatRupiah(angka = 0) {
 }
 
 export default function SuksesScreen({ route, navigation }) {
+  const { width } = useWindowDimensions();
+  const isWide = width >= 1040;
   const { order, item, peran, profil, varian, catatan } = route.params;
 
   return (
     <SafeAreaView style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.heroCard}>
-          <View style={styles.successCircle}>
-            <Text style={styles.successCheck}>✓</Text>
+        <View style={styles.page}>
+          <View style={styles.heroCard}>
+            <View style={styles.successCircle}>
+              <Text style={styles.successCheck}>✓</Text>
+            </View>
+            <Text style={styles.heroTitle}>Titipan berhasil dibuat!</Text>
+            <Text style={styles.heroSubtitle}>
+              Order-service sudah menerima titipanmu dan akan meneruskannya ke alur pembayaran serta tracking.
+            </Text>
           </View>
-          <Text style={styles.heroTitle}>Titipan berhasil dibuat!</Text>
-          <Text style={styles.heroSubtitle}>
-            Order-service sudah menerima titipanmu dan akan meneruskannya ke alur pembayaran serta tracking.
-          </Text>
+
+          <View style={[styles.detailGrid, isWide && styles.detailGridWide]}>
+            <View style={styles.detailMain}>
+              <View style={styles.summaryCard}>
+                <Text style={styles.sectionTitle}>Ringkasan order</Text>
+                <Image source={{ uri: item?.imageUrl }} style={styles.summaryImage} />
+
+                <View style={styles.row}>
+                  <Text style={styles.label}>Nama penitip</Text>
+                  <Text style={styles.value}>{profil?.nama || "Mahasiswa"}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Peran</Text>
+                  <Text style={styles.value}>{peran || "penitip"}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Toko</Text>
+                  <Text style={styles.value}>{item?.toko_nama || "-"}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Barang</Text>
+                  <Text style={styles.value}>{item?.nama || "-"}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Jumlah</Text>
+                  <Text style={styles.value}>{order?.qty ?? "-"} {item?.satuan || "pcs"}</Text>
+                </View>
+                {varian ? (
+                  <View style={styles.row}>
+                    <Text style={styles.label}>Varian</Text>
+                    <Text style={styles.value}>{varian}</Text>
+                  </View>
+                ) : null}
+                {catatan ? (
+                  <View style={styles.row}>
+                    <Text style={styles.label}>Catatan</Text>
+                    <Text style={styles.value}>{catatan}</Text>
+                  </View>
+                ) : null}
+                <View style={styles.row}>
+                  <Text style={styles.label}>Total</Text>
+                  <Text style={styles.totalValue}>{formatRupiah(order?.total)}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Status</Text>
+                  <View style={styles.statusPill}>
+                    <Text style={styles.statusPillText}>{order?.status || "pending"}</Text>
+                  </View>
+                </View>
+                {order?.orderId ? (
+                  <View style={styles.row}>
+                    <Text style={styles.label}>ID Order</Text>
+                    <Text style={[styles.value, styles.orderId]}>#{order.orderId}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+
+            <View style={styles.detailSide}>
+              <View style={styles.timelineCard}>
+                <Text style={styles.sectionTitle}>Alur setelah ini</Text>
+                <Text style={styles.timelineItem}>1. Penjastip membuka sesi jastip di toko pilihan.</Text>
+                <Text style={styles.timelineItem}>2. Order-service menyimpan titipan dan total barang.</Text>
+                <Text style={styles.timelineItem}>3. Payment-service menampung pembayaran tertahan.</Text>
+                <Text style={styles.timelineItem}>4. Tracking-service mencatat status dibelanjakan, diantar, lalu diterima.</Text>
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => navigation.navigate("Beranda", { peran, profil })}
+          >
+            <Text style={styles.primaryButtonText}>Kembali ke Beranda</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.secondaryButtonText}>Kembali ke Login</Text>
+          </TouchableOpacity>
         </View>
-
-        <View style={styles.summaryCard}>
-          <Text style={styles.sectionTitle}>Ringkasan order</Text>
-          <Image source={{ uri: item?.imageUrl }} style={styles.summaryImage} />
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Nama penitip</Text>
-            <Text style={styles.value}>{profil?.nama || "Mahasiswa"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Peran</Text>
-            <Text style={styles.value}>{peran || "penitip"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Toko</Text>
-            <Text style={styles.value}>{item?.toko_nama || "-"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Barang</Text>
-            <Text style={styles.value}>{item?.nama || "-"}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Jumlah</Text>
-            <Text style={styles.value}>{order?.qty ?? "-"} {item?.satuan || "pcs"}</Text>
-          </View>
-          {varian ? (
-            <View style={styles.row}>
-              <Text style={styles.label}>Varian</Text>
-              <Text style={styles.value}>{varian}</Text>
-            </View>
-          ) : null}
-          {catatan ? (
-            <View style={styles.row}>
-              <Text style={styles.label}>Catatan</Text>
-              <Text style={styles.value}>{catatan}</Text>
-            </View>
-          ) : null}
-          <View style={styles.row}>
-            <Text style={styles.label}>Total</Text>
-            <Text style={styles.totalValue}>{formatRupiah(order?.total)}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Status</Text>
-            <View style={styles.statusPill}>
-              <Text style={styles.statusPillText}>{order?.status || "pending"}</Text>
-            </View>
-          </View>
-          {order?.orderId ? (
-            <View style={styles.row}>
-              <Text style={styles.label}>ID Order</Text>
-              <Text style={[styles.value, styles.orderId]}>#{order.orderId}</Text>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.timelineCard}>
-          <Text style={styles.sectionTitle}>Alur setelah ini</Text>
-          <Text style={styles.timelineItem}>1. Penjastip membuka sesi jastip di toko pilihan.</Text>
-          <Text style={styles.timelineItem}>2. Order-service menyimpan titipan dan total barang.</Text>
-          <Text style={styles.timelineItem}>3. Payment-service menampung pembayaran tertahan.</Text>
-          <Text style={styles.timelineItem}>4. Tracking-service mencatat status dibelanjakan, diantar, lalu diterima.</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => navigation.navigate("Beranda", { peran, profil })}
-        >
-          <Text style={styles.primaryButtonText}>Kembali ke Beranda</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Login")}>
-          <Text style={styles.secondaryButtonText}>Kembali ke Login</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -113,6 +123,7 @@ export default function SuksesScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 18, paddingBottom: 32 },
+  page: { width: "100%", maxWidth: 1040, alignSelf: "center" },
   heroCard: {
     backgroundColor: C.pink,
     borderRadius: 28,
@@ -120,6 +131,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.border,
     alignItems: "center",
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3,
   },
   successCircle: {
     width: 94,
@@ -135,13 +151,21 @@ const styles = StyleSheet.create({
   successCheck: { color: C.success, fontSize: 40, fontWeight: "800" },
   heroTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800", textAlign: "center" },
   heroSubtitle: { color: "#DCEAFF", marginTop: 8, lineHeight: 22, textAlign: "center" },
+  detailGrid: { marginTop: 16, gap: 16 },
+  detailGridWide: { flexDirection: "row", alignItems: "flex-start" },
+  detailMain: { flex: 1.05 },
+  detailSide: { flex: 0.95 },
   summaryCard: {
-    marginTop: 16,
     backgroundColor: C.surface,
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
     borderColor: C.border,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.05,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   summaryImage: {
     width: "100%",
@@ -170,7 +194,6 @@ const styles = StyleSheet.create({
   statusPillText: { color: C.success, fontWeight: "800", fontSize: 12 },
   orderId: { color: C.pink },
   timelineCard: {
-    marginTop: 16,
     backgroundColor: "#EEF6FF",
     borderRadius: 24,
     padding: 18,
