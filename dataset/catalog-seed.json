@@ -1,4 +1,4 @@
-﻿{
+{
   "toko": [
     { "id": 1,  "nama": "Chatime Losari",              "pemilik": "PT Pangan Lestari",              "lokasi": "Pantai Losari, Jl. Penghibur No.1, Makassar",                        "kategori": "Minuman Kekinian", "aktif": true },
     { "id": 2,  "nama": "Mie Titi Makassar",            "pemilik": "Keluarga Titi",                  "lokasi": "Jl. Irian No.18, Makassar",                                          "kategori": "Makanan Khas",     "aktif": true },
