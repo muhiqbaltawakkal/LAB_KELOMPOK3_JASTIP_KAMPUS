@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -25,6 +25,7 @@ const C = {
   mint: "#D9ECFF",
   success: "#2FA36B",
   danger: "#D95C74",
+  warning: "#E68A00",
   text: "#17375E",
   textSoft: "#5C7DA4",
 };
@@ -41,8 +42,15 @@ export default function TransaksiScreen({ route, navigation }) {
   const [memuat, setMemuat] = useState(false);
   const [galat, setGalat] = useState(null);
 
+  // â”€â”€ Langkah Q: pilih tawar atau langsung â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // null = belum pilih, "tawar" = mau tawar, "langsung" = langsung pesan
+  const [modePesan, setModePesan] = useState(null);
+  const [hargaTawar, setHargaTawar] = useState("");
+  const [alasanTawar, setAlasanTawar] = useState("");
+
   const jumlahQty = Number(qty || 0);
   const subtotal = useMemo(() => (item.harga ?? 0) * (jumlahQty || 0), [item.harga, jumlahQty]);
+  const totalTawar = useMemo(() => Number(hargaTawar || 0) * (jumlahQty || 0), [hargaTawar, jumlahQty]);
 
   async function pesan() {
     if (memuat) return;
@@ -53,6 +61,13 @@ export default function TransaksiScreen({ route, navigation }) {
     if (jumlahQty > item.stok) {
       setGalat(`Stok tersedia hanya ${item.stok} ${item.satuan}.`);
       return;
+    }
+    if (modePesan === "tawar") {
+      const tawarNum = Number(hargaTawar || 0);
+      if (!tawarNum || tawarNum < 1000) {
+        setGalat("Masukkan harga tawar yang valid (minimal Rp 1.000).");
+        return;
+      }
     }
 
     setMemuat(true);
@@ -73,6 +88,9 @@ export default function TransaksiScreen({ route, navigation }) {
         profil,
         varian,
         catatan,
+        modeTawar: modePesan === "tawar",
+        hargaTawar: modePesan === "tawar" ? Number(hargaTawar) : null,
+        alasanTawar: modePesan === "tawar" ? alasanTawar : null,
       });
     } catch (e) {
       if (e.status === 409) setGalat("Stok habis saat proses titipan. Silakan pilih barang lain.");
@@ -90,20 +108,22 @@ export default function TransaksiScreen({ route, navigation }) {
     <SafeAreaView style={styles.screen}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Hero Card */}
         <View style={styles.heroCard}>
           <View style={styles.rolePill}>
             <Text style={styles.rolePillText}>Flow Penitip</Text>
           </View>
           <Text style={styles.heroTitle}>Lengkapi detail titipanmu</Text>
           <Text style={styles.heroSubtitle}>
-            Isi jumlah, varian, dan catatan agar penjastip bisa memahami kebutuhanmu dengan jelas.
+            Isi jumlah dan varian, lalu pilih apakah ingin menawar harga atau langsung memesan.
           </Text>
         </View>
 
+        {/* Kartu Produk */}
         <View style={styles.productCard}>
           <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
           <View style={styles.productTop}>
-            <Text style={styles.productEmoji}>{item.kategoriIkon || "🎁"}</Text>
+            <Text style={styles.productEmoji}>{item.kategoriIkon || "ðŸŽ"}</Text>
             <View style={styles.stockPill}>
               <Text style={styles.stockPillText}>Stok {item.stok}</Text>
             </View>
@@ -111,11 +131,12 @@ export default function TransaksiScreen({ route, navigation }) {
           <Text style={styles.productStore}>{item.toko_nama || "Toko pilihan"}</Text>
           <Text style={styles.productName}>{item.nama}</Text>
           <Text style={styles.productMeta}>
-            {item.kategori || "Umum"} • {item.satuan || "pcs"}
+            {item.kategori || "Umum"} â€¢ {item.satuan || "pcs"}
           </Text>
           <Text style={styles.productPrice}>{formatRupiah(item.harga)}</Text>
         </View>
 
+        {/* Form Detail */}
         <View style={styles.formCard}>
           <Text style={styles.sectionLabel}>Detail barang</Text>
 
@@ -163,20 +184,104 @@ export default function TransaksiScreen({ route, navigation }) {
           />
         </View>
 
+        {/* â”€â”€ Langkah Q: Ingin tawar harga/jasa titip? â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        <View style={styles.tawarCard}>
+          <View style={styles.tawarHeaderRow}>
+            <Text style={styles.tawarStepBadge}>Langkah Q</Text>
+            <Text style={styles.tawarTitle}>Ingin tawar harga / jasa titip?</Text>
+          </View>
+          <Text style={styles.tawarSubtitle}>
+            Pilih "Tawar Harga" jika ingin mengajukan penawaran ke penjastip, atau "Langsung Pesan" untuk memakai harga acuan.
+          </Text>
+          <View style={styles.tawarChoiceRow}>
+            <TouchableOpacity
+              style={[styles.tawarChoiceBtn, modePesan === "tawar" && styles.tawarChoiceBtnActive]}
+              onPress={() => setModePesan("tawar")}
+            >
+              <Text style={[styles.tawarChoiceBtnText, modePesan === "tawar" && styles.tawarChoiceBtnTextActive]}>
+                ðŸ’¬ Tawar Harga
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tawarChoiceBtn, modePesan === "langsung" && styles.tawarChoiceBtnActive]}
+              onPress={() => setModePesan("langsung")}
+            >
+              <Text style={[styles.tawarChoiceBtnText, modePesan === "langsung" && styles.tawarChoiceBtnTextActive]}>
+                âš¡ Langsung Pesan
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Langkah R: Form Tawar (muncul jika pilih "Tawar") */}
+          {modePesan === "tawar" && (
+            <View style={styles.tawarFormBox}>
+              <View style={styles.tawarFormHeader}>
+                <Text style={styles.tawarFormBadge}>Langkah R</Text>
+                <Text style={styles.tawarFormTitle}>Ajukan tawaran harga</Text>
+              </View>
+              <Text style={styles.tawarFormHint}>
+                Harga acuan: <Text style={styles.tawarFormHintBold}>{formatRupiah(item.harga)}</Text> / {item.satuan}
+              </Text>
+              <Text style={styles.inputLabel}>Harga tawar per {item.satuan || "pcs"}</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={`Contoh: ${Math.round(item.harga * 0.9).toLocaleString("id-ID")}`}
+                placeholderTextColor={C.textSoft}
+                keyboardType="numeric"
+                value={hargaTawar}
+                onChangeText={setHargaTawar}
+              />
+              <Text style={styles.inputLabel}>Alasan penawaran (opsional)</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Contoh: mahasiswa, beli rutin, minta diskon jasa titip"
+                placeholderTextColor={C.textSoft}
+                multiline
+                numberOfLines={3}
+                value={alasanTawar}
+                onChangeText={setAlasanTawar}
+              />
+              {hargaTawar ? (
+                <View style={styles.tawarTotalBox}>
+                  <Text style={styles.tawarTotalLabel}>Estimasi total tawar ({jumlahQty} {item.satuan})</Text>
+                  <Text style={styles.tawarTotalValue}>{formatRupiah(totalTawar)}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
+        </View>
+
+        {/* Ringkasan Pembayaran */}
         <View style={styles.summaryCard}>
           <Text style={styles.sectionLabel}>Ringkasan pembayaran</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Barang x {jumlahQty || 0}</Text>
-            <Text style={styles.summaryValue}>{formatRupiah(subtotal)}</Text>
+            <Text style={styles.summaryValue}>
+              {modePesan === "tawar" && Number(hargaTawar) > 0
+                ? formatRupiah(totalTawar)
+                : formatRupiah(subtotal)}
+            </Text>
           </View>
+          {modePesan === "tawar" && Number(hargaTawar) > 0 && (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Harga acuan</Text>
+              <Text style={[styles.summaryValue, styles.summaryStrike]}>{formatRupiah(subtotal)}</Text>
+            </View>
+          )}
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Biaya jasa</Text>
-            <Text style={styles.summaryHint}>Dikonfirmasi penjastip</Text>
+            <Text style={styles.summaryHint}>
+              {modePesan === "tawar" ? "Termasuk dalam tawaran" : "Dikonfirmasi penjastip"}
+            </Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.summaryRow}>
             <Text style={styles.totalLabel}>Estimasi subtotal</Text>
-            <Text style={styles.totalValue}>{formatRupiah(subtotal)}</Text>
+            <Text style={styles.totalValue}>
+              {modePesan === "tawar" && Number(hargaTawar) > 0
+                ? formatRupiah(totalTawar)
+                : formatRupiah(subtotal)}
+            </Text>
           </View>
         </View>
 
@@ -187,17 +292,28 @@ export default function TransaksiScreen({ route, navigation }) {
         ) : null}
 
         <TouchableOpacity
-          style={[styles.primaryButton, memuat && styles.buttonDisabled]}
+          style={[
+            styles.primaryButton,
+            !modePesan && styles.buttonDisabled,
+            memuat && styles.buttonDisabled,
+          ]}
           onPress={pesan}
-          disabled={memuat}
+          disabled={memuat || !modePesan}
         >
           {memuat ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.primaryButtonText}>Kirim Titipan</Text>
+            <Text style={styles.primaryButtonText}>
+              {modePesan === "tawar" ? "ðŸ’¬ Kirim Titipan + Tawaran" : "âš¡ Kirim Titipan Langsung"}
+            </Text>
           )}
         </TouchableOpacity>
 
+        {!modePesan && (
+          <Text style={styles.footerNote}>
+            Pilih dulu: Tawar Harga atau Langsung Pesan sebelum mengirim titipan.
+          </Text>
+        )}
         <Text style={styles.footerNote}>
           Setelah terkirim, order-service akan menyimpan permintaan dan statusnya akan masuk ke tracking.
         </Text>
@@ -292,7 +408,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bgSoft,
     borderWidth: 1,
-    borderColor: C.borderStrong,
+    borderColor: C.border,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -313,6 +429,82 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   textArea: { minHeight: 96, textAlignVertical: "top" },
+
+  // â”€â”€ Tawar Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  tawarCard: {
+    marginTop: 16,
+    backgroundColor: "#FFF8EC",
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#FDDCA0",
+  },
+  tawarHeaderRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
+  tawarStepBadge: {
+    backgroundColor: "#E68A00",
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 11,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    overflow: "hidden",
+  },
+  tawarTitle: { color: C.text, fontSize: 16, fontWeight: "800" },
+  tawarSubtitle: { color: C.textSoft, lineHeight: 20, marginBottom: 14 },
+  tawarChoiceRow: { flexDirection: "row", gap: 10 },
+  tawarChoiceBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#FDDCA0",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  tawarChoiceBtnActive: {
+    backgroundColor: C.pink,
+    borderColor: C.pinkDark,
+  },
+  tawarChoiceBtnText: { color: C.text, fontWeight: "700", fontSize: 13 },
+  tawarChoiceBtnTextActive: { color: "#FFFFFF" },
+
+  // â”€â”€ Tawar Form (Langkah R) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  tawarFormBox: {
+    marginTop: 16,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#C9DDF4",
+  },
+  tawarFormHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 },
+  tawarFormBadge: {
+    backgroundColor: C.purple,
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 11,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    overflow: "hidden",
+  },
+  tawarFormTitle: { color: C.text, fontSize: 15, fontWeight: "800" },
+  tawarFormHint: { color: C.textSoft, marginBottom: 12, fontSize: 13 },
+  tawarFormHintBold: { color: C.purple, fontWeight: "800" },
+  tawarTotalBox: {
+    backgroundColor: "#EEF6FF",
+    borderRadius: 14,
+    padding: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  tawarTotalLabel: { color: C.textSoft, fontSize: 13 },
+  tawarTotalValue: { color: C.pink, fontWeight: "800", fontSize: 16 },
+
+  // â”€â”€ Summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   summaryCard: {
     marginTop: 16,
     backgroundColor: "#EEF6FF",
@@ -324,6 +516,7 @@ const styles = StyleSheet.create({
   summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   summaryLabel: { color: C.textSoft, fontSize: 14 },
   summaryValue: { color: C.text, fontWeight: "700" },
+  summaryStrike: { textDecorationLine: "line-through", color: C.textSoft },
   summaryHint: { color: C.pinkDark, fontWeight: "700", fontSize: 12 },
   divider: { height: 1, backgroundColor: "#CFE1F7", marginVertical: 8 },
   totalLabel: { color: C.text, fontSize: 15, fontWeight: "800" },
@@ -344,7 +537,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
   },
-  buttonDisabled: { opacity: 0.6 },
+  buttonDisabled: { opacity: 0.4 },
   primaryButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
   footerNote: { color: C.textSoft, textAlign: "center", marginTop: 14, lineHeight: 20, fontSize: 12 },
 });

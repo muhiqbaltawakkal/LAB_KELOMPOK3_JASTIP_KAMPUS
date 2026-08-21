@@ -93,37 +93,67 @@ const LOGIN_DEFAULT = {
 };
 
 const DEMO_TOKO = [
-  { id: 1, nama: "Chatime Losari", alamat: "Pantai Losari, Makassar", kategori: "Minuman Kekinian" },
-  { id: 2, nama: "Mie Titi Makassar", alamat: "Jl. Irian No.18, Makassar", kategori: "Makanan Khas" },
-  { id: 3, nama: "Gramedia Karebosi", alamat: "Mall Karebosi Link, Makassar", kategori: "Buku & Alat Tulis" },
-  { id: 4, nama: "Samsung Experience Store MaRI", alamat: "Mall Ratu Indah, Makassar", kategori: "Elektronik" },
-  { id: 21, nama: "Tas Cantik Makassar", alamat: "Mall Panakkukang Lt.1, Jl. Boulevard, Makassar", kategori: "Tas & Fashion" },
-  { id: 22, nama: "Zara Bag Store TSM", alamat: "Trans Studio Mall Lt.2, Jl. Metro Tanjung Bunga, Makassar", kategori: "Tas Branded" },
-  { id: 23, nama: "Eiger Adventure MaRI", alamat: "Mall Ratu Indah Lt.1, Jl. Dr. Sam Ratulangi, Makassar", kategori: "Tas Sekolah & Kampus" },
+  { id: 1,  nama: "KFC Panakkukang",          alamat: "Mall Panakkukang Lt.GF, Jl. Boulevard, Makassar",            kategori: "Fast Food" },
+  { id: 2,  nama: "Chatime Losari",             alamat: "Pantai Losari, Jl. Penghibur No.1, Makassar",                kategori: "Minuman Kekinian" },
+  { id: 3,  nama: "Mie Titi Makassar",          alamat: "Jl. Irian No.18, Makassar",                                  kategori: "Makanan Khas" },
+  { id: 4,  nama: "Coto Makassar Nusantara",    alamat: "Jl. Nusantara No.32, Makassar",                              kategori: "Makanan Khas" },
+  { id: 5,  nama: "J.CO Donuts & Coffee TSM",   alamat: "Trans Studio Mall Lt.GF, Jl. Metro Tanjung Bunga, Makassar", kategori: "Kafe & Kopi" },
+  { id: 6,  nama: "Gramedia Karebosi",           alamat: "Mall Karebosi Link Lt.2, Jl. Jend. Ahmad Yani, Makassar",   kategori: "Buku & Alat Tulis" },
+  { id: 7,  nama: "Erafone Trans Studio Mall",   alamat: "Trans Studio Mall Lt.1, Jl. Metro Tanjung Bunga, Makassar", kategori: "Elektronik" },
+  { id: 8,  nama: "Tas Cantik Makassar",         alamat: "Mall Panakkukang Lt.1, Jl. Boulevard, Makassar",            kategori: "Tas & Fashion" },
+  { id: 9,  nama: "Eiger Adventure MaRI",        alamat: "Mall Ratu Indah Lt.1, Jl. Dr. Sam Ratulangi, Makassar",     kategori: "Tas Sekolah & Kampus" },
+  { id: 10, nama: "Zara Bag Store TSM",          alamat: "Trans Studio Mall Lt.2, Jl. Metro Tanjung Bunga, Makassar", kategori: "Tas Branded" },
 ];
 
 const DEMO_ITEMS = [
-  { id: 1, toko_id: 1, nama: "Brown Sugar Boba Milk Tea (L)", harga: 42000, stok: 18, satuan: "pcs" },
-  { id: 2, toko_id: 1, nama: "Matcha Latte (M)", harga: 35000, stok: 14, satuan: "pcs" },
-  { id: 3, toko_id: 2, nama: "Mie Titi Original (Reguler)", harga: 35000, stok: 12, satuan: "pcs" },
-  { id: 4, toko_id: 2, nama: "Es Teh Manis", harga: 8000, stok: 30, satuan: "pcs" },
-  { id: 5, toko_id: 3, nama: "Novel Terlaris Gramedia", harga: 89000, stok: 10, satuan: "pcs" },
-  { id: 6, toko_id: 4, nama: "Samsung Galaxy Buds FE", harga: 799000, stok: 7, satuan: "pcs" },
-  // --- Produk Tas ---
-  { id: 21, toko_id: 21, nama: "Tas Selempang Wanita Kulit Sintetis Coklat", harga: 85000, stok: 15, satuan: "pcs" },
-  { id: 22, toko_id: 21, nama: "Tas Tote Bag Kanvas Motif Bunga Pastel", harga: 65000, stok: 20, satuan: "pcs" },
-  { id: 23, toko_id: 21, nama: "Tas Clutch Mini Wanita Hitam Elegan", harga: 75000, stok: 12, satuan: "pcs" },
-  { id: 24, toko_id: 21, nama: "Tas Belanja Anyaman Rotan Natural", harga: 120000, stok: 10, satuan: "pcs" },
-  { id: 25, toko_id: 21, nama: "Tas Sling Bag Casual Pria Biru Navy", harga: 95000, stok: 18, satuan: "pcs" },
-  { id: 26, toko_id: 22, nama: "Tas Bahu Zara Faux Leather Putih", harga: 550000, stok: 5, satuan: "pcs" },
-  { id: 27, toko_id: 22, nama: "Tas Tote Zara Striped Canvas Hitam Putih", harga: 480000, stok: 6, satuan: "pcs" },
-  { id: 28, toko_id: 22, nama: "Tas Mini Crossbody Zara Gold Chain Beige", harga: 620000, stok: 4, satuan: "pcs" },
-  { id: 29, toko_id: 22, nama: "Tas Shoulder Bag Zara Woven Tan", harga: 695000, stok: 3, satuan: "pcs" },
-  { id: 30, toko_id: 23, nama: "Tas Ransel Eiger Cordura 30L Hitam", harga: 650000, stok: 8, satuan: "pcs" },
-  { id: 31, toko_id: 23, nama: "Tas Daypack Eiger Trail 20L Abu-Abu", harga: 425000, stok: 12, satuan: "pcs" },
-  { id: 32, toko_id: 23, nama: "Tas Laptop Eiger 15.6 inch Army Green", harga: 375000, stok: 10, satuan: "pcs" },
-  { id: 33, toko_id: 23, nama: "Tas Pinggang Eiger Waist Bag Olive", harga: 185000, stok: 15, satuan: "pcs" },
-  { id: 34, toko_id: 23, nama: "Tas Kampus Eiger Student Pack 25L Merah", harga: 320000, stok: 9, satuan: "pcs" },
+  // ── KFC Panakkukang (Fast Food) ─────────────────────────────────────────────
+  { id: 1,  toko_id: 1, nama: "KFC Original Crispy Chicken 2 Pcs + Nasi",      harga: 55000,  stok: 50,  satuan: "pcs" },
+  { id: 2,  toko_id: 1, nama: "KFC Burger Zinger Jr. Spicy",                    harga: 42000,  stok: 40,  satuan: "pcs" },
+  { id: 3,  toko_id: 1, nama: "KFC Chicken Strips 3 Pcs + Saus",                harga: 38000,  stok: 35,  satuan: "pcs" },
+  { id: 4,  toko_id: 1, nama: "Krushers Vanilla Ice Blended (M)",               harga: 28000,  stok: 60,  satuan: "pcs" },
+  { id: 5,  toko_id: 1, nama: "KFC Bucket Keluarga 10 Pcs Original",            harga: 195000, stok: 15,  satuan: "pcs" },
+  // ── Chatime Losari (Minuman Kekinian) ────────────────────────────────────────
+  { id: 6,  toko_id: 2, nama: "Brown Sugar Boba Milk Tea (L)",                  harga: 42000,  stok: 30,  satuan: "pcs" },
+  { id: 7,  toko_id: 2, nama: "Matcha Latte Chatime (M)",                       harga: 35000,  stok: 25,  satuan: "pcs" },
+  { id: 8,  toko_id: 2, nama: "Classic Pearl Milk Tea (L)",                     harga: 32000,  stok: 35,  satuan: "pcs" },
+  { id: 9,  toko_id: 2, nama: "Taro Milk Tea with Pudding (M)",                 harga: 37000,  stok: 28,  satuan: "pcs" },
+  // ── Mie Titi Makassar (Makanan Khas) ─────────────────────────────────────────
+  { id: 10, toko_id: 3, nama: "Mie Titi Original Crispy (Reguler)",             harga: 35000,  stok: 20,  satuan: "pcs" },
+  { id: 11, toko_id: 3, nama: "Mie Titi Udang Saus Tiram",                      harga: 45000,  stok: 18,  satuan: "pcs" },
+  { id: 12, toko_id: 3, nama: "Es Teh Manis Makassar",                          harga: 8000,   stok: 60,  satuan: "pcs" },
+  // ── Coto Makassar Nusantara (Makanan Khas) ────────────────────────────────────
+  { id: 13, toko_id: 4, nama: "Coto Makassar Daging Campur 1 Mangkuk",          harga: 30000,  stok: 30,  satuan: "pcs" },
+  { id: 14, toko_id: 4, nama: "Ketupat Buras Coto Makassar 2 Biji",             harga: 5000,   stok: 80,  satuan: "pcs" },
+  { id: 15, toko_id: 4, nama: "Es Kelapa Muda Coto Nusantara",                  harga: 15000,  stok: 40,  satuan: "pcs" },
+  // ── J.CO Donuts & Coffee TSM (Kafe & Kopi) ───────────────────────────────────
+  { id: 16, toko_id: 5, nama: "J.CO Donut Original Glazed 6 Pcs Box",           harga: 75000,  stok: 20,  satuan: "box" },
+  { id: 17, toko_id: 5, nama: "J.CO Ice Blended Avocado Latte (M)",             harga: 48000,  stok: 30,  satuan: "pcs" },
+  { id: 18, toko_id: 5, nama: "J.CO Cappuccino Hot (R)",                        harga: 38000,  stok: 35,  satuan: "pcs" },
+  // ── Gramedia Karebosi (Buku & Alat Tulis) ────────────────────────────────────
+  { id: 19, toko_id: 6, nama: "Novel Bumi - Tere Liye (Edisi Baru)",            harga: 89000,  stok: 12,  satuan: "pcs" },
+  { id: 20, toko_id: 6, nama: "Buku Algoritma & Pemrograman Rinaldi Munir",     harga: 95000,  stok: 10,  satuan: "pcs" },
+  { id: 21, toko_id: 6, nama: "Stabilo Boss Highlighter Set 4 Warna",           harga: 28000,  stok: 50,  satuan: "set" },
+  { id: 22, toko_id: 6, nama: "Pulpen Faber-Castell 0.5mm Tinta Hitam",         harga: 7000,   stok: 100, satuan: "pcs" },
+  // ── Erafone Trans Studio Mall (Elektronik) ────────────────────────────────────
+  { id: 23, toko_id: 7, nama: "Samsung Galaxy A15 Smartphone 4/128GB",          harga: 2199000,stok: 8,   satuan: "pcs" },
+  { id: 24, toko_id: 7, nama: "Kabel Data Anker USB-C 1 Meter Fast Charging",   harga: 89000,  stok: 30,  satuan: "pcs" },
+  { id: 25, toko_id: 7, nama: "Earphone Samsung AKG In-Ear Type-C",             harga: 150000, stok: 20,  satuan: "pcs" },
+  // ── Tas Cantik Makassar (Tas & Fashion) ──────────────────────────────────────
+  { id: 26, toko_id: 8, nama: "Tas Selempang Wanita Kulit Sintetis Coklat",     harga: 85000,  stok: 15,  satuan: "pcs" },
+  { id: 27, toko_id: 8, nama: "Tas Tote Bag Kanvas Motif Bunga Pastel Pink",    harga: 65000,  stok: 20,  satuan: "pcs" },
+  { id: 28, toko_id: 8, nama: "Tas Clutch Mini Wanita Bahan Satin Hitam",       harga: 75000,  stok: 12,  satuan: "pcs" },
+  { id: 29, toko_id: 8, nama: "Tas Belanja Anyaman Rotan Pantai Natural",       harga: 120000, stok: 10,  satuan: "pcs" },
+  { id: 30, toko_id: 8, nama: "Tas Sling Bag Casual Pria Biru Navy",            harga: 95000,  stok: 18,  satuan: "pcs" },
+  // ── Eiger Adventure MaRI (Tas Sekolah & Kampus) ──────────────────────────────
+  { id: 31, toko_id: 9, nama: "Tas Ransel Eiger Cordura 30L Warna Hitam",       harga: 650000, stok: 8,   satuan: "pcs" },
+  { id: 32, toko_id: 9, nama: "Tas Daypack Eiger Trail Lite 20L Abu-Abu",       harga: 425000, stok: 12,  satuan: "pcs" },
+  { id: 33, toko_id: 9, nama: "Tas Laptop Eiger 15 Inch Army Green",            harga: 375000, stok: 10,  satuan: "pcs" },
+  { id: 34, toko_id: 9, nama: "Tas Pinggang Eiger Waist Bag Olive Green",       harga: 185000, stok: 15,  satuan: "pcs" },
+  { id: 35, toko_id: 9, nama: "Tas Kampus Eiger Student Pack 25L Merah",        harga: 320000, stok: 9,   satuan: "pcs" },
+  // ── Zara Bag Store TSM (Tas Branded) ─────────────────────────────────────────
+  { id: 36, toko_id: 10, nama: "Tas Bahu Zara Faux Leather Medium Putih Krem",  harga: 550000, stok: 5,   satuan: "pcs" },
+  { id: 37, toko_id: 10, nama: "Tas Tote Zara Striped Canvas Hitam Putih",      harga: 480000, stok: 6,   satuan: "pcs" },
+  { id: 38, toko_id: 10, nama: "Tas Mini Crossbody Zara Gold Chain Beige",      harga: 620000, stok: 4,   satuan: "pcs" },
 ];
 
 function formatRupiah(angka = 0) {
