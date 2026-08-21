@@ -53,8 +53,8 @@ if (jumlahToko.n === 0) {
     const seed = JSON.parse(fs.readFileSync(seedPath, "utf-8"));
     const insToko = db.prepare("INSERT OR IGNORE INTO toko (id, nama, alamat, kategori) VALUES (?,?,?,?)");
     const insBarang = db.prepare("INSERT OR IGNORE INTO barang (id, toko_id, nama, harga, stok, satuan) VALUES (?,?,?,?,?,?)");
-    for (const t of seed.toko || []) insToko.run(t.id, t.nama, t.alamat, t.kategori);
-    for (const b of seed.barang || []) insBarang.run(b.id, b.toko_id, b.nama, b.harga, b.stok, b.satuan || "pcs");
+    for (const t of seed.toko || []) insToko.run(t.id, t.nama, t.lokasi ?? t.alamat, t.kategori);
+    for (const b of seed.barang || []) insBarang.run(b.id, b.toko_id, b.nama, b.harga ?? b.harga_acuan, b.stok, b.satuan || "pcs");
     log("info", "seed data berhasil dimuat", { toko: (seed.toko || []).length, barang: (seed.barang || []).length });
   }
 }
