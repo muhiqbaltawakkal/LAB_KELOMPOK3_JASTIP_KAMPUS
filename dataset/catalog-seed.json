@@ -19,7 +19,10 @@
     { "id": 17, "nama": "Es Pisang Ijo Anugerah",        "pemilik": "Anugerah Barakah",              "lokasi": "Jl. Abdullah Dg. Sirua No.7, Panakkukang, Makassar",                "kategori": "Kuliner Khas",     "aktif": true },
     { "id": 18, "nama": "Warung Pallubasa Serigala",     "pemilik": "H. Mappangara",                 "lokasi": "Jl. Serigala No.7, Makassar",                                        "kategori": "Makanan Khas",     "aktif": true },
     { "id": 19, "nama": "Kopi Kanneng",                  "pemilik": "Muhamad Reza",                  "lokasi": "Jl. Hertasning Baru No.15, Makassar",                               "kategori": "Kafe & Kopi",      "aktif": true },
-    { "id": 20, "nama": "Apotik Kimia Farma Veteran",    "pemilik": "PT Kimia Farma Apotek",         "lokasi": "Jl. Veteran Selatan No.10, Makassar",                               "kategori": "Apotek & Kesehatan","aktif": true }
+    { "id": 20, "nama": "Apotik Kimia Farma Veteran",    "pemilik": "PT Kimia Farma Apotek",         "lokasi": "Jl. Veteran Selatan No.10, Makassar",                               "kategori": "Apotek & Kesehatan","aktif": true },
+    { "id": 21, "nama": "Tas Cantik Makassar",           "pemilik": "CV Moda Cantik Nusantara",       "lokasi": "Mall Panakkukang Lt.1, Jl. Boulevard, Makassar",                    "kategori": "Tas & Fashion",     "aktif": true },
+    { "id": 22, "nama": "Zara Bag Store TSM",             "pemilik": "PT Zara Retail Indonesia",       "lokasi": "Trans Studio Mall Lt.2, Jl. Metro Tanjung Bunga, Makassar",        "kategori": "Tas Branded",       "aktif": true },
+    { "id": 23, "nama": "Eiger Adventure MaRI",          "pemilik": "PT Eigerindo Multi Produk Industri","lokasi": "Mall Ratu Indah Lt.1, Jl. Dr. Sam Ratulangi, Makassar",          "kategori": "Tas Sekolah & Kampus","aktif": true }
   ],
   "barang": [
     { "id": 1,  "toko_id": 1,  "nama": "Brown Sugar Boba Milk Tea (L)",      "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 42000,   "stok": 100 },
@@ -70,7 +73,21 @@
     { "id": 46, "toko_id": 19, "nama": "Es Kopi Americano (M)",              "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 22000,   "stok": 100 },
     { "id": 47, "toko_id": 20, "nama": "Paracetamol 500mg (10 Tablet)",      "kategori": "Obat",         "satuan": "strip","harga_acuan": 8000,   "stok": 200 },
     { "id": 48, "toko_id": 20, "nama": "Vitamin C 1000mg Redoxon (10 Tab)",  "kategori": "Suplemen",     "satuan": "strip","harga_acuan": 35000,  "stok": 150 },
-    { "id": 49, "toko_id": 20, "nama": "Masker Medis KF94 (10 pcs)",         "kategori": "Kesehatan",    "satuan": "box", "harga_acuan": 25000,   "stok": 120 }
+    { "id": 49, "toko_id": 20, "nama": "Masker Medis KF94 (10 pcs)",         "kategori": "Kesehatan",    "satuan": "box", "harga_acuan": 25000,   "stok": 120 },
+    { "id": 50, "toko_id": 21, "nama": "Tas Selempang Wanita Kulit Sintetis Coklat", "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 85000,   "stok": 15 },
+    { "id": 51, "toko_id": 21, "nama": "Tas Tote Bag Kanvas Motif Bunga Pastel",     "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 65000,   "stok": 20 },
+    { "id": 52, "toko_id": 21, "nama": "Tas Clutch Mini Wanita Hitam Elegan",        "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 75000,   "stok": 12 },
+    { "id": 53, "toko_id": 21, "nama": "Tas Belanja Anyaman Rotan Natural",          "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 120000,  "stok": 10 },
+    { "id": 54, "toko_id": 21, "nama": "Tas Sling Bag Casual Pria Biru Navy",        "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 95000,   "stok": 18 },
+    { "id": 55, "toko_id": 22, "nama": "Tas Bahu Zara Faux Leather Putih",           "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 550000,  "stok": 5  },
+    { "id": 56, "toko_id": 22, "nama": "Tas Tote Zara Striped Canvas Hitam Putih",   "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 480000,  "stok": 6  },
+    { "id": 57, "toko_id": 22, "nama": "Tas Mini Crossbody Zara Gold Chain Beige",   "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 620000,  "stok": 4  },
+    { "id": 58, "toko_id": 22, "nama": "Tas Shoulder Bag Zara Woven Tan",            "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 695000,  "stok": 3  },
+    { "id": 59, "toko_id": 23, "nama": "Tas Ransel Eiger Cordura 30L Hitam",         "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 650000,  "stok": 8  },
+    { "id": 60, "toko_id": 23, "nama": "Tas Daypack Eiger Trail 20L Abu-Abu",        "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 425000,  "stok": 12 },
+    { "id": 61, "toko_id": 23, "nama": "Tas Laptop Eiger 15.6 inch Army Green",      "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 375000,  "stok": 10 },
+    { "id": 62, "toko_id": 23, "nama": "Tas Pinggang Eiger Waist Bag Olive",         "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 185000,  "stok": 15 },
+    { "id": 63, "toko_id": 23, "nama": "Tas Kampus Eiger Student Pack 25L Merah",    "kategori": "Tas",  "satuan": "pcs", "harga_acuan": 320000,  "stok": 9  }
   ],
   "satuan": [
     { "id": 1, "kode": "pcs",   "nama": "Pieces",    "keterangan": "Satuan per buah" },

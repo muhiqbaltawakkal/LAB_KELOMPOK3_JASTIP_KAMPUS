@@ -70,6 +70,9 @@ const KATEGORI_IKON = {
   "Fast Food": "🍔",
   "Lifestyle & Aksesoris": "🎀",
   "Apotek & Kesehatan": "💊",
+  "Tas & Fashion": "👜",
+  "Tas Branded": "👛",
+  "Tas Sekolah & Kampus": "🎒",
   Umum: "🎁",
 };
 
@@ -94,6 +97,9 @@ const DEMO_TOKO = [
   { id: 2, nama: "Mie Titi Makassar", alamat: "Jl. Irian No.18, Makassar", kategori: "Makanan Khas" },
   { id: 3, nama: "Gramedia Karebosi", alamat: "Mall Karebosi Link, Makassar", kategori: "Buku & Alat Tulis" },
   { id: 4, nama: "Samsung Experience Store MaRI", alamat: "Mall Ratu Indah, Makassar", kategori: "Elektronik" },
+  { id: 21, nama: "Tas Cantik Makassar", alamat: "Mall Panakkukang Lt.1, Jl. Boulevard, Makassar", kategori: "Tas & Fashion" },
+  { id: 22, nama: "Zara Bag Store TSM", alamat: "Trans Studio Mall Lt.2, Jl. Metro Tanjung Bunga, Makassar", kategori: "Tas Branded" },
+  { id: 23, nama: "Eiger Adventure MaRI", alamat: "Mall Ratu Indah Lt.1, Jl. Dr. Sam Ratulangi, Makassar", kategori: "Tas Sekolah & Kampus" },
 ];
 
 const DEMO_ITEMS = [
@@ -103,6 +109,21 @@ const DEMO_ITEMS = [
   { id: 4, toko_id: 2, nama: "Es Teh Manis", harga: 8000, stok: 30, satuan: "pcs" },
   { id: 5, toko_id: 3, nama: "Novel Terlaris Gramedia", harga: 89000, stok: 10, satuan: "pcs" },
   { id: 6, toko_id: 4, nama: "Samsung Galaxy Buds FE", harga: 799000, stok: 7, satuan: "pcs" },
+  // --- Produk Tas ---
+  { id: 21, toko_id: 21, nama: "Tas Selempang Wanita Kulit Sintetis Coklat", harga: 85000, stok: 15, satuan: "pcs" },
+  { id: 22, toko_id: 21, nama: "Tas Tote Bag Kanvas Motif Bunga Pastel", harga: 65000, stok: 20, satuan: "pcs" },
+  { id: 23, toko_id: 21, nama: "Tas Clutch Mini Wanita Hitam Elegan", harga: 75000, stok: 12, satuan: "pcs" },
+  { id: 24, toko_id: 21, nama: "Tas Belanja Anyaman Rotan Natural", harga: 120000, stok: 10, satuan: "pcs" },
+  { id: 25, toko_id: 21, nama: "Tas Sling Bag Casual Pria Biru Navy", harga: 95000, stok: 18, satuan: "pcs" },
+  { id: 26, toko_id: 22, nama: "Tas Bahu Zara Faux Leather Putih", harga: 550000, stok: 5, satuan: "pcs" },
+  { id: 27, toko_id: 22, nama: "Tas Tote Zara Striped Canvas Hitam Putih", harga: 480000, stok: 6, satuan: "pcs" },
+  { id: 28, toko_id: 22, nama: "Tas Mini Crossbody Zara Gold Chain Beige", harga: 620000, stok: 4, satuan: "pcs" },
+  { id: 29, toko_id: 22, nama: "Tas Shoulder Bag Zara Woven Tan", harga: 695000, stok: 3, satuan: "pcs" },
+  { id: 30, toko_id: 23, nama: "Tas Ransel Eiger Cordura 30L Hitam", harga: 650000, stok: 8, satuan: "pcs" },
+  { id: 31, toko_id: 23, nama: "Tas Daypack Eiger Trail 20L Abu-Abu", harga: 425000, stok: 12, satuan: "pcs" },
+  { id: 32, toko_id: 23, nama: "Tas Laptop Eiger 15.6 inch Army Green", harga: 375000, stok: 10, satuan: "pcs" },
+  { id: 33, toko_id: 23, nama: "Tas Pinggang Eiger Waist Bag Olive", harga: 185000, stok: 15, satuan: "pcs" },
+  { id: 34, toko_id: 23, nama: "Tas Kampus Eiger Student Pack 25L Merah", harga: 320000, stok: 9, satuan: "pcs" },
 ];
 
 function formatRupiah(angka = 0) {
