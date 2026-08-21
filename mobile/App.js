@@ -88,6 +88,22 @@ const LOGIN_DEFAULT = {
   nama: "",
 };
 
+const DEMO_TOKO = [
+  { id: 1, nama: "Chatime Losari", alamat: "Pantai Losari, Makassar", kategori: "Minuman Kekinian" },
+  { id: 2, nama: "Mie Titi Makassar", alamat: "Jl. Irian No.18, Makassar", kategori: "Makanan Khas" },
+  { id: 3, nama: "Gramedia Karebosi", alamat: "Mall Karebosi Link, Makassar", kategori: "Buku & Alat Tulis" },
+  { id: 4, nama: "Samsung Experience Store MaRI", alamat: "Mall Ratu Indah, Makassar", kategori: "Elektronik" },
+];
+
+const DEMO_ITEMS = [
+  { id: 1, toko_id: 1, nama: "Brown Sugar Boba Milk Tea (L)", harga: 42000, stok: 18, satuan: "pcs" },
+  { id: 2, toko_id: 1, nama: "Matcha Latte (M)", harga: 35000, stok: 14, satuan: "pcs" },
+  { id: 3, toko_id: 2, nama: "Mie Titi Original (Reguler)", harga: 35000, stok: 12, satuan: "pcs" },
+  { id: 4, toko_id: 2, nama: "Es Teh Manis", harga: 8000, stok: 30, satuan: "pcs" },
+  { id: 5, toko_id: 3, nama: "Novel Terlaris Gramedia", harga: 89000, stok: 10, satuan: "pcs" },
+  { id: 6, toko_id: 4, nama: "Samsung Galaxy Buds FE", harga: 799000, stok: 7, satuan: "pcs" },
+];
+
 function formatRupiah(angka = 0) {
   return `Rp ${Number(angka || 0).toLocaleString("id-ID")}`;
 }
@@ -183,20 +199,28 @@ function AuthScreen({ navigation }) {
     setPesan(null);
 
     try {
-      const auth = await login(
-        loginForm.peran === "penjastip" ? "jastip" : loginForm.email.trim()
-      );
+      let authToken = null;
+      let modeDemoAuth = false;
+
+      try {
+        const auth = await login(
+          loginForm.peran === "penjastip" ? "jastip" : loginForm.email.trim()
+        );
+        authToken = auth.token;
+      } catch {
+        modeDemoAuth = true;
+      }
+
       navigation.replace("Beranda", {
         peran: loginForm.peran,
-        token: auth.token,
+        token: authToken,
+        demoAuth: modeDemoAuth,
         profil: {
           nama: capitalizeWords(loginForm.nama || loginForm.email.split("@")[0] || "Pengguna"),
           email: loginForm.email.trim(),
           kampus: registerForm.kampus || "Kampus Makassar",
         },
       });
-    } catch {
-      setPesan({ type: "error", text: "Login gagal. Pastikan backend aktif dan port 8080 bisa diakses." });
     } finally {
       setMemuat(false);
     }
@@ -389,6 +413,8 @@ function PenitipDashboard({
   daftarKategori,
   cari,
   setCari,
+  modeDemo,
+  demoReason,
 }) {
   const tokoUnggulan = tokoList.slice(0, 5);
 
@@ -415,6 +441,12 @@ function PenitipDashboard({
           <Text style={shared.profilePillText}>{profil.kampus || "Kampus Makassar"}</Text>
         </View>
       </View>
+
+      {modeDemo ? (
+        <View style={shared.demoBanner}>
+          <Text style={shared.demoBannerText}>{demoReason || "Mode demo aktif karena backend belum merespons."}</Text>
+        </View>
+      ) : null}
 
       <View style={shared.searchBox}>
         <Text style={shared.searchIcon}>🔎</Text>
@@ -534,6 +566,8 @@ function PenjastipDashboard({
   setSesiForm,
   sesiAktif,
   setSesiAktif,
+  modeDemo,
+  demoReason,
 }) {
   const tugasMasuk = items.slice(0, 5);
   const tokoAktif = tokoList.find((item) => String(item.id) === sesiForm.tokoId) || tokoList[0];
@@ -589,6 +623,12 @@ function PenjastipDashboard({
             <Text style={shared.profilePillText}>{profil.kampus || "Kampus Makassar"}</Text>
           </View>
         </View>
+
+        {modeDemo ? (
+          <View style={shared.demoBanner}>
+            <Text style={shared.demoBannerText}>{demoReason || "Mode demo aktif karena backend belum merespons."}</Text>
+          </View>
+        ) : null}
 
         <View style={penjastip.sessionCard}>
           <SectionHeader
@@ -694,6 +734,10 @@ function BerandaScreen({ route, navigation }) {
   const [tokoList, setTokoList] = useState([]);
   const [memuat, setMemuat] = useState(true);
   const [galat, setGalat] = useState(null);
+  const [modeDemo, setModeDemo] = useState(Boolean(route.params?.demoAuth));
+  const [demoReason, setDemoReason] = useState(
+    route.params?.demoAuth ? "Login backend tidak merespons, jadi tampilan demo tetap dibuka." : ""
+  );
   const [cari, setCari] = useState("");
   const [kategoriAktif, setKategoriAktif] = useState("Semua");
   const [sesiForm, setSesiForm] = useState({ tokoId: "", kapasitas: "5", batasWaktu: "18:00" });
@@ -709,11 +753,21 @@ function BerandaScreen({ route, navigation }) {
       const mergedItems = buildItemViewModel(daftarBarang, daftarToko);
       setItems(mergedItems);
       setTokoList(daftarToko);
+      setModeDemo(false);
+      setDemoReason("");
       if (!sesiForm.tokoId && daftarToko[0]?.id) {
         setSesiForm((prev) => ({ ...prev, tokoId: String(daftarToko[0].id) }));
       }
     } catch (error) {
-      setGalat(error.message || "Gagal memuat beranda");
+      const mergedItems = buildItemViewModel(DEMO_ITEMS, DEMO_TOKO);
+      setItems(mergedItems);
+      setTokoList(DEMO_TOKO);
+      setModeDemo(true);
+      setDemoReason("Backend katalog belum terjangkau, jadi data demo ditampilkan agar UI tetap bisa dilihat.");
+      setGalat(null);
+      if (!sesiForm.tokoId && DEMO_TOKO[0]?.id) {
+        setSesiForm((prev) => ({ ...prev, tokoId: String(DEMO_TOKO[0].id) }));
+      }
     } finally {
       setMemuat(false);
     }
@@ -778,6 +832,8 @@ function BerandaScreen({ route, navigation }) {
         setSesiForm={setSesiForm}
         sesiAktif={sesiAktif}
         setSesiAktif={setSesiAktif}
+        modeDemo={modeDemo}
+        demoReason={demoReason}
       />
     );
   }
@@ -793,6 +849,8 @@ function BerandaScreen({ route, navigation }) {
       daftarKategori={daftarKategori}
       cari={cari}
       setCari={setCari}
+      modeDemo={modeDemo}
+      demoReason={demoReason}
     />
   );
 }
@@ -979,6 +1037,17 @@ const shared = StyleSheet.create({
     paddingVertical: 10,
   },
   profilePillText: { color: "#926B00", fontWeight: "700", fontSize: 12 },
+  demoBanner: {
+    backgroundColor: "#FFF6D8",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#FFE39A",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  demoBannerText: { color: "#9B6B00", fontWeight: "700", lineHeight: 20, fontSize: 12 },
   searchBox: {
     marginTop: 8,
     backgroundColor: C.surface,
