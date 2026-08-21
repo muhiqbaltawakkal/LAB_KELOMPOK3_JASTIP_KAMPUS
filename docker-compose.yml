@@ -1,32 +1,52 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_PASSWORD: lab
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      retries: 10
-
   redis:
-    image: redis:alpine
+    image: redis:7-alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
 
   catalog-service:
     build: ./services/catalog-service
-    deploy:
-      replicas: 3 # Menjalankan 3 salinan service
     environment:
-      DATABASE_URL: postgres://postgres:lab@postgres:5432/catalog
       REDIS_URL: redis://redis:6379
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+
+  order-service:
+    build: ./services/order-service
+    ports:
+      - "3002:3002"
+    environment:
+      CATALOG_URL: http://catalog-service:3001
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: rahasia-kelompok-ganti-ini
+    depends_on:
+      - catalog-service
+      - redis
+
+  payment-service:
+    build: ./services/payment-service
+    ports:
+      - "3003:3003"
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
+
+  tracking-service:
+    build: ./services/tracking-service
+    ports:
+      - "3004:3004"
+    environment:
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - redis
 
   nginx:
     image: nginx:alpine
@@ -36,3 +56,4 @@ services:
       - "8080:8080"
     depends_on:
       - catalog-service
+      - order-service
