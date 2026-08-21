@@ -1,103 +1,191 @@
-// screens/SuksesScreen.js — konfirmasi titipan berhasil, tampilan profesional
 import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
-const C = { bg:"#0B0F1A", card:"#141925", cardBorder:"#1E2736", accent:"#6C63FF", teal:"#00C9B1", green:"#4ade80", text:"#F0F4FF", muted:"#8892A4", badge:"#1A2035" };
+const C = {
+  bg: "#FFF8FC",
+  surface: "#FFFFFF",
+  border: "#FFD8EC",
+  pink: "#FF77B7",
+  purple: "#8B80F9",
+  mint: "#76E4CF",
+  success: "#55C87A",
+  text: "#5C3550",
+  textSoft: "#8F6880",
+};
+
+function formatRupiah(angka = 0) {
+  return `Rp ${Number(angka || 0).toLocaleString("id-ID")}`;
+}
 
 export default function SuksesScreen({ route, navigation }) {
-  const { order, item } = route.params;
+  const { order, item, peran, profil, varian, catatan } = route.params;
 
   return (
-    <SafeAreaView style={ss.wadah}>
-      <StatusBar barStyle="light-content" backgroundColor={C.bg} />
-      <ScrollView contentContainerStyle={ss.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* Ikon sukses animatif */}
-        <View style={ss.heroWrap}>
-          <View style={ss.lingkaran}>
-            <Text style={ss.ikonSukses}>✓</Text>
+    <SafeAreaView style={styles.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.heroCard}>
+          <View style={styles.successCircle}>
+            <Text style={styles.successCheck}>✓</Text>
           </View>
-          <Text style={ss.judulSukses}>Titipan Berhasil!</Text>
-          <Text style={ss.subSukses}>Permintaan jastipmu telah diterima sistem</Text>
+          <Text style={styles.heroTitle}>Titipan berhasil dibuat!</Text>
+          <Text style={styles.heroSubtitle}>
+            Order-service sudah menerima titipanmu dan akan meneruskannya ke alur pembayaran serta tracking.
+          </Text>
         </View>
 
-        {/* Detail Order */}
-        <View style={ss.kartu}>
-          <Text style={ss.kartuJudul}>Ringkasan Pesanan</Text>
+        <View style={styles.summaryCard}>
+          <Text style={styles.sectionTitle}>Ringkasan order</Text>
 
-          <View style={ss.baris}>
-            <Text style={ss.label}>Barang</Text>
-            <Text style={ss.nilai} numberOfLines={2}>{item?.nama ?? "-"}</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Nama penitip</Text>
+            <Text style={styles.value}>{profil?.nama || "Mahasiswa"}</Text>
           </View>
-          <View style={ss.divider} />
-          <View style={ss.baris}>
-            <Text style={ss.label}>Jumlah</Text>
-            <Text style={ss.nilai}>{order?.qty ?? "-"} {item?.satuan ?? "pcs"}</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Peran</Text>
+            <Text style={styles.value}>{peran || "penitip"}</Text>
           </View>
-          <View style={ss.baris}>
-            <Text style={ss.label}>Total Bayar</Text>
-            <Text style={[ss.nilai, ss.totalHarga]}>Rp {(order?.total ?? 0).toLocaleString("id-ID")}</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Toko</Text>
+            <Text style={styles.value}>{item?.toko_nama || "-"}</Text>
           </View>
-          <View style={ss.divider} />
-          <View style={ss.baris}>
-            <Text style={ss.label}>Status</Text>
-            <View style={ss.statusBadge}>
-              <Text style={ss.statusTeks}>🟢 {order?.status ?? "pending"}</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Barang</Text>
+            <Text style={styles.value}>{item?.nama || "-"}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Jumlah</Text>
+            <Text style={styles.value}>{order?.qty ?? "-"} {item?.satuan || "pcs"}</Text>
+          </View>
+          {varian ? (
+            <View style={styles.row}>
+              <Text style={styles.label}>Varian</Text>
+              <Text style={styles.value}>{varian}</Text>
+            </View>
+          ) : null}
+          {catatan ? (
+            <View style={styles.row}>
+              <Text style={styles.label}>Catatan</Text>
+              <Text style={styles.value}>{catatan}</Text>
+            </View>
+          ) : null}
+          <View style={styles.row}>
+            <Text style={styles.label}>Total</Text>
+            <Text style={styles.totalValue}>{formatRupiah(order?.total)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Status</Text>
+            <View style={styles.statusPill}>
+              <Text style={styles.statusPillText}>{order?.status || "pending"}</Text>
             </View>
           </View>
           {order?.orderId ? (
-            <View style={ss.baris}>
-              <Text style={ss.label}>ID Pesanan</Text>
-              <Text style={[ss.nilai, { color: C.accent }]}>#{order.orderId}</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>ID Order</Text>
+              <Text style={[styles.value, styles.orderId]}>#{order.orderId}</Text>
             </View>
           ) : null}
         </View>
 
-        {/* Info langkah selanjutnya */}
-        <View style={ss.infoBox}>
-          <Text style={ss.infoJudul}>📋 Langkah Selanjutnya</Text>
-          <Text style={ss.infoTeks}>1. Penjastip akan menerima notifikasi titipanmu</Text>
-          <Text style={ss.infoTeks}>2. Tunggu konfirmasi dari penjastip</Text>
-          <Text style={ss.infoTeks}>3. Lakukan pembayaran setelah disetujui</Text>
-          <Text style={ss.infoTeks}>4. Barang akan diantarkan ke kamu</Text>
+        <View style={styles.timelineCard}>
+          <Text style={styles.sectionTitle}>Alur setelah ini</Text>
+          <Text style={styles.timelineItem}>1. Penjastip membuka sesi jastip di toko pilihan.</Text>
+          <Text style={styles.timelineItem}>2. Order-service menyimpan titipan dan total barang.</Text>
+          <Text style={styles.timelineItem}>3. Payment-service menampung pembayaran tertahan.</Text>
+          <Text style={styles.timelineItem}>4. Tracking-service mencatat status dibelanjakan, diantar, lalu diterima.</Text>
         </View>
 
-        {/* Tombol */}
-        <TouchableOpacity style={ss.tombolUtama} onPress={() => navigation.navigate("Beranda")}>
-          <Text style={ss.tombolUtamaTeks}>🏠  Kembali ke Beranda</Text>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate("Beranda", { peran, profil })}
+        >
+          <Text style={styles.primaryButtonText}>Kembali ke Beranda</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={ss.tombolSecondary} onPress={() => navigation.navigate("Login")}>
-          <Text style={ss.tombolSecondaryTeks}>Ganti Akun</Text>
+        <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Login")}>
+          <Text style={styles.secondaryButtonText}>Kembali ke Login</Text>
         </TouchableOpacity>
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const ss = StyleSheet.create({
-  wadah: { flex: 1, backgroundColor: C.bg },
-  scroll: { padding: 20, paddingBottom: 40 },
-  heroWrap: { alignItems: "center", marginBottom: 24, marginTop: 12 },
-  lingkaran: { width: 88, height: 88, borderRadius: 44, backgroundColor: "#0F2820", alignItems: "center", justifyContent: "center", marginBottom: 16, borderWidth: 3, borderColor: C.green },
-  ikonSukses: { fontSize: 40, color: C.green, fontWeight: "700" },
-  judulSukses: { color: C.text, fontSize: 24, fontWeight: "800", marginBottom: 6 },
-  subSukses: { color: C.muted, fontSize: 14 },
-  kartu: { backgroundColor: C.card, borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1, borderColor: C.cardBorder },
-  kartuJudul: { color: C.muted, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 },
-  divider: { height: 1, backgroundColor: C.cardBorder, marginVertical: 10 },
-  baris: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
-  label: { color: C.muted, fontSize: 13, flex: 1 },
-  nilai: { color: C.text, fontSize: 14, fontWeight: "600", flex: 1, textAlign: "right" },
-  totalHarga: { color: C.teal, fontSize: 16, fontWeight: "800" },
-  statusBadge: { backgroundColor: "#0F2820", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  statusTeks: { color: C.green, fontSize: 13, fontWeight: "600" },
-  infoBox: { backgroundColor: "#111827", borderRadius: 14, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: "#1E2736" },
-  infoJudul: { color: C.text, fontWeight: "700", marginBottom: 10 },
-  infoTeks: { color: C.muted, fontSize: 13, marginBottom: 6, lineHeight: 20 },
-  tombolUtama: { backgroundColor: C.accent, padding: 18, borderRadius: 14, alignItems: "center", marginBottom: 10 },
-  tombolUtamaTeks: { color: "#fff", fontWeight: "800", fontSize: 16 },
-  tombolSecondary: { padding: 14, borderRadius: 14, alignItems: "center", borderWidth: 1, borderColor: C.cardBorder },
-  tombolSecondaryTeks: { color: C.muted, fontWeight: "600" },
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.bg },
+  scroll: { padding: 18, paddingBottom: 32 },
+  heroCard: {
+    backgroundColor: "#FFF0F8",
+    borderRadius: 28,
+    padding: 22,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: "center",
+  },
+  successCircle: {
+    width: 94,
+    height: 94,
+    borderRadius: 47,
+    backgroundColor: "#EEFFF8",
+    borderWidth: 3,
+    borderColor: "#C3F0DA",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  successCheck: { color: C.success, fontSize: 40, fontWeight: "800" },
+  heroTitle: { color: C.text, fontSize: 26, fontWeight: "800", textAlign: "center" },
+  heroSubtitle: { color: C.textSoft, marginTop: 8, lineHeight: 22, textAlign: "center" },
+  summaryCard: {
+    marginTop: 16,
+    backgroundColor: C.surface,
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  sectionTitle: { color: C.text, fontSize: 18, fontWeight: "800", marginBottom: 12 },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+    gap: 12,
+  },
+  label: { flex: 1, color: C.textSoft, fontWeight: "700" },
+  value: { flex: 1, color: C.text, textAlign: "right", fontWeight: "700", lineHeight: 20 },
+  totalValue: { flex: 1, color: C.purple, textAlign: "right", fontWeight: "800", fontSize: 18 },
+  statusPill: {
+    backgroundColor: "#EEFFF8",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  statusPillText: { color: C.success, fontWeight: "800", fontSize: 12 },
+  orderId: { color: C.pink },
+  timelineCard: {
+    marginTop: 16,
+    backgroundColor: "#FFFDF4",
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: "#FFE7AE",
+  },
+  timelineItem: { color: C.textSoft, lineHeight: 22, marginBottom: 8 },
+  primaryButton: {
+    marginTop: 18,
+    backgroundColor: C.pink,
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  primaryButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
+  secondaryButton: {
+    marginTop: 12,
+    backgroundColor: C.surface,
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  secondaryButtonText: { color: C.text, fontWeight: "800", fontSize: 16 },
 });
-

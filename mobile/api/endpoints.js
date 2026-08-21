@@ -11,6 +11,10 @@ export function getDaftarBarang() {
   return api.get("/v1/items");
 }
 
+export function getDaftarToko() {
+  return api.get("/v1/toko");
+}
+
 export function getDetailBarang(itemId) {
   return api.get(`/v1/items/${itemId}`);
 }
