@@ -1,15 +1,15 @@
-import { SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const C = {
-  bg: "#FFF8FC",
+  bg: "#F4F9FF",
   surface: "#FFFFFF",
-  border: "#FFD8EC",
-  pink: "#FF77B7",
-  purple: "#8B80F9",
-  mint: "#76E4CF",
-  success: "#55C87A",
-  text: "#5C3550",
-  textSoft: "#8F6880",
+  border: "#C9DDF4",
+  pink: "#0B63CE",
+  purple: "#1B88E5",
+  mint: "#D9ECFF",
+  success: "#2FA36B",
+  text: "#17375E",
+  textSoft: "#5C7DA4",
 };
 
 function formatRupiah(angka = 0) {
@@ -35,6 +35,7 @@ export default function SuksesScreen({ route, navigation }) {
 
         <View style={styles.summaryCard}>
           <Text style={styles.sectionTitle}>Ringkasan order</Text>
+          <Image source={{ uri: item?.imageUrl }} style={styles.summaryImage} />
 
           <View style={styles.row}>
             <Text style={styles.label}>Nama penitip</Text>
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 18, paddingBottom: 32 },
   heroCard: {
-    backgroundColor: "#FFF0F8",
+    backgroundColor: "#EAF4FF",
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
@@ -124,9 +125,9 @@ const styles = StyleSheet.create({
     width: 94,
     height: 94,
     borderRadius: 47,
-    backgroundColor: "#EEFFF8",
+    backgroundColor: "#EEF6FF",
     borderWidth: 3,
-    borderColor: "#C3F0DA",
+    borderColor: "#C3DCF7",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -142,6 +143,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.border,
   },
+  summaryImage: {
+    width: "100%",
+    height: 180,
+    borderRadius: 20,
+    marginBottom: 16,
+    backgroundColor: "#DDEEFF",
+  },
   sectionTitle: { color: C.text, fontSize: 18, fontWeight: "800", marginBottom: 12 },
   row: {
     flexDirection: "row",
@@ -154,7 +162,7 @@ const styles = StyleSheet.create({
   value: { flex: 1, color: C.text, textAlign: "right", fontWeight: "700", lineHeight: 20 },
   totalValue: { flex: 1, color: C.purple, textAlign: "right", fontWeight: "800", fontSize: 18 },
   statusPill: {
-    backgroundColor: "#EEFFF8",
+    backgroundColor: "#EEF6FF",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -163,11 +171,11 @@ const styles = StyleSheet.create({
   orderId: { color: C.pink },
   timelineCard: {
     marginTop: 16,
-    backgroundColor: "#FFFDF4",
+    backgroundColor: "#EEF6FF",
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: "#FFE7AE",
+    borderColor: "#BED9FB",
   },
   timelineItem: { color: C.textSoft, lineHeight: 22, marginBottom: 8 },
   primaryButton: {

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -13,18 +14,19 @@ import {
 import { buatTitipan, login } from "../api/endpoints";
 
 const C = {
-  bg: "#FFF8FC",
-  bgSoft: "#FFF1F8",
+  bg: "#F4F9FF",
+  bgSoft: "#EAF4FF",
   surface: "#FFFFFF",
-  border: "#FFD8EC",
-  pink: "#FF77B7",
-  purple: "#8B80F9",
-  peach: "#FFBD9D",
-  mint: "#76E4CF",
-  success: "#55C87A",
-  danger: "#FF7A8A",
-  text: "#5C3550",
-  textSoft: "#8F6880",
+  border: "#C9DDF4",
+  pink: "#0B63CE",
+  pinkDark: "#0A3E7C",
+  purple: "#1B88E5",
+  peach: "#D7EAFF",
+  mint: "#D9ECFF",
+  success: "#2FA36B",
+  danger: "#D95C74",
+  text: "#17375E",
+  textSoft: "#5C7DA4",
 };
 
 function formatRupiah(angka = 0) {
@@ -99,6 +101,7 @@ export default function TransaksiScreen({ route, navigation }) {
         </View>
 
         <View style={styles.productCard}>
+          <Image source={{ uri: item.imageUrl }} style={styles.productImage} />
           <View style={styles.productTop}>
             <Text style={styles.productEmoji}>{item.kategoriIkon || "🎁"}</Text>
             <View style={styles.stockPill}>
@@ -207,7 +210,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
   scroll: { padding: 18, paddingBottom: 32 },
   heroCard: {
-    backgroundColor: "#FFF0F8",
+    backgroundColor: "#EAF4FF",
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
@@ -232,21 +235,28 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: C.border,
   },
+  productImage: {
+    width: "100%",
+    height: 190,
+    borderRadius: 20,
+    marginBottom: 14,
+    backgroundColor: "#DDEEFF",
+  },
   productTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   productEmoji: {
     fontSize: 26,
-    backgroundColor: "#FFF4CC",
+    backgroundColor: "#EAF4FF",
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   stockPill: {
-    backgroundColor: "#F1FFF8",
+    backgroundColor: "#EEF6FF",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
-  stockPillText: { color: C.success, fontWeight: "700", fontSize: 12 },
+  stockPillText: { color: C.pink, fontWeight: "700", fontSize: 12 },
   productStore: { color: C.pink, fontWeight: "700", fontSize: 13 },
   productName: { color: C.text, fontSize: 20, fontWeight: "800", marginTop: 6, lineHeight: 28 },
   productMeta: { color: C.textSoft, marginTop: 6, lineHeight: 20 },
@@ -271,7 +281,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: "#FFF0F8",
+    backgroundColor: "#EAF4FF",
     borderWidth: 1,
     borderColor: C.border,
     alignItems: "center",
@@ -305,26 +315,26 @@ const styles = StyleSheet.create({
   textArea: { minHeight: 96, textAlignVertical: "top" },
   summaryCard: {
     marginTop: 16,
-    backgroundColor: "#FFFDF4",
+    backgroundColor: "#EEF6FF",
     borderRadius: 24,
     padding: 18,
     borderWidth: 1,
-    borderColor: "#FFE8B5",
+    borderColor: "#BED9FB",
   },
   summaryRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
   summaryLabel: { color: C.textSoft, fontSize: 14 },
   summaryValue: { color: C.text, fontWeight: "700" },
-  summaryHint: { color: "#C58A00", fontWeight: "700", fontSize: 12 },
-  divider: { height: 1, backgroundColor: "#F6E2AB", marginVertical: 8 },
+  summaryHint: { color: C.pinkDark, fontWeight: "700", fontSize: 12 },
+  divider: { height: 1, backgroundColor: "#CFE1F7", marginVertical: 8 },
   totalLabel: { color: C.text, fontSize: 15, fontWeight: "800" },
   totalValue: { color: C.purple, fontSize: 20, fontWeight: "800" },
   errorBox: {
     marginTop: 16,
-    backgroundColor: "#FFF2F4",
+    backgroundColor: "#FDEFF2",
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: "#FFC7D0",
+    borderColor: "#E6C4CD",
   },
   errorText: { color: C.danger, fontWeight: "700", lineHeight: 20 },
   primaryButton: {
