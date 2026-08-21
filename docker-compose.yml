@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: lab
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      retries: 10
+
+  catalog-service:
+    build: ./services/catalog-service
+    environment:
+      DATABASE_URL: postgres://postgres:lab@postgres:5432/catalog
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+
+  order-service:
+    build: ./services/order-service
+    environment:
+      DATABASE_URL: postgres://postgres:lab@postgres:5432/order
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3002:3002"
