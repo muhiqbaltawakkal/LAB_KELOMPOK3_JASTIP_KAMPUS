@@ -48,6 +48,7 @@ const IMG = {
   paracetamol: require("../assets/products/33_paracetamol_500mg_10_tablet.png"),
   sopSaudara: require("../assets/products/34_sop_saudara_daging_reguler.jpg"),
 };
+
 const CATALOG = [
   { id: 1, toko: "Chatime Losari", nama: "Brown Sugar Boba Milk Tea (L)", kategori: "Minuman", harga: 42000, satuan: "cup", img: IMG.bobaBrown, deskripsi: "Teh susu creamy dengan boba brown sugar legit." },
   { id: 2, toko: "Chatime Losari", nama: "Matcha Latte (M)", kategori: "Minuman", harga: 35000, satuan: "cup", img: IMG.matcha, deskripsi: "Matcha latte premium rasa Jepang." },
