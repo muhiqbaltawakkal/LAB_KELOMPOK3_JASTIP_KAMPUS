@@ -25,6 +25,20 @@ Perintah berikut bersifat destruktif dan hanya untuk Codespaces/lingkungan demo.
 npm run demo:reset-and-seed -- --confirm-reset
 ```
 
+### Menjalankan Expo Go dari Codespaces
+
+Gunakan launcher khusus agar aplikasi di ponsel mengakses gateway Codespaces,
+bukan `localhost` milik ponsel:
+
+```bash
+cd mobile
+npm run start:codespaces
+```
+
+Scan QR baru yang ditampilkan. Port `8080` harus memiliki visibility **Public** agar
+Expo Go dapat mengakses API. Web dan Expo Go menggunakan penyimpanan sesi yang
+berbeda, sehingga login perlu dilakukan sekali pada masing-masing perangkat.
+
 Password semua akun demo adalah `Penjastip2026!` (jangan digunakan di produksi). Empat akun berlabel Penjastip:
 
 | Nama | Email |
