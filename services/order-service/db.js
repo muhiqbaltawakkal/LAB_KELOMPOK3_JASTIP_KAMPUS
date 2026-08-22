@@ -1,7 +1,11 @@
 const { Pool, types } = require("pg");
 types.setTypeParser(20, Number);
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const ready = pool.query(`
+const ready = (async () => {
+  const client = await pool.connect();
+  try {
+    await client.query("SELECT pg_advisory_lock(hashtext('order-service-schema-v1'))");
+    await client.query(`
   CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     nama TEXT NOT NULL,
@@ -86,4 +90,9 @@ const ready = pool.query(`
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
   );
 `);
+  } finally {
+    await client.query("SELECT pg_advisory_unlock(hashtext('order-service-schema-v1'))").catch(() => {});
+    client.release();
+  }
+})();
 module.exports = { pool, ready };
