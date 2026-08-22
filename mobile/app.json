@@ -7,7 +7,6 @@
     "userInterfaceStyle": "dark",
     "plugins": [
       "expo-router",
-      "expo-notifications",
       ["expo-image-picker", { "photosPermission": "Izinkan Jastip Kampus memilih foto produk.", "cameraPermission": "Izinkan Jastip Kampus mengambil foto produk." }]
     ],
     "extra": {

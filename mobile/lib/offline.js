@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
 import { request } from "./api";
 
 const OUTBOX = "jastip:outbox:v1";
@@ -36,11 +35,5 @@ export async function flushOutbox() {
     }
   }
   await AsyncStorage.setItem(OUTBOX, JSON.stringify(remaining));
-  if (sent) {
-    await Notifications.scheduleNotificationAsync({
-      content: { title: "Jastip tersinkron", body: `${sent} aksi offline berhasil dikirim.` },
-      trigger: null,
-    }).catch(() => {});
-  }
   return { sent, remaining: remaining.length };
 }
