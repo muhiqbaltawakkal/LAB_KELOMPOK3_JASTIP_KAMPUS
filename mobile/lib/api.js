@@ -1,6 +1,6 @@
 import Constants from "expo-constants";
 
-const configured = Constants.expoConfig?.extra?.apiUrl || process.env.EXPO_PUBLIC_API_URL;
+const configured = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl;
 export const API_URL = configured || "http://localhost:8080";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

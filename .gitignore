@@ -5,6 +5,8 @@ mobile/dist-test/
 mobile/dist-ci/
 .env
 !.env.example
+mobile/.env
+!mobile/.env.example
 *.log
 *.db
 *.bundle
