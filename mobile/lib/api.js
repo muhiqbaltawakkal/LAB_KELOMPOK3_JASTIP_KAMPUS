@@ -1,20 +1,28 @@
 import Constants from "expo-constants";
 
-const configured = process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl;
+const codespacesGateway = typeof window !== "undefined" && window.location?.hostname?.endsWith(".app.github.dev")
+  ? `${window.location.protocol}//${window.location.hostname.replace(/-\d+\.app\.github\.dev$/, "-8080.app.github.dev")}`
+  : null;
+const configured = codespacesGateway || process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl;
 export const API_URL = configured || "http://localhost:8080";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export async function request(path, { token, headers, retries = 3, ...options } = {}) {
   for (let attempt = 0; ; attempt += 1) {
-    const response = await fetch(`${API_URL}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...headers,
-      },
-    });
+    let response;
+    try {
+      response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...headers,
+        },
+      });
+    } catch {
+      throw new Error(`Tidak dapat terhubung ke API (${API_URL})`);
+    }
     if (response.status === 429 && attempt < retries) {
       const seconds = Number(response.headers.get("Retry-After"));
       await wait(Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 1000 * 2 ** attempt);
