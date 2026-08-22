@@ -3,6 +3,7 @@ const { DatabaseSync } = require("node:sqlite");
 const { createClient } = require("redis");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const os = require("node:os");
 
 const app = express();
 app.use(express.json());
