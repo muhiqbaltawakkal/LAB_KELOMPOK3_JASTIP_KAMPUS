@@ -9,9 +9,6 @@
       "expo-router",
       ["expo-image-picker", { "photosPermission": "Izinkan Jastip Kampus memilih foto produk.", "cameraPermission": "Izinkan Jastip Kampus mengambil foto produk." }]
     ],
-    "extra": {
-      "apiUrl": "http://192.168.110.245:8080"
-    },
     "android": {
       "package": "com.kelompok3.jastipkampus"
     }
