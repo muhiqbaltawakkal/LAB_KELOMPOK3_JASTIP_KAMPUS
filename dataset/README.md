@@ -1,7 +1,6 @@
 # Dataset — Jastip Kampus
 
-Folder ini berisi seed data (data awal) untuk seluruh microservice.
-Data ini digunakan langsung dari memori pada **Lapisan 1** dan akan dipindahkan ke database pada **Lapisan 2**.
+Sumber resmi seed demo adalah `JastipKampus_Dataset.xlsx` dan 34 foto pada `JastipKampus_Gambar_Produk`. Manifest runtime hasil normalisasi berada pada `demo-seed.js`. File JSON lama dipertahankan sebagai arsip dan tidak dipakai karena berbeda dari workbook; lihat `docs/DATASET-AUDIT.md`.
 
 **Dibuat oleh:** Rizki Amalia Rasyid (105841121223) — Data & Persistence Engineer
 
