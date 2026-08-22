@@ -1,0 +1,9 @@
+{
+  "name": "jastip-kampus",
+  "private": true,
+  "scripts": {
+    "bootstrap:admin": "npm --prefix services/order-service run bootstrap:admin",
+    "test": "npm --prefix services/catalog-service test && npm --prefix services/order-service test",
+    "test:web": "npm --prefix mobile run export:web"
+  }
+}

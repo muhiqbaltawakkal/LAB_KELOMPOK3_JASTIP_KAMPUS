@@ -2,7 +2,7 @@
   "name": "order-service",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": { "start": "node index.js", "test": "node --test" },
+  "scripts": { "start": "node index.js", "test": "node --test", "bootstrap:admin": "node bootstrap-admin.js" },
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1",

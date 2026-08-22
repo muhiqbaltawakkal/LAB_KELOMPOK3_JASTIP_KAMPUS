@@ -1,4 +1,11 @@
 node_modules/
+mobile/.expo-test/
+mobile/.expo-admin-test/
+mobile/dist-test/
+mobile/dist-ci/
 .env
+!.env.example
 *.log
 *.db
+*.bundle
+**/uploads/

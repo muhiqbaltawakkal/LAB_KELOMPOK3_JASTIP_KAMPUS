@@ -383,3 +383,15 @@ Sistem wajib menegakkan aturan berikut setiap saat:
 Project ini dikembangkan sebagai proyek pembelajaran arsitektur **Microservices** dengan studi kasus nyata **Jastip Kampus**.
 
 **Fokus utama:** menjaga **konsistensi kapasitas titipan penjastip** ketika terjadi banyak permintaan secara bersamaan — menguji ketahanan sistem terhadap kondisi *high concurrency*.
+# Admin dashboard
+
+Akun admin tidak dapat dibuat dari registrasi publik. Jalankan order-service sekali agar migrasi diterapkan, lalu dari root project gunakan PowerShell:
+
+```powershell
+$env:ADMIN_NAME="Administrator"
+$env:ADMIN_EMAIL="admin@jastip.local"
+$env:ADMIN_PASSWORD="ganti-dengan-password-kuat"
+npm run bootstrap:admin
+```
+
+Jika service memakai lokasi database khusus, set juga `DB_PATH` ke file `order.db` yang sama. Pada Docker, jalankan bootstrap di container order-service dengan ketiga environment variable tersebut. Setelah login dari Expo/web, role admin otomatis membuka dashboard responsif.
