@@ -1,795 +1,1456 @@
-import React, { useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, FlatList, Image,
-  StyleSheet, StatusBar, KeyboardAvoidingView, Platform, useWindowDimensions,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { getDaftarBarang, getDaftarToko, login } from "./api/endpoints";
+import TransaksiScreen from "./screens/TransaksiScreen";
+import SuksesScreen from "./screens/SuksesScreen";
+
+const Stack = createNativeStackNavigator();
 
 const C = {
-  primary: "#0B5FFF", primaryDark: "#0847C7", primarySoft: "#E8F0FF",
-  accent: "#00A86B", accentSoft: "#E6F8F0", warn: "#E67E22", warnSoft: "#FFF4E8",
-  danger: "#E74C3C", dangerSoft: "#FDECEC", bg: "#F5F7FB", surface: "#FFFFFF",
-  border: "#E3E8F2", text: "#0F172A", muted: "#64748B", light: "#F1F5F9", ink: "#1E293B",
+  bg: "#F4F9FF",
+  bgSoft: "#EAF4FF",
+  surface: "#FFFFFF",
+  surfaceAlt: "#EAF3FF",
+  border: "#C9DDF4",
+  borderStrong: "#90B8E8",
+  pink: "#0B63CE",
+  pinkDark: "#0A3E7C",
+  purple: "#1B88E5",
+  mint: "#D9ECFF",
+  sky: "#79B8FF",
+  lemon: "#E7F3FF",
+  peach: "#D5E8FF",
+  success: "#2FA36B",
+  danger: "#D95C74",
+  text: "#17375E",
+  textSoft: "#5C7DA4",
 };
 
-const IMG = {
-  bobaBrown: require("../assets/products/01_brown_sugar_boba_milk_tea_L.jpg"),
-  matcha: require("../assets/products/02_matcha_latte_M.jpeg"),
-  tigerBoba: require("../assets/products/03_tiger_sugar_boba.jpg"),
-  taro: require("../assets/products/04_taro_milk_tea_L.jpg"),
-  mieTiti: require("../assets/products/05_mie_titi_original_reguler.jpg"),
-  mieTitiJumbo: require("../assets/products/06_mie_titi_spesial_jumbo.jpg"),
-  esTeh: require("../assets/products/07_es_teh_manis.jpg"),
-  novel: require("../assets/products/08_novel_terlaris_bulan_ini.jpeg"),
-  bukuTulis: require("../assets/products/09_buku_tulis_sinar_dunia_40_lembar.jpeg"),
-  pulpen: require("../assets/products/10_pulpen_pilot_g2_hitam.jpeg"),
-  spidol: require("../assets/products/11_spidol_snowman_whiteboard.jpeg"),
-  buds: require("../assets/products/12_samsung_galaxy_buds_fe.jpeg"),
-  charger: require("../assets/products/13_samsung_25w_typec_charger.jpg"),
-  caseA55: require("../assets/products/14_samsung_clear_case_galaxy_a55.webp"),
-  indomie: require("../assets/products/15_mie_instan_indomie_goreng.jpg"),
-  aqua: require("../assets/products/16_aqua_air_mineral_600ml.webp"),
-  chitato: require("../assets/products/17_snack_chitato_sapi_panggang.jpeg"),
-  pocari: require("../assets/products/18_pocari_sweat_500ml.webp"),
-  pallubasaSapi: require("../assets/products/19_pallubasa_sapi_spesial.webp"),
-  pallubasaAyam: require("../assets/products/20_pallubasa_ayam.webp"),
-  americano: require("../assets/products/21_americano_hot.jpg"),
-  kopiAren: require("../assets/products/22_kopi_susu_gula_aren.jpg"),
-  esKopi: require("../assets/products/23_es_kopi_hitam.jpg"),
-  mcflurry: require("../assets/products/24_mcflurry_oreo.jpeg"),
-  mcchicken: require("../assets/products/25_paket_mcchicken_value.jpg"),
-  fries: require("../assets/products/26_french_fries_large.jpeg"),
-  pisangIjo: require("../assets/products/27_es_pisang_ijo_original.jpg"),
-  goodday: require("../assets/products/28_goodday_kopi_sachet_10pcs.jpg"),
-  kfc: require("../assets/products/29_kfc_original_2pcs.jpg"),
-  akuntansi: require("../assets/products/30_buku_kuliah_akuntansi_dasar.jpeg"),
-  pisangGoreng: require("../assets/products/31_pisang_goreng_keju.jpeg"),
-  tumbler: require("../assets/products/32_miniso_tumbler_500ml.jpeg"),
-  paracetamol: require("../assets/products/33_paracetamol_500mg_10_tablet.png"),
-  sopSaudara: require("../assets/products/34_sop_saudara_daging_reguler.jpg"),
+const ROLE_CONTENT = {
+  penitip: {
+    icon: "🛍️",
+    title: "Penitip",
+    subtitle: "Titipkan barang favoritmu tanpa keluar kampus",
+    heroTitle: "Mau jastip apa hari ini?",
+    heroSubtitle: "Pilih toko, pilih barang, lalu kirim titipan ke penjastip terpercaya.",
+    cta: "Ajukan Titipan",
+  },
+  penjastip: {
+    icon: "🛵",
+    title: "Penjastip",
+    subtitle: "Buka sesi jastip dan terima permintaan belanja",
+    heroTitle: "Kelola sesi jastipmu",
+    heroSubtitle: "Atur toko, batas waktu, dan kapasitas untuk menerima titipan masuk.",
+    cta: "Buka Sesi Jastip",
+  },
 };
-const CATALOG = [
-  { id: 1, toko: "Chatime Losari", nama: "Brown Sugar Boba Milk Tea (L)", kategori: "Minuman", harga: 42000, satuan: "cup", img: IMG.bobaBrown, deskripsi: "Teh susu creamy dengan boba brown sugar legit." },
-  { id: 2, toko: "Chatime Losari", nama: "Matcha Latte (M)", kategori: "Minuman", harga: 35000, satuan: "cup", img: IMG.matcha, deskripsi: "Matcha latte premium rasa Jepang." },
-  { id: 3, toko: "Chatime Losari", nama: "Tiger Sugar Boba", kategori: "Minuman", harga: 40000, satuan: "cup", img: IMG.tigerBoba, deskripsi: "Signature tiger sugar dengan boba kenyal." },
-  { id: 4, toko: "Chatime Losari", nama: "Taro Milk Tea (L)", kategori: "Minuman", harga: 38000, satuan: "cup", img: IMG.taro, deskripsi: "Taro milk tea creamy ukuran large." },
-  { id: 5, toko: "Mie Titi Makassar", nama: "Mie Titi Original Reguler", kategori: "Makanan", harga: 35000, satuan: "porsi", img: IMG.mieTiti, deskripsi: "Mie kering khas Makassar kuah kental." },
-  { id: 6, toko: "Mie Titi Makassar", nama: "Mie Titi Spesial Jumbo", kategori: "Makanan", harga: 55000, satuan: "porsi", img: IMG.mieTitiJumbo, deskripsi: "Porsi jumbo topping lengkap." },
-  { id: 7, toko: "Mie Titi Makassar", nama: "Es Teh Manis", kategori: "Minuman", harga: 8000, satuan: "gelas", img: IMG.esTeh, deskripsi: "Es teh manis segar pelengkap makan." },
-  { id: 8, toko: "Gramedia Karebosi", nama: "Novel Terlaris Bulan Ini", kategori: "Buku", harga: 89000, satuan: "pcs", img: IMG.novel, deskripsi: "Rekomendasi novel best seller terkini." },
-  { id: 9, toko: "Gramedia Karebosi", nama: "Buku Tulis Sinar Dunia 40 Lembar", kategori: "Alat Tulis", harga: 5500, satuan: "pcs", img: IMG.bukuTulis, deskripsi: "Buku tulis SIDU 40 lembar." },
-  { id: 10, toko: "Gramedia Karebosi", nama: "Pulpen Pilot G2 Hitam", kategori: "Alat Tulis", harga: 25000, satuan: "pcs", img: IMG.pulpen, deskripsi: "Pulpen gel halus tinta hitam." },
-  { id: 11, toko: "Gramedia Karebosi", nama: "Spidol Snowman Whiteboard", kategori: "Alat Tulis", harga: 12000, satuan: "pcs", img: IMG.spidol, deskripsi: "Spidol papan tulis mudah dihapus." },
-  { id: 12, toko: "Samsung Experience Store", nama: "Samsung Galaxy Buds FE", kategori: "Elektronik", harga: 799000, satuan: "pcs", img: IMG.buds, deskripsi: "Earphone wireless resmi Samsung." },
-  { id: 13, toko: "Samsung Experience Store", nama: "Samsung 25W Type-C Charger", kategori: "Elektronik", harga: 250000, satuan: "pcs", img: IMG.charger, deskripsi: "Charger cepat 25W USB-C original." },
-  { id: 14, toko: "Samsung Experience Store", nama: "Clear Case Galaxy A55", kategori: "Elektronik", harga: 149000, satuan: "pcs", img: IMG.caseA55, deskripsi: "Case transparan pelindung Galaxy A55." },
-  { id: 15, toko: "Indomaret Tamalanrea", nama: "Indomie Goreng", kategori: "Kebutuhan", harga: 3500, satuan: "bungkus", img: IMG.indomie, deskripsi: "Mie instan goreng favorit mahasiswa." },
-  { id: 16, toko: "Indomaret Tamalanrea", nama: "Aqua 600ml", kategori: "Minuman", harga: 4500, satuan: "botol", img: IMG.aqua, deskripsi: "Air mineral kemasan 600ml." },
-  { id: 17, toko: "Indomaret Tamalanrea", nama: "Chitato Sapi Panggang", kategori: "Kebutuhan", harga: 12000, satuan: "pcs", img: IMG.chitato, deskripsi: "Snack kentang rasa sapi panggang." },
-  { id: 18, toko: "Alfamart Perintis", nama: "Pocari Sweat 500ml", kategori: "Minuman", harga: 8000, satuan: "botol", img: IMG.pocari, deskripsi: "Minuman isotonik penyegar." },
-  { id: 19, toko: "Warung Pallubasa Serigala", nama: "Pallubasa Sapi Spesial", kategori: "Makanan", harga: 40000, satuan: "mangkuk", img: IMG.pallubasaSapi, deskripsi: "Pallubasa daging sapi kuah santan." },
-  { id: 20, toko: "Warung Pallubasa Serigala", nama: "Pallubasa Ayam", kategori: "Makanan", harga: 32000, satuan: "mangkuk", img: IMG.pallubasaAyam, deskripsi: "Pallubasa ayam khas Makassar." },
-  { id: 21, toko: "Kopi Kanneng", nama: "Americano Hot", kategori: "Minuman", harga: 22000, satuan: "cup", img: IMG.americano, deskripsi: "Espresso hot dengan air panas." },
-  { id: 22, toko: "Kopi Kanneng", nama: "Kopi Susu Gula Aren", kategori: "Minuman", harga: 25000, satuan: "cup", img: IMG.kopiAren, deskripsi: "Kopi susu manis gula aren." },
-  { id: 23, toko: "Kopi Kanneng", nama: "Es Kopi Hitam", kategori: "Minuman", harga: 18000, satuan: "cup", img: IMG.esKopi, deskripsi: "Kopi hitam dingin tanpa gula." },
-  { id: 24, toko: "McDonald's Panakkukang", nama: "McFlurry Oreo", kategori: "Makanan", harga: 27000, satuan: "cup", img: IMG.mcflurry, deskripsi: "Es krim lembut topping Oreo." },
-  { id: 25, toko: "McDonald's Panakkukang", nama: "Paket McChicken Value", kategori: "Makanan", harga: 45000, satuan: "paket", img: IMG.mcchicken, deskripsi: "McChicken + fries + minuman." },
-  { id: 26, toko: "McDonald's Panakkukang", nama: "French Fries Large", kategori: "Makanan", harga: 28000, satuan: "pcs", img: IMG.fries, deskripsi: "Kentang goreng ukuran large." },
-  { id: 27, toko: "Es Pisang Ijo Anugerah", nama: "Es Pisang Ijo Original", kategori: "Makanan", harga: 18000, satuan: "porsi", img: IMG.pisangIjo, deskripsi: "Pisang ijo santan khas Makassar." },
-  { id: 28, toko: "Indomaret Tamalanrea", nama: "Good Day Kopi Sachet 10pcs", kategori: "Kebutuhan", harga: 12000, satuan: "pack", img: IMG.goodday, deskripsi: "Kopi sachet siap seduh 10 pcs." },
-  { id: 29, toko: "KFC Panakkukang", nama: "KFC Original 2pcs", kategori: "Makanan", harga: 42000, satuan: "paket", img: IMG.kfc, deskripsi: "Ayam goreng original 2 potong." },
-  { id: 30, toko: "Gramedia Karebosi", nama: "Buku Kuliah Akuntansi Dasar", kategori: "Buku", harga: 95000, satuan: "pcs", img: IMG.akuntansi, deskripsi: "Buku pengantar akuntansi dasar." },
-  { id: 31, toko: "Es Pisang Ijo Anugerah", nama: "Pisang Goreng Keju", kategori: "Makanan", harga: 15000, satuan: "porsi", img: IMG.pisangGoreng, deskripsi: "Pisang goreng renyah tabur keju." },
-  { id: 32, toko: "Miniso Panakkukang", nama: "Miniso Tumbler 500ml", kategori: "Aksesoris", harga: 89000, satuan: "pcs", img: IMG.tumbler, deskripsi: "Tumbler stylish tahan panas/dingin." },
-  { id: 33, toko: "Apotik Kimia Farma", nama: "Paracetamol 500mg (10 Tablet)", kategori: "Kesehatan", harga: 8000, satuan: "strip", img: IMG.paracetamol, deskripsi: "Obat penurun demam & pereda nyeri." },
-  { id: 34, toko: "Sop Saudara", nama: "Sop Saudara Daging Reguler", kategori: "Makanan", harga: 35000, satuan: "mangkuk", img: IMG.sopSaudara, deskripsi: "Sop saudara daging kuah gurih." },
+
+const KATEGORI_IKON = {
+  "Minuman Kekinian": "🧋",
+  "Makanan Khas": "🍜",
+  "Buku & Alat Tulis": "📚",
+  Elektronik: "📱",
+  Minimarket: "🛒",
+  "Kuliner Khas": "🍌",
+  "Kafe & Kopi": "☕",
+  "Fast Food": "🍔",
+  "Lifestyle & Aksesoris": "🎀",
+  "Apotek & Kesehatan": "💊",
+  Umum: "🎁",
+};
+
+const REGISTER_DEFAULT = {
+  nama: "",
+  email: "",
+  noHp: "",
+  kampus: "",
+  password: "",
+  peran: "penitip",
+};
+
+const LOGIN_DEFAULT = {
+  email: "",
+  password: "",
+  peran: "penitip",
+  nama: "",
+};
+
+const DEMO_TOKO = [
+  { id: 1, nama: "Chatime Losari", alamat: "Pantai Losari, Makassar", kategori: "Minuman Kekinian" },
+  { id: 2, nama: "Mie Titi Makassar", alamat: "Jl. Irian No.18, Makassar", kategori: "Makanan Khas" },
+  { id: 3, nama: "Gramedia Karebosi", alamat: "Mall Karebosi Link, Makassar", kategori: "Buku & Alat Tulis" },
+  { id: 4, nama: "Samsung Experience Store MaRI", alamat: "Mall Ratu Indah, Makassar", kategori: "Elektronik" },
 ];
 
-const TOKO_OPTIONS = [
-  "Chatime Losari", "Mie Titi Makassar", "Gramedia Karebosi", "Samsung Experience Store",
-  "Indomaret Tamalanrea", "Alfamart Perintis", "Warung Pallubasa Serigala", "Kopi Kanneng",
-  "McDonald's Panakkukang", "Es Pisang Ijo Anugerah", "KFC Panakkukang", "Miniso Panakkukang",
-  "Apotik Kimia Farma", "Sop Saudara",
+const DEMO_ITEMS = [
+  { id: 1, toko_id: 1, nama: "Brown Sugar Boba Milk Tea (L)", harga: 42000, stok: 18, satuan: "pcs" },
+  { id: 2, toko_id: 1, nama: "Matcha Latte (M)", harga: 35000, stok: 14, satuan: "pcs" },
+  { id: 3, toko_id: 2, nama: "Mie Titi Original (Reguler)", harga: 35000, stok: 12, satuan: "pcs" },
+  { id: 4, toko_id: 2, nama: "Es Teh Manis", harga: 8000, stok: 30, satuan: "pcs" },
+  { id: 5, toko_id: 3, nama: "Novel Terlaris Gramedia", harga: 89000, stok: 10, satuan: "pcs" },
+  { id: 6, toko_id: 4, nama: "Samsung Galaxy Buds FE", harga: 799000, stok: 7, satuan: "pcs" },
 ];
 
-const DEFAULT_SESI = [
-  { id: "S003", penjastip: "Andi", toko: "Indomaret Tamalanrea", batas: "19:00", kapasitas: 15, diisi: 3 },
-  { id: "S004", penjastip: "Sari", toko: "Kopi Kanneng", batas: "16:00", kapasitas: 12, diisi: 4 },
-  { id: "S005", penjastip: "Bima", toko: "McDonald's Panakkukang", batas: "20:00", kapasitas: 10, diisi: 2 },
-  { id: "S006", penjastip: "Rina", toko: "Chatime Losari", batas: "18:30", kapasitas: 12, diisi: 5 },
-];
+function formatRupiah(angka = 0) {
+  return `Rp ${Number(angka || 0).toLocaleString("id-ID")}`;
+}
 
-const rp = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+function capitalizeWords(teks = "") {
+  return teks
+    .split(" ")
+    .filter(Boolean)
+    .map((kata) => kata.charAt(0).toUpperCase() + kata.slice(1))
+    .join(" ");
+}
 
-function Badge({ label, color = C.primary, bg }) {
+function getProductImagePrompt(name = "", category = "", storeName = "") {
+  const cleanName = String(name || "product").trim();
+  const cleanCategory = String(category || "shopping").trim();
+  const cleanStore = String(storeName || "").trim();
+
+  // Prompt dibuat dari NAMA PRODUK, bukan hanya kategori.
+  // Ini jauh lebih relevan daripada loremflickr yang sering mengembalikan
+  // foto acak yang tidak berhubungan dengan produk.
+  return [
+    "professional ecommerce product photo",
+    cleanName,
+    cleanCategory,
+    cleanStore,
+    "single product centered",
+    "front view",
+    "clean light background",
+    "realistic",
+    "high detail",
+    "no people",
+    "no text",
+    "no watermark",
+  ].filter(Boolean).join(", ");
+}
+
+function buildGeneratedProductImageUrl(item, category, storeName = "") {
+  const prompt = getProductImagePrompt(item.nama, category, storeName);
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=900&height=650&nologo=true&seed=${item.id}`;
+}
+
+function getBackendImage(item = {}) {
+  // Dukung beberapa nama field umum dari backend.
   return (
-    <View style={[st.badge, { backgroundColor: bg || color + "18" }]}>
-      <Text style={[st.badgeText, { color }]}>{label}</Text>
-    </View>
+    item.imageUrl ||
+    item.image_url ||
+    item.image ||
+    item.gambar ||
+    item.gambar_url ||
+    item.foto ||
+    item.foto_url ||
+    item.photo ||
+    item.thumbnail ||
+    null
   );
 }
 
-function SvcTag({ name }) {
-  const map = {
-    "order-service": { bg: "#EEF4FF", c: "#1D4ED8" },
-    "catalog-service": { bg: "#ECFDF5", c: "#047857" },
-    "payment-service": { bg: "#FFF7ED", c: "#C2410C" },
-    "tracking-service": { bg: "#F5F3FF", c: "#6D28D9" },
+function buildItemViewModel(items, tokoList) {
+  const tokoMap = new Map((tokoList || []).map((toko) => [toko.id, toko]));
+
+  return (items || []).map((item) => {
+    const toko = tokoMap.get(item.toko_id) || {};
+    const kategori = toko.kategori || item.kategori || "Umum";
+    const tokoNama = toko.nama || item.toko_nama || `Toko #${item.toko_id}`;
+
+    // Jika backend sudah memiliki foto produk, PAKAI FOTO ASLI.
+    // Jika belum ada, fallback ke gambar yang dibuat berdasarkan nama produk.
+    const backendImage = getBackendImage(item);
+
+    return {
+      ...item,
+      kategori,
+      toko_nama: tokoNama,
+      toko_alamat: toko.alamat || item.toko_alamat || "-",
+      kategoriIkon: KATEGORI_IKON[kategori] || KATEGORI_IKON.Umum,
+      imageUrl: backendImage || buildGeneratedProductImageUrl(item, kategori, tokoNama),
+      imageIsBackend: Boolean(backendImage),
+    };
+  });
+}
+
+function ProductImage({ item, style }) {
+  const [uri, setUri] = useState(item.imageUrl);
+
+  useEffect(() => {
+    setUri(item.imageUrl);
+  }, [item.imageUrl]);
+
+  function handleImageError() {
+    const fallback = buildGeneratedProductImageUrl(
+      { ...item, id: `${item.id}-fallback` },
+      item.kategori,
+      item.toko_nama
+    );
+    if (uri !== fallback) setUri(fallback);
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={style}
+      resizeMode="cover"
+      onError={handleImageError}
+    />
+  );
+}
+
+function StatCard({ label, value, tone }) {
+  const mapTone = {
+    pink: { bg: "#EEF6FF", border: "#B9D8F8" },
+    purple: { bg: "#E8F3FF", border: "#C3DCF8" },
+    mint: { bg: "#F3F9FF", border: "#D2E6FB" },
+    lemon: { bg: "#ECF6FF", border: "#C8DEFA" },
   };
-  const col = map[name] || { bg: C.light, c: C.muted };
+  const toneStyle = mapTone[tone] || mapTone.pink;
   return (
-    <View style={[st.svcTag, { backgroundColor: col.bg }]}>
-      <Text style={[st.svcText, { color: col.c }]}>{name}</Text>
+    <View style={[shared.statCard, { backgroundColor: toneStyle.bg, borderColor: toneStyle.border }]}>
+      <Text style={shared.statValue}>{value}</Text>
+      <Text style={shared.statLabel}>{label}</Text>
     </View>
   );
 }
 
-function Btn({ label, onPress, style, outline, danger, success, disabled }) {
-  let bg = C.primary; let tc = "#fff"; let borderColor = "transparent";
-  if (outline) { bg = "#fff"; tc = C.primary; borderColor = C.primary; }
-  if (danger) { bg = outline ? "#fff" : C.danger; tc = outline ? C.danger : "#fff"; borderColor = C.danger; }
-  if (success) { bg = outline ? "#fff" : C.accent; tc = outline ? C.accent : "#fff"; borderColor = C.accent; }
+function SectionHeader({ eyebrow, title, subtitle }) {
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.85}
-      style={[st.btn, { backgroundColor: bg, borderColor, opacity: disabled ? 0.5 : 1 }, style]}>
-      <Text style={[st.btnText, { color: tc }]}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-function Input({ label, ...props }) {
-  return (
-    <View style={{ marginBottom: 14 }}>
-      {label ? <Text style={st.label}>{label}</Text> : null}
-      <TextInput style={st.input} placeholderTextColor="#94A3B8" {...props} />
+    <View style={shared.sectionHeader}>
+      <Text style={shared.eyebrow}>{eyebrow}</Text>
+      <Text style={shared.sectionTitle}>{title}</Text>
+      {subtitle ? <Text style={shared.sectionSubtitle}>{subtitle}</Text> : null}
     </View>
   );
 }
 
-function ScreenShell({ children }) {
+function AuthScreen({ navigation }) {
+  const [tab, setTab] = useState("register");
+  const [registerForm, setRegisterForm] = useState(REGISTER_DEFAULT);
+  const [loginForm, setLoginForm] = useState(LOGIN_DEFAULT);
+  const [memuat, setMemuat] = useState(false);
+  const [pesan, setPesan] = useState(null);
+
+  function setRegisterField(key, value) {
+    setRegisterForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function setLoginField(key, value) {
+    setLoginForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function handleRegister() {
+    const wajib = ["nama", "email", "noHp", "kampus", "password"];
+    const belumIsi = wajib.find((field) => !registerForm[field].trim());
+    if (belumIsi) {
+      setPesan({ type: "error", text: "Semua field registrasi wajib diisi." });
+      return;
+    }
+    setPesan({ type: "success", text: "Akun demo berhasil dibuat. Sekarang login untuk masuk ke aplikasi." });
+    setLoginForm({
+      email: registerForm.email,
+      password: registerForm.password,
+      peran: registerForm.peran,
+      nama: registerForm.nama,
+    });
+    setTab("login");
+  }
+
+  async function handleLogin() {
+    if (!loginForm.email.trim() || !loginForm.password.trim()) {
+      setPesan({ type: "error", text: "Email dan password wajib diisi." });
+      return;
+    }
+
+    setMemuat(true);
+    setPesan(null);
+
+    try {
+      let authToken = null;
+      let modeDemoAuth = false;
+
+      try {
+        const auth = await login(
+          loginForm.peran === "penjastip" ? "jastip" : loginForm.email.trim()
+        );
+        authToken = auth.token;
+      } catch {
+        modeDemoAuth = true;
+      }
+
+      navigation.replace("Beranda", {
+        peran: loginForm.peran,
+        token: authToken,
+        demoAuth: modeDemoAuth,
+        profil: {
+          nama: capitalizeWords(loginForm.nama || loginForm.email.split("@")[0] || "Pengguna"),
+          email: loginForm.email.trim(),
+          kampus: registerForm.kampus || "Kampus Makassar",
+        },
+      });
+    } finally {
+      setMemuat(false);
+    }
+  }
+
   return (
-    <SafeAreaView style={st.root} edges={["top", "left", "right", "bottom"]}>
+    <SafeAreaView style={auth.screen}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
-      <KeyboardAvoidingView style={st.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView
-          style={st.screen}
-          contentContainerStyle={st.container}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {children}
-        </ScrollView>
-      </KeyboardAvoidingView>
+      <ScrollView contentContainerStyle={auth.scroll} showsVerticalScrollIndicator={false}>
+        <View style={auth.heroCard}>
+          <Text style={auth.heroEmoji}>🎓</Text>
+          <Text style={auth.heroTitle}>Jastip Kampus</Text>
+          <Text style={auth.heroSubtitle}>
+              Titip belanja dari kampus dengan mudah, cepat, dan terpercaya.
+          </Text>
+        </View>
+
+        <View style={auth.tabRow}>
+          <TouchableOpacity
+            style={[auth.tabButton, tab === "register" && auth.tabButtonActive]}
+            onPress={() => setTab("register")}
+          >
+            <Text style={[auth.tabText, tab === "register" && auth.tabTextActive]}>Register</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[auth.tabButton, tab === "login" && auth.tabButtonActive]}
+            onPress={() => setTab("login")}
+          >
+            <Text style={[auth.tabText, tab === "login" && auth.tabTextActive]}>Login</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={auth.formCard}>
+          {tab === "register" ? (
+            <>
+              <SectionHeader
+                eyebrow="Langkah 1"
+                title="Buat akun baru"
+                subtitle="Isi data diri kamu untuk mulai menggunakan Jastip Kampus."
+              />
+              <TextInput
+                style={auth.input}
+                placeholder="Nama lengkap"
+                placeholderTextColor={C.textSoft}
+                value={registerForm.nama}
+                onChangeText={(value) => setRegisterField("nama", value)}
+              />
+              <TextInput
+                style={auth.input}
+                placeholder="Email"
+                placeholderTextColor={C.textSoft}
+                keyboardType="email-address"
+                value={registerForm.email}
+                onChangeText={(value) => setRegisterField("email", value)}
+              />
+              <TextInput
+                style={auth.input}
+                placeholder="No. HP"
+                placeholderTextColor={C.textSoft}
+                keyboardType="phone-pad"
+                value={registerForm.noHp}
+                onChangeText={(value) => setRegisterField("noHp", value)}
+              />
+              <TextInput
+                style={auth.input}
+                placeholder="Asal kampus"
+                placeholderTextColor={C.textSoft}
+                value={registerForm.kampus}
+                onChangeText={(value) => setRegisterField("kampus", value)}
+              />
+              <TextInput
+                style={auth.input}
+                placeholder="Password"
+                placeholderTextColor={C.textSoft}
+                secureTextEntry
+                value={registerForm.password}
+                onChangeText={(value) => setRegisterField("password", value)}
+              />
+
+              <Text style={auth.roleLabel}>Pilih peran</Text>
+              <View style={auth.roleRow}>
+                {["penitip", "penjastip"].map((peran) => (
+                  <TouchableOpacity
+                    key={peran}
+                    style={[
+                      auth.roleCard,
+                      registerForm.peran === peran && auth.roleCardActive,
+                    ]}
+                    onPress={() => setRegisterField("peran", peran)}
+                  >
+                    <Text style={auth.roleIcon}>{ROLE_CONTENT[peran].icon}</Text>
+                    <Text style={auth.roleTitle}>{ROLE_CONTENT[peran].title}</Text>
+                    <Text style={auth.roleSubtitle}>{ROLE_CONTENT[peran].subtitle}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity style={auth.primaryButton} onPress={handleRegister}>
+                <Text style={auth.primaryButtonText}>Buat Akun</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <SectionHeader
+                eyebrow="Langkah 2"
+                title="Login ke aplikasi"
+                subtitle="Masuk sesuai peran untuk melihat tampilan yang sesuai."
+              />
+              <TextInput
+                style={auth.input}
+                placeholder="Email"
+                placeholderTextColor={C.textSoft}
+                keyboardType="email-address"
+                value={loginForm.email}
+                onChangeText={(value) => setLoginField("email", value)}
+              />
+              <TextInput
+                style={auth.input}
+                placeholder="Password"
+                placeholderTextColor={C.textSoft}
+                secureTextEntry
+                value={loginForm.password}
+                onChangeText={(value) => setLoginField("password", value)}
+              />
+
+              <Text style={auth.roleLabel}>Masuk sebagai</Text>
+              <View style={auth.rolePillRow}>
+                {["penitip", "penjastip"].map((peran) => (
+                  <TouchableOpacity
+                    key={peran}
+                    style={[
+                      auth.rolePill,
+                      loginForm.peran === peran && auth.rolePillActive,
+                    ]}
+                    onPress={() => setLoginField("peran", peran)}
+                  >
+                    <Text style={auth.rolePillText}>
+                      {ROLE_CONTENT[peran].icon} {ROLE_CONTENT[peran].title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[auth.primaryButton, memuat && auth.buttonDisabled]}
+                onPress={handleLogin}
+                disabled={memuat}
+              >
+                {memuat ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={auth.primaryButtonText}>Masuk Sekarang</Text>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
+
+          {pesan ? (
+            <View
+              style={[
+                auth.noticeBox,
+                pesan.type === "error" ? auth.noticeError : auth.noticeSuccess,
+              ]}
+            >
+              <Text
+                style={[
+                  auth.noticeText,
+                  pesan.type === "error" ? auth.noticeTextError : auth.noticeTextSuccess,
+                ]}
+              >
+                {pesan.text}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-function TopBar({ title, right, onBack }) {
-  return (
-    <View style={st.topBar}>
-      <View style={st.topBarLeft}>
-        {onBack ? (
-          <TouchableOpacity onPress={onBack} style={st.backBtn}><Text style={st.backBtnText}>←</Text></TouchableOpacity>
-        ) : null}
-        <Text style={st.topBarTitle}>{title}</Text>
-      </View>
-      {right || null}
-    </View>
-  );
-}
+function PenitipDashboard({
+  profil,
+  navigation,
+  filteredItems,
+  tokoList,
+  selectedStoreId,
+  setSelectedStoreId,
+  kategoriAktif,
+  setKategoriAktif,
+  daftarKategori,
+  cari,
+  setCari,
+  modeDemo,
+  demoReason,
+}) {
+  const tokoUnggulan = [{ id: "Semua", nama: "Semua Toko", kategori: "Semua katalog" }, ...tokoList.slice(0, 5)];
 
-function BrandHeader({ subtitle }) {
-  return (
-    <View style={st.brandWrap}>
-      <View style={st.logoCircle}><Text style={st.logoIcon}>🛵</Text></View>
-      <Text style={st.appTitle}>JastipKampus</Text>
-      {subtitle ? <Text style={st.sub}>{subtitle}</Text> : null}
-    </View>
-  );
-}
-
-function WelcomeScreen({ onNavigate, hasAccount }) {
-  return (
-    <ScreenShell>
-      <View style={st.heroPanel}>
-        <Text style={st.heroEyebrow}>JASTIP ANTAR MAHASISWA</Text>
-        <Text style={st.heroTitle}>Belanja kampus jadi lebih gampang</Text>
-        <Text style={st.heroDesc}>Titip belanja ke teman se-kampus, buka sesi jastip, tawar harga, bayar aman, dan lacak status sampai barang diterima.</Text>
-        <View style={st.heroStats}>
-          <View style={st.statBox}><Text style={st.statNum}>{CATALOG.length}</Text><Text style={st.statLabel}>Produk</Text></View>
-          <View style={st.statBox}><Text style={st.statNum}>{TOKO_OPTIONS.length}</Text><Text style={st.statLabel}>Toko</Text></View>
-          <View style={st.statBox}><Text style={st.statNum}>4</Text><Text style={st.statLabel}>Layanan</Text></View>
+  const header = (
+    <View>
+      <View style={penitip.heroCard}>
+        <View style={penitip.heroTag}>
+          <Text style={penitip.heroTagText}>Dashboard Penitip</Text>
+        </View>
+        <Text style={penitip.heroTitle}>Halo, {profil.nama || "Mahasiswa"} 👋</Text>
+        <Text style={penitip.heroSubtitle}>{ROLE_CONTENT.penitip.heroSubtitle}</Text>
+        <View style={penitip.heroStatsRow}>
+          <StatCard label="Barang Ready" value={filteredItems.length} tone="pink" />
+          <StatCard label="Toko Aktif" value={tokoList.length} tone="purple" />
+          <StatCard label="Kategori" value={daftarKategori.length - 1} tone="mint" />
         </View>
       </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Mulai sekarang</Text>
-        <Text style={st.mutedLine}>Buat akun dulu sebelum masuk ke aplikasi.</Text>
-        <Btn label="Daftar Akun Baru" onPress={() => onNavigate("Register")} />
-        <Btn label={hasAccount ? "Masuk ke Akun" : "Masuk (perlu daftar dulu)"} outline disabled={!hasAccount}
-          onPress={() => onNavigate("Login")} style={{ marginTop: 10 }} />
-        <Text style={[st.mutedLine, { marginTop: 12, textAlign: "center", color: hasAccount ? C.accent : C.muted }]}>
-          {hasAccount ? "Akun sudah tersedia. Silakan masuk." : "Belum ada akun. Silakan daftar terlebih dahulu."}
-        </Text>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Alur singkat</Text>
-        {["Daftar & login akun kampus", "Pilih peran: Penjastip atau Penitip", "Penjastip buka sesi · Penitip pilih produk", "Opsional tawar harga · bayar escrow · tracking"].map((t, i) => (
-          <View key={t} style={st.stepRow}>
-            <View style={st.stepDot}><Text style={st.stepDotText}>{i + 1}</Text></View>
-            <Text style={st.stepText}>{t}</Text>
-          </View>
-        ))}
-      </View>
-    </ScreenShell>
-  );
-}
 
-function RegisterScreen({ onNavigate, onRegister }) {
-  const [nama, setNama] = useState("");
-  const [email, setEmail] = useState("");
-  const [hp, setHp] = useState("");
-  const [kampus, setKampus] = useState("");
-  const [pass, setPass] = useState("");
-  const [error, setError] = useState("");
-  const submit = () => {
-    if (!nama.trim() || !email.trim() || !hp.trim() || !kampus.trim() || !pass.trim()) { setError("Lengkapi semua data registrasi."); return; }
-    if (pass.trim().length < 6) { setError("Password minimal 6 karakter."); return; }
-    onRegister({ nama: nama.trim(), email: email.trim().toLowerCase(), hp: hp.trim(), kampus: kampus.trim(), pass: pass.trim() });
-  };
-  return (
-    <ScreenShell>
-      <BrandHeader subtitle="Langkah A–D · Registrasi akun" />
-      <Text style={st.heading}>Buat Akun</Text>
-      <Text style={st.subCenter}>Isi nama, email/HP, password, dan kampus</Text>
-      <View style={st.card}>
-        <Input label="Nama Lengkap" value={nama} onChangeText={setNama} placeholder="Nama kamu" />
-        <Input label="Email" value={email} onChangeText={setEmail} placeholder="email@kampus.ac.id" keyboardType="email-address" autoCapitalize="none" />
-        <Input label="No. HP" value={hp} onChangeText={setHp} placeholder="08xxxxxxxxxx" keyboardType="phone-pad" />
-        <Input label="Kampus" value={kampus} onChangeText={setKampus} placeholder="Universitas Muhammadiyah Makassar" />
-        <Input label="Password" value={pass} onChangeText={setPass} placeholder="Minimal 6 karakter" secureTextEntry />
-        {error ? <Text style={st.errorText}>{error}</Text> : null}
-        <Btn label="Buat Akun" onPress={submit} />
-        <TouchableOpacity onPress={() => onNavigate("Login")} style={{ marginTop: 14, alignItems: "center" }}>
-          <Text style={{ color: C.muted }}>Sudah punya akun? <Text style={{ color: C.primary, fontWeight: "700" }}>Masuk</Text></Text>
+      <View style={shared.utilityRow}>
+        <TouchableOpacity style={shared.switchButton} onPress={() => navigation.replace("Login")}>
+          <Text style={shared.switchButtonText}>Ganti Akun</Text>
         </TouchableOpacity>
-      </View>
-      <Btn label="← Kembali" outline onPress={() => onNavigate("Welcome")} />
-    </ScreenShell>
-  );
-}
-
-function LoginScreen({ onNavigate, onLogin, accounts }) {
-  const [email, setEmail] = useState(accounts[0]?.email || "");
-  const [pass, setPass] = useState("");
-  const [error, setError] = useState("");
-  const submit = () => {
-    if (!accounts.length) { setError("Belum ada akun. Silakan daftar terlebih dahulu."); return; }
-    const found = accounts.find((a) => a.email === email.trim().toLowerCase() || a.hp === email.trim());
-    if (!found) { setError("Akun tidak ditemukan. Daftar dulu sebelum login."); return; }
-    if (found.pass !== pass) { setError("Password salah."); return; }
-    onLogin(found);
-  };
-  return (
-    <ScreenShell>
-      <BrandHeader subtitle="Langkah E–F · Login ke beranda" />
-      <Text style={st.heading}>Masuk</Text>
-      <Text style={st.subCenter}>Gunakan akun yang sudah kamu daftarkan</Text>
-      <View style={st.card}>
-        {!accounts.length ? (
-          <View style={st.alertBox}>
-            <Text style={st.alertTitle}>Akun belum dibuat</Text>
-            <Text style={st.alertText}>Kamu harus daftar dulu sebelum bisa login.</Text>
-            <Btn label="Daftar Sekarang" onPress={() => onNavigate("Register")} style={{ marginTop: 10 }} />
-          </View>
-        ) : (
-          <>
-            <Input label="Email / No. HP" value={email} onChangeText={setEmail} placeholder="email@kampus.ac.id" autoCapitalize="none" />
-            <Input label="Password" value={pass} onChangeText={setPass} placeholder="••••••••" secureTextEntry />
-            {error ? <Text style={st.errorText}>{error}</Text> : null}
-            <Btn label="Masuk" onPress={submit} />
-          </>
-        )}
-        <TouchableOpacity onPress={() => onNavigate("Register")} style={{ marginTop: 14, alignItems: "center" }}>
-          <Text style={{ color: C.muted }}>Belum punya akun? <Text style={{ color: C.primary, fontWeight: "700" }}>Daftar</Text></Text>
-        </TouchableOpacity>
-      </View>
-      <Btn label="← Kembali" outline onPress={() => onNavigate("Welcome")} />
-    </ScreenShell>
-  );
-}
-
-function PilihPeranScreen({ user, onNavigate, onLogout }) {
-  return (
-    <ScreenShell>
-      <View style={st.profileBanner}>
-        <View style={{ flex: 1 }}>
-          <Text style={st.helloText}>Halo, {user?.nama?.split(" ")[0] || "Mahasiswa"} 👋</Text>
-          <Text style={st.helloSub}>{user?.kampus || "Kampus"} · {user?.email}</Text>
+        <View style={shared.profilePill}>
+          <Text style={shared.profilePillText}>{profil.kampus || "Kampus Makassar"}</Text>
         </View>
-        <TouchableOpacity onPress={onLogout}><Text style={st.logoutText}>Keluar</Text></TouchableOpacity>
       </View>
-      <Text style={st.heading}>Pilih Peran</Text>
-      <Text style={st.subCenter}>Langkah G · jadi Penjastip atau Penitip</Text>
-      <TouchableOpacity style={[st.roleCard, { borderColor: C.primary }]} onPress={() => onNavigate("PenjastipDashboard")} activeOpacity={0.9}>
-        <View style={[st.roleIconWrap, { backgroundColor: C.primarySoft }]}><Text style={{ fontSize: 34 }}>🛵</Text></View>
-        <Text style={st.roleTitle}>Penjastip</Text>
-        <Text style={st.roleDesc}>Buka sesi jastip, tentukan toko, batas waktu, dan kapasitas order.</Text>
-        <SvcTag name="order-service" />
-      </TouchableOpacity>
-      <TouchableOpacity style={[st.roleCard, { borderColor: C.accent }]} onPress={() => onNavigate("PenitipBrowse")} activeOpacity={0.9}>
-        <View style={[st.roleIconWrap, { backgroundColor: C.accentSoft }]}><Text style={{ fontSize: 34 }}>📦</Text></View>
-        <Text style={st.roleTitle}>Penitip</Text>
-        <Text style={st.roleDesc}>Lihat katalog produk dengan foto asli dataset, pilih jastip, dan titip belanja.</Text>
-        <SvcTag name="catalog-service" />
-      </TouchableOpacity>
-    </ScreenShell>
-  );
-}
 
-function PenjastipDashboard({ onNavigate, sesiList, onBukaSesi }) {
-  const [toko, setToko] = useState(TOKO_OPTIONS[0]);
-  const [batas, setBatas] = useState("17:00");
-  const [kap, setKap] = useState("10");
-  const [error, setError] = useState("");
-  const [mine, setMine] = useState(null);
-  const buka = () => {
-    if (!toko || !batas) { setError("Isi toko dan batas waktu."); return; }
-    const sesi = { id: "S" + String(100 + sesiList.length + 1), penjastip: "Kamu", toko, batas, kapasitas: parseInt(kap, 10) || 10, diisi: 0 };
-    onBukaSesi(sesi); setMine(sesi); setError("");
-  };
-  return (
-    <ScreenShell>
-      <TopBar title="Dashboard Penjastip" right={<SvcTag name="order-service" />} onBack={() => onNavigate("PilihPeran")} />
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Buka Sesi Jastip</Text>
-        <Text style={st.mutedLine}>Langkah H–J · simpan toko, batas waktu, kapasitas</Text>
-        <Text style={st.label}>Pilih Toko</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-          {TOKO_OPTIONS.map((t) => (
-            <TouchableOpacity key={t} onPress={() => setToko(t)} style={[st.chip, toko === t && st.chipActive]}>
-              <Text style={[st.chipText, toko === t && st.chipTextActive]}>{t}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <Input label="Batas Waktu Order (HH:MM)" value={batas} onChangeText={setBatas} placeholder="17:00" />
-        <Input label="Kapasitas Order" value={kap} onChangeText={setKap} placeholder="10" keyboardType="numeric" />
-        {error ? <Text style={st.errorText}>{error}</Text> : null}
-        <Btn label="Buka Sesi Jastip" onPress={buka} />
-      </View>
-      {mine ? (
-        <View style={[st.card, st.successCard]}>
-          <Text style={st.cardTitle}>✅ Sesi kamu aktif</Text>
-          <Text style={st.infoRow}><Text style={st.infoKey}>Toko · </Text>{mine.toko}</Text>
-          <Text style={st.infoRow}><Text style={st.infoKey}>Batas · </Text>{mine.batas}</Text>
-          <Text style={st.infoRow}><Text style={st.infoKey}>Kapasitas · </Text>{mine.diisi}/{mine.kapasitas}</Text>
-          <Badge label="Tampil di aplikasi penitip" color={C.accent} bg={C.accentSoft} />
+      {modeDemo ? (
+        <View style={shared.demoBanner}>
+          <Text style={shared.demoBannerText}>⚠️ Mode demo — data offline karena server belum merespons.</Text>
         </View>
       ) : null}
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Sesi Aktif di Sekitar</Text>
-        {sesiList.map((sesi) => (
-          <View key={sesi.id} style={st.sesiRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={st.sesiToko}>{sesi.toko}</Text>
-              <Text style={st.sesiInfo}>Oleh {sesi.penjastip} · batas {sesi.batas}</Text>
-            </View>
-            <Badge label={`${sesi.diisi}/${sesi.kapasitas}`} color={C.primary} />
-          </View>
-        ))}
-      </View>
-    </ScreenShell>
-  );
-}
 
-function PenitipBrowse({ onNavigate, onPilihBarang, sesiList }) {
-  const { width } = useWindowDimensions();
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("Semua");
-  const cats = ["Semua", "Makanan", "Minuman", "Buku", "Alat Tulis", "Elektronik", "Kebutuhan", "Aksesoris", "Kesehatan"];
-  const filtered = useMemo(
-    () => CATALOG.filter((b) => (filter === "Semua" || b.kategori === filter) && (b.nama.toLowerCase().includes(search.toLowerCase()) || b.toko.toLowerCase().includes(search.toLowerCase()))),
-    [search, filter]
-  );
-  const cols = width >= 1200 ? 4 : width >= 800 ? 3 : 2;
-  const cardWidth = Math.max(140, Math.floor((Math.min(width, 960) - 32) / cols) - 8);
-  return (
-    <SafeAreaView style={st.root} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
-      <TopBar title="Katalog Jastip" right={<SvcTag name="catalog-service" />} onBack={() => onNavigate("PilihPeran")} />
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, maxWidth: 960, width: "100%", alignSelf: "center" }}>
-        <Text style={st.mutedLine}>Langkah K–L · toko, barang, harga acuan + foto dari JastipKampus_Gambar_Produk</Text>
-        <TextInput style={st.searchBar} placeholder="Cari barang atau toko…" placeholderTextColor="#94A3B8" value={search} onChangeText={setSearch} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-          {cats.map((c) => (
-            <TouchableOpacity key={c} onPress={() => setFilter(c)} style={[st.chip, filter === c && st.chipActive]}>
-              <Text style={[st.chipText, filter === c && st.chipTextActive]}>{c}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <View style={st.sesiStrip}>
-          <Text style={st.sesiStripTitle}>Sesi jastip aktif · {sesiList.length}</Text>
-          <Text style={st.sesiStripSub}>{sesiList.map((s) => s.toko).slice(0, 3).join(" · ")}</Text>
-        </View>
+      <View style={shared.searchBox}>
+        <Text style={shared.searchIcon}>🔎</Text>
+        <TextInput
+          style={shared.searchInput}
+          placeholder="Cari barang atau toko..."
+          placeholderTextColor={C.textSoft}
+          value={cari}
+          onChangeText={setCari}
+        />
       </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={shared.categoryRow}
+      >
+        {daftarKategori.map((kategori) => (
+          <TouchableOpacity
+            key={kategori}
+            style={[
+              shared.categoryChip,
+              kategoriAktif === kategori && shared.categoryChipActive,
+            ]}
+            onPress={() => setKategoriAktif(kategori)}
+          >
+            <Text style={[shared.categoryChipText, kategoriAktif === kategori && shared.categoryChipTextActive]}>
+              {kategori === "Semua" ? "📚" : KATEGORI_IKON[kategori] || "🎁"} {kategori}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <SectionHeader
+        eyebrow="Toko Pilihan"
+        title="Pilih toko untuk dilihat"
+      />
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={penitip.storeRow}
+      >
+        {tokoUnggulan.map((toko, index) => (
+          <TouchableOpacity
+            key={toko.id}
+            style={[
+              penitip.storeCard,
+              { backgroundColor: [C.surfaceAlt, "#F2F7FF", "#EEF6FF", "#EAF4FF", "#F7FBFF", "#EEF6FF"][index % 6] },
+              selectedStoreId === String(toko.id) && penitip.storeCardActive,
+            ]}
+            onPress={() => setSelectedStoreId(String(toko.id))}
+            activeOpacity={0.9}
+          >
+            <Text style={penitip.storeEmoji}>
+              {toko.id === "Semua" ? "🏬" : KATEGORI_IKON[toko.kategori] || "🏪"}
+            </Text>
+            <Text style={[penitip.storeName, selectedStoreId === String(toko.id) && penitip.storeNameActive]}>{toko.nama}</Text>
+            <Text style={[penitip.storeCategory, selectedStoreId === String(toko.id) && penitip.storeCategoryActive]}>{toko.kategori}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <SectionHeader
+        eyebrow="Katalog Barang"
+        title="Pilih barang untuk dititipkan"
+      />
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={shared.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <FlatList
-        key={`cols-${cols}`}
-        data={filtered}
-        numColumns={cols}
+        data={filteredItems}
         keyExtractor={(item) => String(item.id)}
-        style={{ flex: 1, width: "100%" }}
-        contentContainerStyle={{ padding: 10, paddingBottom: 30, maxWidth: 960, width: "100%", alignSelf: "center" }}
-        columnWrapperStyle={cols > 1 ? { justifyContent: "flex-start" } : undefined}
+        numColumns={2}
+        ListHeaderComponent={header}
+        contentContainerStyle={shared.listContainer}
+        columnWrapperStyle={shared.gridRow}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
-          <TouchableOpacity style={[st.prodCard, { width: cardWidth }]} onPress={() => onPilihBarang(item)} activeOpacity={0.9}>
-            <View style={st.prodInner}>
-              <Image source={item.img} style={st.prodImg} resizeMode="cover" />
-              <View style={st.prodBody}>
-                <Text style={st.prodNama} numberOfLines={2}>{item.nama}</Text>
-                <Text style={st.prodToko} numberOfLines={1}>{item.toko}</Text>
-                <View style={st.prodFooter}>
-                  <Text style={st.prodHarga}>{rp(item.harga)}</Text>
-                  <Text style={st.prodSatuan}>/{item.satuan}</Text>
-                </View>
-                <Badge label={item.kategori} color={C.primaryDark} />
+          <TouchableOpacity
+            style={penitip.itemCard}
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate("Transaksi", { item, peran: "penitip", profil })}
+          >
+            <ProductImage item={item} style={penitip.itemImage} />
+            <View style={penitip.itemCategoryBadge}>
+              <Text style={penitip.itemCategoryBadgeText}>{item.kategori}</Text>
+            </View>
+            <View style={penitip.itemTopRow}>
+              <Text style={penitip.itemEmoji}>{item.kategoriIkon}</Text>
+              <View style={penitip.stockPill}>
+                <Text style={penitip.stockPillText}>Stok {item.stok}</Text>
               </View>
+            </View>
+            <Text style={penitip.itemName} numberOfLines={2}>{item.nama}</Text>
+
+            <View style={penitip.storeLine}>
+              <Text style={penitip.storeIcon}>●</Text>
+              <Text style={penitip.itemStore} numberOfLines={1}>{item.toko_nama}</Text>
+            </View>
+
+            <Text style={penitip.itemCategory} numberOfLines={2}>{item.toko_alamat}</Text>
+
+            <View style={penitip.priceRow}>
+              <View>
+                <Text style={penitip.priceLabel}>Mulai dari</Text>
+                <Text style={penitip.itemPrice}>{formatRupiah(item.harga)}</Text>
+              </View>
+              <View style={penitip.buyCircle}>
+                <Text style={penitip.buyCircleText}>›</Text>
+              </View>
+            </View>
+
+            <View style={penitip.ctaButton}>
+              <Text style={penitip.ctaButtonText}>＋ {ROLE_CONTENT.penitip.cta}</Text>
             </View>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={<Text style={{ textAlign: "center", color: C.muted, marginTop: 40 }}>Tidak ada barang ditemukan.</Text>}
+        ListEmptyComponent={
+          <View style={shared.emptyBox}>
+            <Text style={shared.emptyEmoji}>📦</Text>
+            <Text style={shared.emptyText}>Barang yang kamu cari belum tersedia.</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
 }
 
-function FormTitipan({ barang, sesiList, onNavigate, onLanjut }) {
-  const [jumlah, setJumlah] = useState(1);
-  const [varian, setVarian] = useState("");
-  const [catatan, setCatatan] = useState("");
-  const related = sesiList.filter((s) => s.toko === barang.toko);
-  const options = related.length ? related : sesiList;
-  const [sesiDipilih, setSesiDipilih] = useState(options[0] || null);
-  const total = barang.harga * jumlah; const biaya = 5000;
+function PenjastipDashboard({
+  profil,
+  navigation,
+  items,
+  tokoList,
+  sesiForm,
+  setSesiForm,
+  sesiAktif,
+  setSesiAktif,
+  modeDemo,
+  demoReason,
+}) {
+  const tugasMasuk = items.slice(0, 5);
+  const tokoAktif = tokoList.find((item) => String(item.id) === sesiForm.tokoId) || tokoList[0];
+  const estimasiKomisi = tugasMasuk.length ? `${Math.min(18, tugasMasuk.length * 3)}%` : "12%";
+
+  function bukaSesi() {
+    const kapasitas = Number(sesiForm.kapasitas);
+    if (!sesiForm.tokoId || !kapasitas || kapasitas < 1 || !sesiForm.batasWaktu.trim()) {
+      return;
+    }
+    const tokoTerpilih = tokoList.find((toko) => String(toko.id) === sesiForm.tokoId);
+    setSesiAktif({
+      tokoNama: tokoTerpilih?.nama || "Toko pilihan",
+      kategori: tokoTerpilih?.kategori || "Umum",
+      kapasitas,
+      batasWaktu: sesiForm.batasWaktu,
+    });
+  }
+
+  function ambilTugas(item) {
+    const tokoTerpilih = tokoList.find((toko) => toko.id === item.toko_id);
+    setSesiAktif((prev) => ({
+      tokoNama: prev?.tokoNama || tokoTerpilih?.nama || "Toko pilihan",
+      kategori: prev?.kategori || tokoTerpilih?.kategori || "Umum",
+      kapasitas: prev?.kapasitas || Number(sesiForm.kapasitas || 5),
+      batasWaktu: prev?.batasWaktu || sesiForm.batasWaktu || "18:00",
+      highlight: item.nama,
+    }));
+  }
+
   return (
-    <ScreenShell>
-      <TopBar title="Detail Titipan" right={<SvcTag name="order-service" />} onBack={() => onNavigate("PenitipBrowse")} />
-      <View style={[st.card, st.rowCard]}>
-        <Image source={barang.img} style={st.detailImg} />
-        <View style={{ flex: 1 }}>
-          <Text style={st.cardTitle}>{barang.nama}</Text>
-          <Text style={st.prodToko}>{barang.toko}</Text>
-          <Text style={st.prodHarga}>{rp(barang.harga)} / {barang.satuan}</Text>
-          <Text style={st.mutedLine}>{barang.deskripsi}</Text>
-          <SvcTag name="catalog-service" />
+    <SafeAreaView style={shared.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <ScrollView contentContainerStyle={shared.scrollContainer} showsVerticalScrollIndicator={false}>
+        <View style={penjastip.heroCard}>
+          <View style={penjastip.heroBadge}>
+            <Text style={penjastip.heroBadgeText}>Dashboard Penjastip</Text>
+          </View>
+          <Text style={penjastip.heroTitle}>Hai, {profil.nama || "Kak Penjastip"} ✨</Text>
+          <Text style={penjastip.heroSubtitle}>{ROLE_CONTENT.penjastip.heroSubtitle}</Text>
+          <View style={penjastip.statRow}>
+            <StatCard label="Toko Aktif" value={tokoList.length} tone="purple" />
+            <StatCard label="Titipan Masuk" value={tugasMasuk.length} tone="mint" />
+            <StatCard label="Estimasi Komisi" value={estimasiKomisi} tone="lemon" />
+          </View>
         </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Pilih Sesi Jastip</Text>
-        <Text style={st.mutedLine}>Langkah M–O · cek sesi buka & kapasitas</Text>
-        {options.map((sesi) => (
-          <TouchableOpacity key={sesi.id} style={[st.sesiRow, sesiDipilih?.id === sesi.id && st.sesiSelected]} onPress={() => setSesiDipilih(sesi)}>
-            <View style={{ flex: 1 }}>
-              <Text style={st.sesiToko}>{sesi.toko}</Text>
-              <Text style={st.sesiInfo}>Batas {sesi.batas} · {sesi.diisi}/{sesi.kapasitas} order · {sesi.penjastip}</Text>
-            </View>
-            {sesiDipilih?.id === sesi.id ? <Badge label="Dipilih" color={C.primary} /> : null}
+
+        <View style={shared.utilityRow}>
+          <TouchableOpacity style={shared.switchButton} onPress={() => navigation.replace("Login")}>
+            <Text style={shared.switchButtonText}>Ganti Akun</Text>
           </TouchableOpacity>
-        ))}
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Detail Titipan</Text>
-        <Text style={st.mutedLine}>Langkah N · nama barang, jumlah, varian, catatan</Text>
-        <Text style={st.label}>Jumlah</Text>
-        <View style={st.qtyRow}>
-          <TouchableOpacity style={st.qtyBtn} onPress={() => setJumlah(Math.max(1, jumlah - 1))}><Text style={st.qtyBtnText}>−</Text></TouchableOpacity>
-          <Text style={st.qtyVal}>{jumlah}</Text>
-          <TouchableOpacity style={st.qtyBtn} onPress={() => setJumlah(jumlah + 1)}><Text style={st.qtyBtnText}>+</Text></TouchableOpacity>
+          <View style={shared.profilePill}>
+            <Text style={shared.profilePillText}>{profil.kampus || "Kampus Makassar"}</Text>
+          </View>
         </View>
-        <Input label="Varian / ukuran" value={varian} onChangeText={setVarian} placeholder="cth: less sugar, large, rasa keju" />
-        <Input label="Catatan" value={catatan} onChangeText={setCatatan} placeholder="Catatan ke penjastip (opsional)" multiline />
-        <View style={st.summaryBox}>
-          <View style={st.summaryRow}><Text style={st.summaryLabel}>Harga acuan</Text><Text style={st.summaryVal}>{rp(barang.harga)} × {jumlah}</Text></View>
-          <View style={st.summaryRow}><Text style={st.summaryLabel}>Biaya jasa titip</Text><Text style={st.summaryVal}>{rp(biaya)}</Text></View>
-          <View style={st.divider} />
-          <View style={st.summaryRow}><Text style={st.totalLabel}>Total estimasi</Text><Text style={st.totalVal}>{rp(total + biaya)}</Text></View>
-        </View>
-      </View>
-      <Text style={[st.mutedLine, { marginBottom: 8 }]}>Langkah Q · ingin tawar harga/jasa titip?</Text>
-      <View style={st.rowGap}>
-        <Btn label="💬 Tawar Harga" outline style={{ flex: 1, marginRight: 8 }} onPress={() => onNavigate("TawarHarga", { barang, jumlah, varian, catatan, sesi: sesiDipilih })} />
-        <Btn label="Lanjut Bayar" style={{ flex: 1 }} disabled={!sesiDipilih} onPress={() => onLanjut({ barang, jumlah, varian, catatan, sesi: sesiDipilih, total: total + biaya, tawaran: null })} />
-      </View>
-    </ScreenShell>
-  );
-}
 
-function TawarHargaScreen({ params, onNavigate, onLanjutBayar }) {
-  const { barang, jumlah, varian, catatan, sesi } = params;
-  const [tawaran, setTawaran] = useState(String(barang.harga));
-  const [status, setStatus] = useState(null);
-  return (
-    <ScreenShell>
-      <TopBar title="Proses Tawar" right={<SvcTag name="order-service" />} onBack={() => onNavigate("FormTitipan", params)} />
-      <View style={[st.card, st.rowCard]}>
-        <Image source={barang.img} style={st.thumbImg} />
-        <View style={{ flex: 1 }}>
-          <Text style={st.cardTitle}>{barang.nama}</Text>
-          <Text style={st.prodToko}>{barang.toko}</Text>
-          <Text style={st.mutedLine}>Harga acuan catalog-service: {rp(barang.harga)}</Text>
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Ajukan Tawaran</Text>
-        <Text style={st.mutedLine}>Langkah R–V · tawar, setuju/tolak, ubah, atau batalkan</Text>
-        <Input label={`Tawaran per ${barang.satuan}`} value={tawaran} onChangeText={setTawaran} keyboardType="numeric" />
-        {!status && <Btn label="Kirim Tawaran" onPress={() => setStatus("menunggu")} />}
-        {status === "menunggu" && (
-          <View>
-            <View style={st.warnBox}><Text style={st.warnText}>⏳ Menunggu konfirmasi penjastip…</Text></View>
-            <View style={st.rowGap}>
-              <Btn label="Simulasi Setuju" success style={{ flex: 1, marginRight: 8 }} onPress={() => setStatus("disetujui")} />
-              <Btn label="Simulasi Tolak" danger style={{ flex: 1 }} onPress={() => setStatus("ditolak")} />
+        {modeDemo ? (
+          <View style={shared.demoBanner}>
+            <Text style={shared.demoBannerText}>⚠️ Mode demo — data offline karena server belum merespons.</Text>
+          </View>
+        ) : null}
+
+        <View style={penjastip.sessionCard}>
+          <SectionHeader
+            eyebrow="Buka Sesi"
+            title="Atur sesi jastip"
+          />
+
+          <Text style={penjastip.inputLabel}>Pilih toko</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={penjastip.tokoChipRow}
+          >
+            {tokoList.map((toko) => (
+              <TouchableOpacity
+                key={toko.id}
+                style={[
+                  penjastip.tokoChip,
+                  sesiForm.tokoId === String(toko.id) && penjastip.tokoChipActive,
+                ]}
+                onPress={() => setSesiForm((prev) => ({ ...prev, tokoId: String(toko.id) }))}
+              >
+                <Text style={penjastip.tokoChipText}>
+                  {KATEGORI_IKON[toko.kategori] || "🏪"} {toko.nama}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={penjastip.inlineRow}>
+            <View style={penjastip.inlineField}>
+              <Text style={penjastip.inputLabel}>Kapasitas</Text>
+              <TextInput
+                style={penjastip.input}
+                keyboardType="numeric"
+                value={sesiForm.kapasitas}
+                onChangeText={(value) => setSesiForm((prev) => ({ ...prev, kapasitas: value }))}
+              />
+            </View>
+            <View style={penjastip.inlineField}>
+              <Text style={penjastip.inputLabel}>Batas waktu</Text>
+              <TextInput
+                style={penjastip.input}
+                value={sesiForm.batasWaktu}
+                onChangeText={(value) => setSesiForm((prev) => ({ ...prev, batasWaktu: value }))}
+              />
             </View>
           </View>
-        )}
-        {status === "disetujui" && (
-          <View>
-            <View style={st.okBox}><Text style={st.okText}>✅ Tawaran disetujui. Lanjut proses jastip.</Text></View>
-            <Btn label="Lanjut Bayar →" style={{ marginTop: 12 }} onPress={() => onLanjutBayar({ barang, jumlah, varian, catatan, sesi, total: parseInt(tawaran, 10) * jumlah + 5000, tawaran: parseInt(tawaran, 10) })} />
-          </View>
-        )}
-        {status === "ditolak" && (
-          <View>
-            <View style={st.badBox}><Text style={st.badText}>❌ Tawaran ditolak. Ubah tawaran atau batalkan titipan.</Text></View>
-            <View style={st.rowGap}>
-              <Btn label="Ubah Tawaran" outline style={{ flex: 1, marginRight: 8 }} onPress={() => setStatus(null)} />
-              <Btn label="Batalkan" danger style={{ flex: 1 }} onPress={() => onNavigate("PenitipBrowse")} />
-            </View>
-          </View>
-        )}
-      </View>
-    </ScreenShell>
-  );
-}
 
-function PembayaranScreen({ order, onNavigate, onBayar }) {
-  const [metode, setMetode] = useState("QRIS");
-  const metodes = ["QRIS", "GoPay", "OVO", "Dana", "Transfer Bank"];
-  return (
-    <ScreenShell>
-      <TopBar title="Pembayaran" right={<SvcTag name="payment-service" />} onBack={() => onNavigate("FormTitipan", order)} />
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Ringkasan Order</Text>
-        <Text style={st.mutedLine}>Langkah U–X1 · total titipan & saldo tertahan</Text>
-        <View style={st.rowCard}>
-          <Image source={order.barang.img} style={st.thumbImg} />
-          <View style={{ flex: 1 }}>
-            <Text style={st.prodNama}>{order.barang.nama}</Text>
-            <Text style={st.prodToko}>{order.barang.toko}</Text>
-            <Text style={st.sesiInfo}>Sesi {order.sesi?.toko} · batas {order.sesi?.batas}</Text>
-            <Text style={st.prodHarga}>× {order.jumlah}{order.varian ? ` · ${order.varian}` : ""}</Text>
-          </View>
-        </View>
-        <View style={st.summaryBox}>
-          {order.tawaran ? <View style={st.summaryRow}><Text style={st.summaryLabel}>Harga disepakati</Text><Text style={st.summaryVal}>{rp(order.tawaran)}</Text></View> : null}
-          <View style={st.summaryRow}><Text style={st.totalLabel}>Total bayar</Text><Text style={st.totalVal}>{rp(order.total)}</Text></View>
-          <Text style={[st.mutedLine, { marginTop: 8 }]}>Dana ditahan escrow oleh payment-service sampai barang diterima.</Text>
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Metode Pembayaran</Text>
-        {metodes.map((m) => (
-          <TouchableOpacity key={m} style={[st.metodeRow, metode === m && st.metodeActive]} onPress={() => setMetode(m)}>
-            <View style={[st.radio, metode === m && st.radioOn]} />
-            <Text style={{ color: C.text, fontWeight: metode === m ? "700" : "500" }}>{m}</Text>
+          <TouchableOpacity style={penjastip.openButton} onPress={bukaSesi}>
+            <Text style={penjastip.openButtonText}>{ROLE_CONTENT.penjastip.cta}</Text>
           </TouchableOpacity>
+        </View>
+
+        {sesiAktif ? (
+          <View style={penjastip.activeSessionBox}>
+            <Text style={penjastip.activeTitle}>Sesi aktif di {sesiAktif.tokoNama}</Text>
+            <Text style={penjastip.activeSubtitle}>
+              Kategori {sesiAktif.kategori} • kapasitas {sesiAktif.kapasitas} order • tutup {sesiAktif.batasWaktu}
+            </Text>
+            {sesiAktif.highlight ? (
+              <Text style={penjastip.activeHighlight}>Titipan terbaru: {sesiAktif.highlight}</Text>
+            ) : null}
+          </View>
+        ) : null}
+
+        <SectionHeader
+          eyebrow="Titipan Masuk"
+          title="Permintaan yang bisa kamu ambil"
+          subtitle={`Toko prioritas: ${tokoAktif?.nama || "pilih toko dulu"}`}
+        />
+
+        {tugasMasuk.map((item, index) => (
+          <View
+            key={item.id}
+            style={[
+              penjastip.taskCard,
+              { backgroundColor: ["#F7FBFF", "#EEF6FF", "#EAF4FF", "#F2F8FF", "#F4FAFF"][index % 5] },
+            ]}
+          >
+            <View style={penjastip.taskTopRow}>
+              <View style={penjastip.taskImageWrap}>
+                <ProductImage item={item} style={penjastip.taskImage} />
+                <View style={penjastip.taskImageBadge}>
+                  <Text style={penjastip.taskImageBadgeText}>{item.kategoriIkon}</Text>
+                </View>
+              </View>
+              <View style={penjastip.taskRight}>
+                <Text style={penjastip.taskCategory}>{item.kategori}</Text>
+                <Text style={penjastip.taskTitle}>{item.nama}</Text>
+                <Text style={penjastip.taskMeta}>{item.toko_nama} • {formatRupiah(item.harga)}</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={penjastip.taskButton} onPress={() => ambilTugas(item)}>
+              <Text style={penjastip.taskButtonText}>Ambil Tugas Demo</Text>
+            </TouchableOpacity>
+          </View>
         ))}
-        <Btn label={`Bayar ${rp(order.total)} via ${metode}`} onPress={() => onBayar(metode)} style={{ marginTop: 8 }} />
-      </View>
-    </ScreenShell>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-function TrackingScreen({ order, onNavigate }) {
-  const [step, setStep] = useState(0);
-  const steps = [
-    { key: "dititip", title: "Dititip", desc: "Order dikonfirmasi. Status dicatat tracking-service." },
-    { key: "dibelanjakan", title: "Dibelanjakan", desc: `Penjastip membeli barang di ${order.sesi?.toko}.` },
-    { key: "diantar", title: "Diantar", desc: "Penjastip mengantar barang ke penitip." },
-    { key: "diterima", title: "Diterima", desc: "Penitip konfirmasi terima. Dana dilepas ke penjastip." },
-  ];
+function BerandaScreen({ route, navigation }) {
+  const peran = route.params?.peran ?? "penitip";
+  const profil = route.params?.profil ?? { nama: peran === "penjastip" ? "Kak Penjastip" : "Mahasiswa" };
+  const [items, setItems] = useState([]);
+  const [tokoList, setTokoList] = useState([]);
+  const [memuat, setMemuat] = useState(true);
+  const [galat, setGalat] = useState(null);
+  const [modeDemo, setModeDemo] = useState(Boolean(route.params?.demoAuth));
+  const [demoReason, setDemoReason] = useState(
+    route.params?.demoAuth ? "Login backend tidak merespons, jadi tampilan demo tetap dibuka." : ""
+  );
+  const [cari, setCari] = useState("");
+  const [selectedStoreId, setSelectedStoreId] = useState("Semua");
+  const [kategoriAktif, setKategoriAktif] = useState("Semua");
+  const [sesiForm, setSesiForm] = useState({ tokoId: "", kapasitas: "5", batasWaktu: "18:00" });
+  const [sesiAktif, setSesiAktif] = useState(null);
+
+  async function muatData() {
+    setMemuat(true);
+    setGalat(null);
+    try {
+      const [itemsRes, tokoRes] = await Promise.all([getDaftarBarang(), getDaftarToko()]);
+      const daftarBarang = Array.isArray(itemsRes) ? itemsRes : itemsRes.items ?? [];
+      const daftarToko = Array.isArray(tokoRes) ? tokoRes : tokoRes.toko ?? [];
+      const mergedItems = buildItemViewModel(daftarBarang, daftarToko);
+      setItems(mergedItems);
+      setTokoList(daftarToko);
+      setModeDemo(false);
+      setDemoReason("");
+      if (!sesiForm.tokoId && daftarToko[0]?.id) {
+        setSesiForm((prev) => ({ ...prev, tokoId: String(daftarToko[0].id) }));
+      }
+    } catch (error) {
+      const mergedItems = buildItemViewModel(DEMO_ITEMS, DEMO_TOKO);
+      setItems(mergedItems);
+      setTokoList(DEMO_TOKO);
+      setModeDemo(true);
+      setDemoReason("Backend katalog belum terjangkau, jadi data demo ditampilkan agar UI tetap bisa dilihat.");
+      setGalat(null);
+      if (!sesiForm.tokoId && DEMO_TOKO[0]?.id) {
+        setSesiForm((prev) => ({ ...prev, tokoId: String(DEMO_TOKO[0].id) }));
+      }
+    } finally {
+      setMemuat(false);
+    }
+  }
+
+  useEffect(() => {
+    muatData();
+  }, []);
+
+  const daftarKategori = useMemo(() => {
+    return ["Semua", ...Array.from(new Set(items.map((item) => item.kategori))).sort()];
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    let hasil = items;
+    if (kategoriAktif !== "Semua") {
+      hasil = hasil.filter((item) => item.kategori === kategoriAktif);
+    }
+    if (selectedStoreId !== "Semua") {
+      hasil = hasil.filter((item) => String(item.toko_id) === selectedStoreId);
+    }
+    if (cari.trim()) {
+      const q = cari.toLowerCase();
+      hasil = hasil.filter(
+        (item) =>
+          item.nama.toLowerCase().includes(q) ||
+          item.toko_nama.toLowerCase().includes(q) ||
+          item.kategori.toLowerCase().includes(q)
+      );
+    }
+    return hasil;
+  }, [items, kategoriAktif, cari, selectedStoreId]);
+
+  if (memuat) {
+    return (
+      <SafeAreaView style={shared.loadingScreen}>
+        <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+        <ActivityIndicator size="large" color={C.pink} />
+        <Text style={shared.loadingText}>Memuat dashboard {ROLE_CONTENT[peran].title.toLowerCase()}...</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (galat) {
+    return (
+      <SafeAreaView style={shared.loadingScreen}>
+        <Text style={shared.emptyEmoji}>📦</Text>
+        <Text style={shared.errorTitle}>Beranda belum bisa dimuat</Text>
+        <Text style={shared.errorText}>{galat}</Text>
+        <TouchableOpacity style={shared.retryButton} onPress={muatData}>
+          <Text style={shared.retryButtonText}>Coba Lagi</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  if (peran === "penjastip") {
+    return (
+      <PenjastipDashboard
+        profil={profil}
+        navigation={navigation}
+        items={filteredItems}
+        tokoList={tokoList}
+        sesiForm={sesiForm}
+        setSesiForm={setSesiForm}
+        sesiAktif={sesiAktif}
+        setSesiAktif={setSesiAktif}
+        modeDemo={modeDemo}
+        demoReason={demoReason}
+      />
+    );
+  }
+
   return (
-    <ScreenShell>
-      <TopBar title="Tracking Titipan" right={<SvcTag name="tracking-service" />} onBack={() => onNavigate("PilihPeran")} />
-      <View style={[st.card, st.rowCard]}>
-        <Image source={order.barang.img} style={st.thumbImg} />
-        <View style={{ flex: 1 }}>
-          <Text style={st.prodNama}>{order.barang.nama}</Text>
-          <Text style={st.prodToko}>{order.sesi?.toko}</Text>
-          <Text style={st.prodHarga}>{rp(order.total)}</Text>
-          <Badge label={order.metode || "QRIS"} color={C.warn} bg={C.warnSoft} />
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Status Pengiriman</Text>
-        <Text style={st.mutedLine}>Langkah Y–AI · dititip → dibelanjakan → diantar → diterima</Text>
-        {steps.map((stItem, i) => (
-          <View key={stItem.key} style={st.trackRow}>
-            <View style={[st.trackDot, i <= step && st.trackDotOn]}>
-              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>{i <= step ? "✓" : i + 1}</Text>
-            </View>
-            <View style={{ flex: 1, marginLeft: 12, paddingBottom: 14 }}>
-              <Text style={[st.trackLabel, i <= step && { color: C.primary, fontWeight: "800" }]}>{stItem.title}</Text>
-              {i === step ? <Text style={st.trackDesc}>{stItem.desc}</Text> : null}
-            </View>
-          </View>
-        ))}
-      </View>
-      {step < 3 ? (
-        <Btn label={`Simulasikan: ${steps[step + 1].title} →`} onPress={() => setStep((v) => Math.min(3, v + 1))} />
-      ) : (
-        <View style={[st.card, st.successCard]}>
-          <Text style={{ color: C.accent, fontWeight: "800", fontSize: 18, textAlign: "center" }}>🎉 Transaksi Selesai</Text>
-          <Text style={{ color: C.accent, textAlign: "center", marginTop: 6 }}>payment-service sudah melepaskan dana ke penjastip.</Text>
-        </View>
-      )}
-      <Btn label="Kembali ke Beranda" outline onPress={() => onNavigate("PilihPeran")} style={{ marginTop: 8 }} />
-    </ScreenShell>
+    <PenitipDashboard
+      profil={profil}
+      navigation={navigation}
+      filteredItems={filteredItems}
+      tokoList={tokoList}
+      selectedStoreId={selectedStoreId}
+      setSelectedStoreId={setSelectedStoreId}
+      kategoriAktif={kategoriAktif}
+      setKategoriAktif={setKategoriAktif}
+      daftarKategori={daftarKategori}
+      cari={cari}
+      setCari={setCari}
+      modeDemo={modeDemo}
+      demoReason={demoReason}
+    />
   );
 }
 
 export default function App() {
-  const [screen, setScreen] = useState("Welcome");
-  const [params, setParams] = useState({});
-  const [accounts, setAccounts] = useState([]);
-  const [user, setUser] = useState(null);
-  const [sesiList, setSesiList] = useState(DEFAULT_SESI);
-  const go = useCallback((target, p) => { setScreen(target); if (p !== undefined) setParams(p || {}); }, []);
-  const handleRegister = (akun) => { setAccounts((prev) => [...prev.filter((a) => a.email !== akun.email), akun]); go("Login"); };
-  const handleLogin = (akun) => { setUser(akun); go("PilihPeran"); };
-  const handleLogout = () => { setUser(null); go("Welcome"); };
-
-  let current = null;
-  if (screen === "Welcome") current = <WelcomeScreen onNavigate={go} hasAccount={accounts.length > 0} />;
-  else if (screen === "Register") current = <RegisterScreen onNavigate={go} onRegister={handleRegister} />;
-  else if (screen === "Login") current = <LoginScreen onNavigate={go} onLogin={handleLogin} accounts={accounts} />;
-  else if (screen === "PilihPeran") current = <PilihPeranScreen user={user} onNavigate={go} onLogout={handleLogout} />;
-  else if (screen === "PenjastipDashboard") current = (
-    <PenjastipDashboard onNavigate={go} sesiList={sesiList} onBukaSesi={(sesi) => setSesiList((prev) => [sesi, ...prev.filter((x) => x.id !== sesi.id)])} />
-  );
-  else if (screen === "PenitipBrowse") current = (
-    <PenitipBrowse onNavigate={go} sesiList={sesiList} onPilihBarang={(barang) => go("FormTitipan", { barang })} />
-  );
-  else if (screen === "FormTitipan" && params.barang) current = (
-    <FormTitipan barang={params.barang} sesiList={sesiList} onNavigate={(t, p) => go(t, p || params)} onLanjut={(order) => go("Pembayaran", order)} />
-  );
-  else if (screen === "TawarHarga" && params.barang) current = (
-    <TawarHargaScreen params={params} onNavigate={(t, p) => go(t, p || params)} onLanjutBayar={(order) => go("Pembayaran", order)} />
-  );
-  else if (screen === "Pembayaran" && params.barang) current = (
-    <PembayaranScreen order={params} onNavigate={(t, p) => go(t, p || params)} onBayar={(metode) => go("Tracking", { ...params, metode })} />
-  );
-  else if (screen === "Tracking" && params.barang) current = <TrackingScreen order={params} onNavigate={go} />;
-  else current = (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <Text style={{ color: C.muted, marginBottom: 12 }}>Memuat…</Text>
-      <Btn label="Ke Beranda" outline onPress={() => go(user ? "PilihPeran" : "Welcome")} style={{ minWidth: 160 }} />
-    </View>
-  );
   return (
-      <SafeAreaProvider>
-        <View style={st.root}>{current}</View>
-      </SafeAreaProvider>
-    );
-  }
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerStyle: { backgroundColor: C.surface },
+          headerTintColor: C.text,
+          headerTitleStyle: { fontWeight: "700" },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: C.bg },
+        }}
+      >
+        <Stack.Screen name="Login" component={AuthScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Beranda" component={BerandaScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Transaksi" component={TransaksiScreen} options={{ title: "Form Titipan" }} />
+        <Stack.Screen name="Sukses" component={SuksesScreen} options={{ title: "Status Titipan", headerBackVisible: false }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
 
-  const st = StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: C.bg,
-      minHeight: Platform.OS === "web" ? "100vh" : undefined,
-      width: "100%",
-    },
-    screen: { flex: 1, backgroundColor: C.bg, width: "100%" },
-    container: { padding: 16, paddingBottom: 40, maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1 },
-  card: { backgroundColor: C.surface, borderRadius: 18, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: C.border, shadowColor: "#0F172A", shadowOpacity: 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  cardTitle: { fontSize: 16, fontWeight: "800", color: C.text, marginBottom: 6 },
-  topBar: { backgroundColor: C.surface, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: C.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
-  topBarLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  topBarTitle: { fontSize: 17, fontWeight: "800", color: C.text },
-  backBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.light, alignItems: "center", justifyContent: "center", marginRight: 8 },
-  backBtnText: { fontSize: 18, color: C.text, fontWeight: "700" },
-  heading: { fontSize: 26, fontWeight: "800", color: C.text, textAlign: "center", marginBottom: 4 },
-  sub: { fontSize: 14, color: C.muted, textAlign: "center", marginTop: 6, lineHeight: 20 },
-  subCenter: { fontSize: 14, color: C.muted, textAlign: "center", marginBottom: 18 },
-  brandWrap: { alignItems: "center", marginBottom: 10, marginTop: 8 },
-  logoCircle: { width: 58, height: 58, borderRadius: 29, backgroundColor: C.primary, alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  logoIcon: { fontSize: 28 },
-  appTitle: { fontSize: 24, fontWeight: "900", color: C.primary },
-  label: { fontSize: 13, fontWeight: "700", color: C.ink, marginBottom: 6 },
-  input: { backgroundColor: "#F8FAFC", borderRadius: 12, borderWidth: 1, borderColor: C.border, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: C.text },
-  btn: { borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, alignItems: "center", borderWidth: 1.5 },
-  btnText: { fontSize: 15, fontWeight: "800" },
-  badge: { alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, marginTop: 6 },
-  badgeText: { fontSize: 11, fontWeight: "700" },
-  svcTag: { alignSelf: "flex-start", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-  svcText: { fontSize: 11, fontWeight: "700" },
-  mutedLine: { fontSize: 12, color: C.muted, lineHeight: 18, marginBottom: 8 },
-  errorText: { color: C.danger, fontWeight: "600", marginBottom: 8, fontSize: 13 },
-  heroPanel: { backgroundColor: C.primary, borderRadius: 24, padding: 22, marginBottom: 14 },
-  heroEyebrow: { color: "#BFDBFE", fontWeight: "800", fontSize: 11, letterSpacing: 1.2, marginBottom: 8 },
-  heroTitle: { color: "#fff", fontSize: 28, fontWeight: "900", lineHeight: 34 },
-  heroDesc: { color: "#DBEAFE", marginTop: 10, lineHeight: 21, fontSize: 14 },
-  heroStats: { flexDirection: "row", marginTop: 18 },
-  statBox: { flex: 1, backgroundColor: "rgba(255,255,255,0.14)", borderRadius: 14, paddingVertical: 12, alignItems: "center", marginHorizontal: 4 },
-  statNum: { color: "#fff", fontWeight: "900", fontSize: 18 },
-  statLabel: { color: "#DBEAFE", fontSize: 11, marginTop: 2 },
-  stepRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  stepDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: C.primarySoft, alignItems: "center", justifyContent: "center", marginRight: 10 },
-  stepDotText: { color: C.primary, fontWeight: "800", fontSize: 12 },
-  stepText: { color: C.text, flex: 1, fontSize: 13, lineHeight: 18 },
-  alertBox: { backgroundColor: C.warnSoft, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: "#F6D7A8" },
-  alertTitle: { color: C.warn, fontWeight: "800", fontSize: 15 },
-  alertText: { color: "#9A5B12", marginTop: 4, lineHeight: 18 },
-  profileBanner: { backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.border, marginBottom: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  helloText: { fontSize: 18, fontWeight: "800", color: C.text },
-  helloSub: { color: C.muted, marginTop: 3, fontSize: 12 },
-  logoutText: { color: C.danger, fontWeight: "700" },
-  roleCard: { backgroundColor: C.surface, borderRadius: 22, padding: 20, marginBottom: 14, borderWidth: 2, alignItems: "center" },
-  roleIconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  roleTitle: { fontSize: 22, fontWeight: "900", color: C.text, marginBottom: 6 },
-  roleDesc: { fontSize: 13, color: C.muted, textAlign: "center", marginBottom: 10, lineHeight: 19 },
-  searchBar: { backgroundColor: C.surface, borderRadius: 14, borderWidth: 1, borderColor: C.border, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: C.text, marginBottom: 10 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: C.light, marginRight: 8, borderWidth: 1, borderColor: "transparent" },
-  chipActive: { backgroundColor: C.primary, borderColor: C.primary },
-  chipText: { fontSize: 12, color: C.muted, fontWeight: "600" },
-  chipTextActive: { color: "#fff", fontWeight: "700" },
-  sesiStrip: { backgroundColor: C.primarySoft, borderRadius: 14, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: "#C9DBFF" },
-  sesiStripTitle: { color: C.primaryDark, fontWeight: "800", fontSize: 13 },
-  sesiStripSub: { color: C.muted, fontSize: 12, marginTop: 2 },
-  prodCard: { padding: 6 },
-  prodInner: { backgroundColor: C.surface, borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: C.border },
-  prodImg: { width: "100%", height: 130, backgroundColor: C.light },
-  prodBody: { padding: 10 },
-  prodNama: { fontSize: 13, fontWeight: "800", color: C.text, minHeight: 34 },
-  prodToko: { fontSize: 11, color: C.muted, marginTop: 2 },
-  prodFooter: { flexDirection: "row", alignItems: "flex-end", marginTop: 6, marginBottom: 2 },
-  prodHarga: { fontSize: 14, fontWeight: "900", color: C.primary },
-  prodSatuan: { fontSize: 11, color: C.muted, marginLeft: 2, marginBottom: 1 },
-  rowCard: { flexDirection: "row", alignItems: "flex-start" },
-  detailImg: { width: 100, height: 100, borderRadius: 14, backgroundColor: C.light, marginRight: 12 },
-  thumbImg: { width: 72, height: 72, borderRadius: 12, backgroundColor: C.light, marginRight: 12 },
-  infoRow: { fontSize: 13, color: C.text, marginBottom: 4 },
-  infoKey: { fontWeight: "700", color: C.muted },
-  sesiRow: { backgroundColor: C.light, borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "transparent" },
-  sesiSelected: { backgroundColor: C.primarySoft, borderColor: C.primary },
-  sesiToko: { fontWeight: "800", color: C.text, fontSize: 13 },
-  sesiInfo: { color: C.muted, fontSize: 12, marginTop: 2 },
-  qtyRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
-  qtyBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.primary, alignItems: "center", justifyContent: "center" },
-  qtyBtnText: { color: "#fff", fontSize: 22, lineHeight: 26, fontWeight: "600" },
-  qtyVal: { fontSize: 20, fontWeight: "800", color: C.text, minWidth: 48, textAlign: "center", marginHorizontal: 12 },
-  summaryBox: { backgroundColor: C.light, borderRadius: 14, padding: 14, marginTop: 4 },
-  summaryRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
-  summaryLabel: { fontSize: 12, color: C.muted },
-  summaryVal: { fontSize: 13, fontWeight: "700", color: C.text },
-  totalLabel: { fontSize: 14, fontWeight: "800", color: C.text },
-  totalVal: { fontSize: 18, fontWeight: "900", color: C.primary },
-  divider: { height: 1, backgroundColor: C.border, marginVertical: 8 },
-  rowGap: { flexDirection: "row", marginBottom: 8 },
-  metodeRow: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: C.border, marginBottom: 8 },
-  metodeActive: { borderColor: C.primary, backgroundColor: C.primarySoft },
-  radio: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: C.primary, backgroundColor: "transparent", marginRight: 10 },
-  radioOn: { backgroundColor: C.primary },
-  trackRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 4 },
-  trackDot: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "#CBD5E1" },
-  trackDotOn: { backgroundColor: C.primary },
-  trackLabel: { fontSize: 13, fontWeight: "700", color: C.muted },
-  trackDesc: { fontSize: 12, color: C.muted, marginTop: 2, lineHeight: 17 },
-  successCard: { backgroundColor: C.accentSoft, borderColor: "#9AE6C4" },
-  warnBox: { backgroundColor: C.warnSoft, borderRadius: 12, padding: 12, marginBottom: 10 },
-  warnText: { color: "#9A5B12", fontWeight: "700" },
-  okBox: { backgroundColor: C.accentSoft, borderRadius: 12, padding: 12 },
-  okText: { color: C.accent, fontWeight: "700" },
-  badBox: { backgroundColor: C.dangerSoft, borderRadius: 12, padding: 12, marginBottom: 10 },
-  badText: { color: C.danger, fontWeight: "700" },
+const auth = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.bg },
+  scroll: { padding: 20, paddingBottom: 36 },
+  heroCard: {
+    backgroundColor: C.pink,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 22,
+    borderWidth: 1,
+    borderColor: "#0A56B5",
+    alignItems: "center",
+    marginBottom: 16,
+    shadowColor: "#0A3E7C",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 14,
+    elevation: 5,
+  },
+  heroEmoji: { fontSize: 42, marginBottom: 6 },
+  heroTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "900" },
+  heroSubtitle: { color: "#E7F1FF", fontSize: 13, lineHeight: 20, textAlign: "center", marginTop: 7 },
+  tabRow: {
+    flexDirection: "row",
+    backgroundColor: "#DCEBFA",
+    borderRadius: 16,
+    padding: 4,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "#C9DDF4",
+  },
+  tabButton: { flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: "center" },
+  tabButtonActive: { backgroundColor: C.pink },
+  tabText: { color: C.pinkDark, fontWeight: "700" },
+  tabTextActive: { color: "#FFFFFF" },
+  formCard: {
+    backgroundColor: C.surface,
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#D3E3F4",
+    shadowColor: "#1D4E89",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.07,
+    shadowRadius: 12,
+    elevation: 3,
+  },
+  input: {
+    backgroundColor: C.bgSoft,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    color: C.text,
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  roleLabel: { color: C.textSoft, fontWeight: "700", marginTop: 4, marginBottom: 10 },
+  roleRow: { gap: 12 },
+  roleCard: {
+    backgroundColor: "#F7FBFF",
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 20,
+    padding: 16,
+  },
+  roleCardActive: {
+    borderColor: C.pink,
+    backgroundColor: "#EAF4FF",
+  },
+  roleIcon: { fontSize: 28, marginBottom: 8 },
+  roleTitle: { color: C.text, fontWeight: "800", fontSize: 16 },
+  roleSubtitle: { color: C.textSoft, marginTop: 4, lineHeight: 20 },
+  rolePillRow: { flexDirection: "row", gap: 10, marginBottom: 4 },
+  rolePill: {
+    flex: 1,
+    backgroundColor: C.bgSoft,
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  rolePillActive: { backgroundColor: "#EAF4FF", borderColor: C.pink },
+  rolePillText: { color: C.text, fontWeight: "700", fontSize: 13 },
+  primaryButton: {
+    backgroundColor: C.pink,
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 14,
+  },
+  primaryButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
+  buttonDisabled: { opacity: 0.6 },
+  noticeBox: {
+    marginTop: 16,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+  },
+  noticeSuccess: { backgroundColor: "#EEF8FF", borderColor: "#B7D9FA" },
+  noticeError: { backgroundColor: "#FFF3F5", borderColor: "#FFC4CC" },
+  noticeText: { fontWeight: "600", lineHeight: 20 },
+  noticeTextSuccess: { color: "#2A8A4A" },
+  noticeTextError: { color: "#D45565" },
+});
+
+const shared = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: C.bg },
+  scrollContainer: { padding: 18, paddingBottom: 32 },
+  listContainer: { padding: 18, paddingBottom: 32 },
+  loadingScreen: { flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center", padding: 24 },
+  loadingText: { color: C.textSoft, marginTop: 12, fontSize: 14 },
+  errorTitle: { color: C.text, fontSize: 20, fontWeight: "800", marginTop: 8 },
+  errorText: { color: C.textSoft, textAlign: "center", marginTop: 8, lineHeight: 22 },
+  retryButton: {
+    marginTop: 18,
+    backgroundColor: C.purple,
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  retryButtonText: { color: "#FFFFFF", fontWeight: "800" },
+  emptyBox: { alignItems: "center", paddingVertical: 40 },
+  emptyEmoji: { fontSize: 40 },
+  emptyText: { color: C.textSoft, marginTop: 8 },
+  sectionHeader: { marginTop: 18, marginBottom: 12 },
+  eyebrow: {
+    color: C.pinkDark,
+    textTransform: "uppercase",
+    fontWeight: "800",
+    fontSize: 11,
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  sectionTitle: { color: C.text, fontSize: 22, fontWeight: "800" },
+  sectionSubtitle: { color: C.textSoft, marginTop: 6, lineHeight: 22 },
+  utilityRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 14, marginBottom: 8 },
+  switchButton: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  switchButtonText: { color: C.text, fontWeight: "700" },
+  profilePill: {
+    backgroundColor: "#EAF4FF",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  profilePillText: { color: C.pinkDark, fontWeight: "700", fontSize: 12 },
+  demoBanner: {
+    backgroundColor: "#EEF6FF",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "#BED9FB",
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  demoBannerText: { color: C.pinkDark, fontWeight: "700", lineHeight: 20, fontSize: 12 },
+  searchBox: {
+    marginTop: 8,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  searchIcon: { marginRight: 10, fontSize: 16 },
+  searchInput: { flex: 1, color: C.text, fontSize: 14 },
+  categoryRow: { gap: 10, paddingTop: 16, paddingBottom: 8 },
+  categoryChip: {
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: "#C9DDF4",
+    borderRadius: 999,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    shadowColor: "#1D4E89",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 1,
+  },
+  categoryChipActive: { backgroundColor: C.pink, borderColor: C.pink },
+  categoryChipText: { color: C.text, fontWeight: "700", fontSize: 12 },
+  categoryChipTextActive: { color: "#FFFFFF" },
+  gridRow: { justifyContent: "space-between", marginBottom: 14 },
+  statCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 14,
+    marginHorizontal: 4,
+  },
+  statValue: { color: C.text, fontSize: 18, fontWeight: "800" },
+  statLabel: { color: C.textSoft, fontSize: 12, marginTop: 4 },
+});
+
+const penitip = StyleSheet.create({
+  heroCard: {
+    backgroundColor: C.pink,
+    borderRadius: 30,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#0A56B5",
+    shadowColor: "#0A3E7C",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 7,
+    overflow: "hidden",
+  },
+  heroTag: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginBottom: 12,
+  },
+  heroTagText: { color: C.pinkDark, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
+  heroTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "800" },
+  heroSubtitle: { color: "#DCEAFF", lineHeight: 22, marginTop: 8 },
+  heroStatsRow: { flexDirection: "row", marginTop: 16, marginHorizontal: -4 },
+  storeRow: { gap: 12, paddingBottom: 4 },
+  storeCard: {
+    width: 180,
+    borderRadius: 24,
+    padding: 17,
+    borderWidth: 1,
+    borderColor: C.border,
+    shadowColor: "#1D4E89",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  storeCardActive: {
+    backgroundColor: C.pink,
+    borderColor: C.pink,
+  },
+  storeEmoji: { fontSize: 30, marginBottom: 9 },
+  storeName: { color: C.text, fontWeight: "800", fontSize: 15 },
+  storeCategory: { color: C.textSoft, marginTop: 4, lineHeight: 20 },
+  storeNameActive: { color: "#FFFFFF" },
+  storeCategoryActive: { color: "#DCEAFF" },
+  itemCard: {
+    width: "48.3%",
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: "#D5E5F5",
+    borderRadius: 26,
+    padding: 10,
+    shadowColor: "#1D4E89",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  itemImage: {
+    width: "100%",
+    height: 150,
+    borderRadius: 20,
+    marginBottom: 10,
+    backgroundColor: "#EAF4FF",
+  },
+  itemCategoryBadge: {
+    position: "absolute",
+    top: 18,
+    left: 18,
+    backgroundColor: "rgba(10,62,124,0.88)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    zIndex: 2,
+  },
+  itemCategoryBadgeText: { color: "#FFFFFF", fontSize: 10, fontWeight: "800" },
+  itemTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  itemEmoji: {
+    fontSize: 23,
+    backgroundColor: "#EEF6FF",
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    borderRadius: 14,
+  },
+  stockPill: {
+    backgroundColor: "#EEF8FF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  stockPillText: { color: C.pinkDark, fontWeight: "700", fontSize: 11 },
+  itemName: { color: C.text, fontWeight: "900", fontSize: 14, lineHeight: 20, minHeight: 40 },
+  storeLine: { flexDirection: "row", alignItems: "center", marginTop: 7 },
+  storeIcon: { color: C.purple, fontSize: 10, marginRight: 6 },
+  itemStore: { color: C.pinkDark, fontWeight: "800", fontSize: 12, flex: 1 },
+  itemCategory: { color: C.textSoft, marginTop: 4, fontSize: 11, minHeight: 34, lineHeight: 16 },
+  priceRow: {
+    marginTop: 10,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+  },
+  priceLabel: { color: C.textSoft, fontSize: 9, fontWeight: "700", marginBottom: 2 },
+  itemPrice: { color: C.purple, fontWeight: "900", fontSize: 16 },
+  buyCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: C.pink,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  buyCircleText: { color: "#FFFFFF", fontSize: 25, lineHeight: 28, fontWeight: "700" },
+  ctaButton: {
+    marginTop: 12,
+    backgroundColor: "#EAF4FF",
+    borderRadius: 15,
+    paddingVertical: 11,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#C9E1FA",
+  },
+  ctaButtonText: { color: C.pinkDark, fontWeight: "900", fontSize: 11 },
+});
+
+const penjastip = StyleSheet.create({
+  heroCard: {
+    backgroundColor: C.pink,
+    borderRadius: 30,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: "#0A56B5",
+    shadowColor: "#0A3E7C",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.16,
+    shadowRadius: 18,
+    elevation: 7,
+    overflow: "hidden",
+  },
+  heroBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginBottom: 12,
+  },
+  heroBadgeText: { color: C.pinkDark, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
+  heroTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "800" },
+  heroSubtitle: { color: "#DCEAFF", lineHeight: 22, marginTop: 8 },
+  statRow: { flexDirection: "row", marginTop: 16, marginHorizontal: -4 },
+  sessionCard: {
+    backgroundColor: C.surface,
+    borderRadius: 24,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: C.border,
+    marginTop: 8,
+  },
+  inputLabel: { color: C.textSoft, fontWeight: "700", marginTop: 6, marginBottom: 8 },
+  tokoChipRow: { gap: 10, paddingBottom: 6 },
+  tokoChip: {
+    backgroundColor: C.bgSoft,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  tokoChipActive: { backgroundColor: "#EAF4FF", borderColor: C.pink },
+  tokoChipText: { color: C.text, fontWeight: "700", fontSize: 12 },
+  inlineRow: { flexDirection: "row", gap: 12, marginTop: 12 },
+  inlineField: { flex: 1 },
+  input: {
+    backgroundColor: C.bgSoft,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: C.text,
+  },
+  openButton: {
+    marginTop: 16,
+    backgroundColor: C.purple,
+    borderRadius: 18,
+    paddingVertical: 15,
+    alignItems: "center",
+  },
+  openButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 15 },
+  activeSessionBox: {
+    marginTop: 16,
+    backgroundColor: "#EEF6FF",
+    borderWidth: 1,
+    borderColor: "#B9D8F8",
+    borderRadius: 20,
+    padding: 18,
+  },
+  activeTitle: { color: C.pinkDark, fontWeight: "800", fontSize: 16 },
+  activeSubtitle: { color: C.textSoft, marginTop: 6, lineHeight: 20 },
+  activeHighlight: { color: C.text, marginTop: 10, fontWeight: "700" },
+  taskCard: {
+    borderRadius: 22,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    marginBottom: 12,
+  },
+  taskTopRow: { flexDirection: "row", alignItems: "center" },
+  taskImageWrap: { position: "relative", marginRight: 12 },
+  taskImage: {
+    width: 82,
+    height: 82,
+    borderRadius: 20,
+    backgroundColor: "#DDEEFF",
+  },
+  taskImageBadge: {
+    position: "absolute",
+    right: -5,
+    bottom: -5,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  taskImageBadgeText: { fontSize: 15 },
+  taskRight: { flex: 1 },
+  taskCategory: {
+    color: C.purple,
+    fontSize: 10,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 3,
+  },
+  taskTitle: { color: C.text, fontWeight: "900", fontSize: 15, lineHeight: 20 },
+  taskMeta: { color: C.textSoft, marginTop: 5, lineHeight: 18, fontSize: 12 },
+  taskButton: {
+    marginTop: 12,
+    alignSelf: "flex-start",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  taskButtonText: { color: C.purple, fontWeight: "800", fontSize: 12 },
 });
