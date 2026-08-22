@@ -1,10 +1,52 @@
 import Constants from "expo-constants";
 
-const codespacesGateway = typeof window !== "undefined" && window.location?.hostname?.endsWith(".app.github.dev")
-  ? `${window.location.protocol}//${window.location.hostname.replace(/-\d+\.app\.github\.dev$/, "-8080.app.github.dev")}`
-  : null;
-const configured = codespacesGateway || process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiUrl;
-export const API_URL = configured || "http://localhost:8080";
+function fromWebLocation() {
+  if (typeof window === "undefined" || !window.location?.hostname) return null;
+  const { protocol, hostname } = window.location;
+  if (hostname.endsWith(".app.github.dev")) {
+    return `${protocol}//${hostname.replace(/-\d+\.app\.github\.dev$/, "-8080.app.github.dev")}`;
+  }
+  if (hostname === "localhost" || hostname === "127.0.0.1") {
+    return "http://localhost:8080";
+  }
+  return `${protocol}//${hostname}:8080`;
+}
+
+function fromExpoHostUri() {
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    Constants.expoGoConfig?.debuggerHost ||
+    Constants.manifest2?.extra?.expoClient?.hostUri ||
+    Constants.manifest?.debuggerHost;
+  if (!hostUri) return null;
+  const host = String(hostUri).split(":")[0];
+  if (!host) return null;
+  return `http://${host}:8080`;
+}
+
+function isLoopback(url) {
+  if (!url) return false;
+  try {
+    const host = new URL(url).hostname;
+    return host === "localhost" || host === "127.0.0.1";
+  } catch {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(String(url));
+  }
+}
+
+const configured =
+  process.env.EXPO_PUBLIC_API_URL ||
+  Constants.expoConfig?.extra?.apiUrl;
+
+const webDetected = fromWebLocation();
+const expoDetected = fromExpoHostUri();
+const autoDetected = webDetected || expoDetected;
+
+// Jika Expo Go mendeteksi host Metro dan konfigurasi memaksa localhost,
+// gunakan host Metro supaya perangkat fisik tetap bisa menjangkau API.
+export const API_URL = expoDetected && isLoopback(configured)
+  ? expoDetected
+  : configured || autoDetected || "http://localhost:8080";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

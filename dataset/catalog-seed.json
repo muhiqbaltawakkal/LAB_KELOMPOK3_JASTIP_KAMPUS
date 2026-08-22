@@ -1,83 +1,619 @@
 {
-  "toko": [
-    { "id": 1,  "nama": "Chatime Losari",              "pemilik": "PT Pangan Lestari",              "lokasi": "Pantai Losari, Jl. Penghibur No.1, Makassar",                        "kategori": "Minuman Kekinian", "aktif": true },
-    { "id": 2,  "nama": "Mie Titi Makassar",            "pemilik": "Keluarga Titi",                  "lokasi": "Jl. Irian No.18, Makassar",                                          "kategori": "Makanan Khas",     "aktif": true },
-    { "id": 3,  "nama": "Gramedia Karebosi",             "pemilik": "PT Gramedia Asri Media",         "lokasi": "Mall Karebosi Link Lt.2, Jl. Jend. Ahmad Yani, Makassar",            "kategori": "Buku & Alat Tulis","aktif": true },
-    { "id": 4,  "nama": "Erafone Trans Studio Mall",     "pemilik": "PT Erafone Artha Retailindo",    "lokasi": "Trans Studio Mall Lt.1, Jl. Metro Tanjung Bunga, Makassar",          "kategori": "Elektronik",       "aktif": true },
-    { "id": 5,  "nama": "Indomaret Tamalanrea",          "pemilik": "PT Indomarco Prismatama",        "lokasi": "Jl. Perintis Kemerdekaan KM.10, Tamalanrea, Makassar",               "kategori": "Minimarket",       "aktif": true },
-    { "id": 6,  "nama": "Pisang Ijo Bu Budi",            "pemilik": "Hj. Budi Rahayu",               "lokasi": "Jl. Penghibur No.48A, Pantai Losari, Makassar",                      "kategori": "Kuliner Khas",     "aktif": true },
-    { "id": 7,  "nama": "Coto Makassar Nusantara",       "pemilik": "H. Syamsul Bahri",              "lokasi": "Jl. Nusantara No.32, Makassar",                                      "kategori": "Makanan Khas",     "aktif": true },
-    { "id": 8,  "nama": "Konro Bakar Karebosi",          "pemilik": "Keluarga Haris",                "lokasi": "Jl. Gunung Lompobattang No.41, Makassar",                            "kategori": "Makanan Khas",     "aktif": true },
-    { "id": 9,  "nama": "Kopi Torabika Cafe Panakkukang", "pemilik": "PT Torabika Eka Semesta",      "lokasi": "Mall Panakkukang Lt.1, Jl. Boulevard, Makassar",                     "kategori": "Kafe & Kopi",      "aktif": true },
-    { "id": 10, "nama": "J.CO Donuts & Coffee TSM",      "pemilik": "PT J.CO Donuts Indonesia",     "lokasi": "Trans Studio Mall Lt.GF, Jl. Metro Tanjung Bunga, Makassar",        "kategori": "Kafe & Kopi",      "aktif": true },
-    { "id": 11, "nama": "Alfamart Perintis",             "pemilik": "PT Sumber Alfaria Trijaya",     "lokasi": "Jl. Perintis Kemerdekaan KM.12, Makassar",                           "kategori": "Minimarket",       "aktif": true },
-    { "id": 12, "nama": "Samsung Experience Store MaRI", "pemilik": "PT Samsung Electronics Indonesia","lokasi": "Mall Ratu Indah Lt.1, Jl. Dr. Sam Ratulangi, Makassar",           "kategori": "Elektronik",       "aktif": true },
-    { "id": 13, "nama": "Burger King Karebosi",          "pemilik": "PT Sari Burger Indonesia",      "lokasi": "Mall Karebosi Link Lt.GF, Jl. Jend. Ahmad Yani, Makassar",          "kategori": "Fast Food",        "aktif": true },
-    { "id": 14, "nama": "KFC Panakkukang",               "pemilik": "PT Fast Food Indonesia",        "lokasi": "Mall Panakkukang Lt.GF, Jl. Boulevard, Makassar",                   "kategori": "Fast Food",        "aktif": true },
-    { "id": 15, "nama": "Toko Buku Fajar Bookshop",      "pemilik": "CV Fajar Media",                "lokasi": "Jl. Urip Sumoharjo No.20, Makassar",                                "kategori": "Buku & Alat Tulis","aktif": true },
-    { "id": 16, "nama": "Miniso Panakkukang",             "pemilik": "PT Miniso Lifestyle Trading",  "lokasi": "Mall Panakkukang Lt.2, Jl. Boulevard, Makassar",                    "kategori": "Lifestyle & Aksesoris","aktif": true },
-    { "id": 17, "nama": "Es Pisang Ijo Anugerah",        "pemilik": "Anugerah Barakah",              "lokasi": "Jl. Abdullah Dg. Sirua No.7, Panakkukang, Makassar",                "kategori": "Kuliner Khas",     "aktif": true },
-    { "id": 18, "nama": "Warung Pallubasa Serigala",     "pemilik": "H. Mappangara",                 "lokasi": "Jl. Serigala No.7, Makassar",                                        "kategori": "Makanan Khas",     "aktif": true },
-    { "id": 19, "nama": "Kopi Kanneng",                  "pemilik": "Muhamad Reza",                  "lokasi": "Jl. Hertasning Baru No.15, Makassar",                               "kategori": "Kafe & Kopi",      "aktif": true },
-    { "id": 20, "nama": "Apotik Kimia Farma Veteran",    "pemilik": "PT Kimia Farma Apotek",         "lokasi": "Jl. Veteran Selatan No.10, Makassar",                               "kategori": "Apotek & Kesehatan","aktif": true }
-  ],
-  "barang": [
-    { "id": 1,  "toko_id": 1,  "nama": "Brown Sugar Boba Milk Tea (L)",      "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 42000,   "stok": 100 },
-    { "id": 2,  "toko_id": 1,  "nama": "Matcha Latte (M)",                   "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 35000,   "stok": 100 },
-    { "id": 3,  "toko_id": 1,  "nama": "Classic Milk Tea (L)",               "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 32000,   "stok": 100 },
-    { "id": 4,  "toko_id": 2,  "nama": "Mie Titi Original (Reguler)",        "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 35000,   "stok": 50  },
-    { "id": 5,  "toko_id": 2,  "nama": "Mie Titi Udang",                     "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 45000,   "stok": 50  },
-    { "id": 6,  "toko_id": 2,  "nama": "Es Teh Manis",                       "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 8000,    "stok": 100 },
-    { "id": 7,  "toko_id": 3,  "nama": "Buku Tulis Sinardunia A5 40 Lembar", "kategori": "Alat Tulis",   "satuan": "pcs", "harga_acuan": 5500,    "stok": 300 },
-    { "id": 8,  "toko_id": 3,  "nama": "Pulpen Faber-Castell 0.5mm Hitam",   "kategori": "Alat Tulis",   "satuan": "pcs", "harga_acuan": 7000,    "stok": 400 },
-    { "id": 9,  "toko_id": 3,  "nama": "Stabilo Boss Highlighter Set 4 Warna","kategori": "Alat Tulis",  "satuan": "set", "harga_acuan": 28000,   "stok": 150 },
-    { "id": 10, "toko_id": 3,  "nama": "Sticky Notes Post-it 3x3",           "kategori": "Alat Tulis",   "satuan": "pcs", "harga_acuan": 18000,   "stok": 200 },
-    { "id": 11, "toko_id": 4,  "nama": "Samsung Galaxy A15 (4/128GB)",       "kategori": "Elektronik",   "satuan": "pcs", "harga_acuan": 2199000, "stok": 20  },
-    { "id": 12, "toko_id": 4,  "nama": "Kabel Data Anker USB-C 1m",          "kategori": "Elektronik",   "satuan": "pcs", "harga_acuan": 89000,   "stok": 80  },
-    { "id": 13, "toko_id": 4,  "nama": "Earphone Samsung AKG Type-C",        "kategori": "Elektronik",   "satuan": "pcs", "harga_acuan": 150000,  "stok": 60  },
-    { "id": 14, "toko_id": 5,  "nama": "Aqua 600ml",                         "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 4500,    "stok": 500 },
-    { "id": 15, "toko_id": 5,  "nama": "Indomie Goreng",                     "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 3500,    "stok": 400 },
-    { "id": 16, "toko_id": 5,  "nama": "Chitato Sapi Panggang 68g",          "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 12000,   "stok": 200 },
-    { "id": 17, "toko_id": 6,  "nama": "Pisang Ijo Original (1 Porsi)",      "kategori": "Kuliner",      "satuan": "pcs", "harga_acuan": 20000,   "stok": 60  },
-    { "id": 18, "toko_id": 6,  "nama": "Pisang Ijo Durian (1 Porsi)",        "kategori": "Kuliner",      "satuan": "pcs", "harga_acuan": 25000,   "stok": 40  },
-    { "id": 19, "toko_id": 7,  "nama": "Coto Makassar (1 Mangkuk)",          "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 30000,   "stok": 80  },
-    { "id": 20, "toko_id": 7,  "nama": "Ketupat (2 Biji)",                   "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 5000,    "stok": 150 },
-    { "id": 21, "toko_id": 7,  "nama": "Es Kelapa Muda",                     "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 15000,   "stok": 80  },
-    { "id": 22, "toko_id": 8,  "nama": "Konro Bakar (1 Porsi)",              "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 55000,   "stok": 60  },
-    { "id": 23, "toko_id": 8,  "nama": "Sup Konro (1 Mangkuk)",              "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 60000,   "stok": 50  },
-    { "id": 24, "toko_id": 9,  "nama": "Kopi Torabika Duo Sachet",           "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 3000,    "stok": 500 },
-    { "id": 25, "toko_id": 9,  "nama": "Cappuccino Torabika (M)",            "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 22000,   "stok": 100 },
-    { "id": 26, "toko_id": 10, "nama": "J.CO Original Glazed (6 pcs)",       "kategori": "Makanan",      "satuan": "box", "harga_acuan": 75000,   "stok": 50  },
-    { "id": 27, "toko_id": 10, "nama": "Ice Blended Avocado (M)",            "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 48000,   "stok": 80  },
-    { "id": 28, "toko_id": 11, "nama": "Pocari Sweat 500ml",                 "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 8000,    "stok": 400 },
-    { "id": 29, "toko_id": 11, "nama": "Roti Tawar Sari Roti",               "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 14000,   "stok": 150 },
-    { "id": 30, "toko_id": 11, "nama": "Mie Sedaap Goreng",                  "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 3500,    "stok": 350 },
-    { "id": 31, "toko_id": 12, "nama": "Samsung Galaxy S24 (8/256GB)",       "kategori": "Elektronik",   "satuan": "pcs", "harga_acuan": 11999000,"stok": 10  },
-    { "id": 32, "toko_id": 12, "nama": "Samsung Buds2 Pro",                  "kategori": "Elektronik",   "satuan": "pcs", "harga_acuan": 2199000, "stok": 25  },
-    { "id": 33, "toko_id": 13, "nama": "Whopper Jr. Burger",                 "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 45000,   "stok": 100 },
-    { "id": 34, "toko_id": 13, "nama": "Chicken Fries (6 pcs)",              "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 35000,   "stok": 100 },
-    { "id": 35, "toko_id": 14, "nama": "KFC Original 2 Pcs + Nasi",         "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 55000,   "stok": 100 },
-    { "id": 36, "toko_id": 14, "nama": "Krushers Vanilla (M)",               "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 28000,   "stok": 80  },
-    { "id": 37, "toko_id": 15, "nama": "Kamus Besar Bahasa Indonesia (KBBI)","kategori": "Buku",         "satuan": "pcs", "harga_acuan": 120000,  "stok": 30  },
-    { "id": 38, "toko_id": 15, "nama": "Buku Algoritma & Pemrograman",       "kategori": "Buku",         "satuan": "pcs", "harga_acuan": 85000,   "stok": 40  },
-    { "id": 39, "toko_id": 16, "nama": "Tumbler Miniso 500ml",               "kategori": "Aksesoris",    "satuan": "pcs", "harga_acuan": 89000,   "stok": 70  },
-    { "id": 40, "toko_id": 16, "nama": "Pouch Kosmetik Miniso",              "kategori": "Aksesoris",    "satuan": "pcs", "harga_acuan": 55000,   "stok": 60  },
-    { "id": 41, "toko_id": 16, "nama": "Lampu Meja LED Miniso",              "kategori": "Aksesoris",    "satuan": "pcs", "harga_acuan": 149000,  "stok": 35  },
-    { "id": 42, "toko_id": 17, "nama": "Es Pisang Ijo Anugerah (1 Porsi)",   "kategori": "Kuliner",      "satuan": "pcs", "harga_acuan": 18000,   "stok": 70  },
-    { "id": 43, "toko_id": 18, "nama": "Pallubasa (1 Mangkuk)",              "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 35000,   "stok": 60  },
-    { "id": 44, "toko_id": 18, "nama": "Telur Pallubasa",                    "kategori": "Makanan",      "satuan": "pcs", "harga_acuan": 5000,    "stok": 100 },
-    { "id": 45, "toko_id": 19, "nama": "Kopi Susu Kanneng (M)",              "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 25000,   "stok": 100 },
-    { "id": 46, "toko_id": 19, "nama": "Es Kopi Americano (M)",              "kategori": "Minuman",      "satuan": "pcs", "harga_acuan": 22000,   "stok": 100 },
-    { "id": 47, "toko_id": 20, "nama": "Paracetamol 500mg (10 Tablet)",      "kategori": "Obat",         "satuan": "strip","harga_acuan": 8000,   "stok": 200 },
-    { "id": 48, "toko_id": 20, "nama": "Vitamin C 1000mg Redoxon (10 Tab)",  "kategori": "Suplemen",     "satuan": "strip","harga_acuan": 35000,  "stok": 150 },
-    { "id": 49, "toko_id": 20, "nama": "Masker Medis KF94 (10 pcs)",         "kategori": "Kesehatan",    "satuan": "box", "harga_acuan": 25000,   "stok": 120 }
-  ],
-  "satuan": [
-    { "id": 1, "kode": "pcs",   "nama": "Pieces",    "keterangan": "Satuan per buah" },
-    { "id": 2, "kode": "set",   "nama": "Set",       "keterangan": "Satuan per set/paket" },
-    { "id": 3, "kode": "lusin", "nama": "Lusin",     "keterangan": "Satuan per 12 buah" },
-    { "id": 4, "kode": "box",   "nama": "Box",       "keterangan": "Satuan per kotak" },
-    { "id": 5, "kode": "kg",    "nama": "Kilogram",  "keterangan": "Satuan berat" },
-    { "id": 6, "kode": "strip", "nama": "Strip",     "keterangan": "Satuan per strip/lembar obat" }
+  "nama_katalog": "JastipKampus",
+  "jumlah_produk": 34,
+  "sumber_gambar": "JastipKampus_Gambar_Produk",
+  "produk": [
+    {
+      "id": 1,
+      "nama": "Brown Sugar Boba Milk Tea L",
+      "kategori": "Minuman Kekinian",
+      "satuan": "cup",
+      "gambar": "01_brown_sugar_boba_milk_tea_L.jpg",
+      "toko_id": 1,
+      "harga_acuan": 42000,
+      "stok": 18,
+      "toko": {
+        "id": 1,
+        "nama": "Chatime Losari",
+        "pemilik": "PT Pangan Lestari",
+        "lokasi": "Pantai Losari, Jl. Penghibur No.1, Makassar",
+        "kategori": "Minuman Kekinian",
+        "aktif": true
+      }
+    },
+    {
+      "id": 2,
+      "nama": "Matcha Latte M",
+      "kategori": "Minuman Kekinian",
+      "satuan": "cup",
+      "gambar": "02_matcha_latte_M.jpeg",
+      "toko_id": 1,
+      "harga_acuan": 35000,
+      "stok": 14,
+      "toko": {
+        "id": 1,
+        "nama": "Chatime Losari",
+        "pemilik": "PT Pangan Lestari",
+        "lokasi": "Pantai Losari, Jl. Penghibur No.1, Makassar",
+        "kategori": "Minuman Kekinian",
+        "aktif": true
+      }
+    },
+    {
+      "id": 3,
+      "nama": "Tiger Sugar Boba",
+      "kategori": "Minuman Kekinian",
+      "satuan": "cup",
+      "gambar": "03_tiger_sugar_boba.jpg",
+      "toko_id": 1,
+      "harga_acuan": 38000,
+      "stok": 20,
+      "toko": {
+        "id": 1,
+        "nama": "Chatime Losari",
+        "pemilik": "PT Pangan Lestari",
+        "lokasi": "Pantai Losari, Jl. Penghibur No.1, Makassar",
+        "kategori": "Minuman Kekinian",
+        "aktif": true
+      }
+    },
+    {
+      "id": 4,
+      "nama": "Taro Milk Tea L",
+      "kategori": "Minuman Kekinian",
+      "satuan": "cup",
+      "gambar": "04_taro_milk_tea_L.jpg",
+      "toko_id": 1,
+      "harga_acuan": 40000,
+      "stok": 16,
+      "toko": {
+        "id": 1,
+        "nama": "Chatime Losari",
+        "pemilik": "PT Pangan Lestari",
+        "lokasi": "Pantai Losari, Jl. Penghibur No.1, Makassar",
+        "kategori": "Minuman Kekinian",
+        "aktif": true
+      }
+    },
+    {
+      "id": 5,
+      "nama": "Mie Titi Original Reguler",
+      "kategori": "Makanan Khas",
+      "satuan": "porsi",
+      "gambar": "05_mie_titi_original_reguler.jpg",
+      "toko_id": 2,
+      "harga_acuan": 35000,
+      "stok": 12,
+      "toko": {
+        "id": 2,
+        "nama": "Mie Titi Makassar",
+        "pemilik": "Keluarga Titi",
+        "lokasi": "Jl. Irian No.18, Makassar",
+        "kategori": "Makanan Khas",
+        "aktif": true
+      }
+    },
+    {
+      "id": 6,
+      "nama": "Mie Titi Spesial Jumbo",
+      "kategori": "Makanan Khas",
+      "satuan": "porsi",
+      "gambar": "06_mie_titi_spesial_jumbo.jpg",
+      "toko_id": 2,
+      "harga_acuan": 55000,
+      "stok": 8,
+      "toko": {
+        "id": 2,
+        "nama": "Mie Titi Makassar",
+        "pemilik": "Keluarga Titi",
+        "lokasi": "Jl. Irian No.18, Makassar",
+        "kategori": "Makanan Khas",
+        "aktif": true
+      }
+    },
+    {
+      "id": 7,
+      "nama": "Es Teh Manis",
+      "kategori": "Minuman Kekinian",
+      "satuan": "gelas",
+      "gambar": "07_es_teh_manis.jpg",
+      "toko_id": 2,
+      "harga_acuan": 8000,
+      "stok": 30,
+      "toko": {
+        "id": 2,
+        "nama": "Mie Titi Makassar",
+        "pemilik": "Keluarga Titi",
+        "lokasi": "Jl. Irian No.18, Makassar",
+        "kategori": "Makanan Khas",
+        "aktif": true
+      }
+    },
+    {
+      "id": 8,
+      "nama": "Novel Terlaris Bulan Ini",
+      "kategori": "Buku & Alat Tulis",
+      "satuan": "pcs",
+      "gambar": "08_novel_terlaris_bulan_ini.jpeg",
+      "toko_id": 3,
+      "harga_acuan": 89000,
+      "stok": 10,
+      "toko": {
+        "id": 3,
+        "nama": "Gramedia Karebosi",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Karebosi Link Lt.2, Makassar",
+        "kategori": "Buku & Alat Tulis",
+        "aktif": true
+      }
+    },
+    {
+      "id": 9,
+      "nama": "Buku Tulis Sinar Dunia 40 Lembar",
+      "kategori": "Buku & Alat Tulis",
+      "satuan": "pcs",
+      "gambar": "09_buku_tulis_sinar_dunia_40_lembar.jpeg",
+      "toko_id": 3,
+      "harga_acuan": 8500,
+      "stok": 50,
+      "toko": {
+        "id": 3,
+        "nama": "Gramedia Karebosi",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Karebosi Link Lt.2, Makassar",
+        "kategori": "Buku & Alat Tulis",
+        "aktif": true
+      }
+    },
+    {
+      "id": 10,
+      "nama": "Pulpen Pilot G2 Hitam",
+      "kategori": "Buku & Alat Tulis",
+      "satuan": "pcs",
+      "gambar": "10_pulpen_pilot_g2_hitam.jpeg",
+      "toko_id": 3,
+      "harga_acuan": 15000,
+      "stok": 35,
+      "toko": {
+        "id": 3,
+        "nama": "Gramedia Karebosi",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Karebosi Link Lt.2, Makassar",
+        "kategori": "Buku & Alat Tulis",
+        "aktif": true
+      }
+    },
+    {
+      "id": 11,
+      "nama": "Spidol Snowman Whiteboard",
+      "kategori": "Buku & Alat Tulis",
+      "satuan": "pcs",
+      "gambar": "11_spidol_snowman_whiteboard.jpeg",
+      "toko_id": 3,
+      "harga_acuan": 12000,
+      "stok": 25,
+      "toko": {
+        "id": 3,
+        "nama": "Gramedia Karebosi",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Karebosi Link Lt.2, Makassar",
+        "kategori": "Buku & Alat Tulis",
+        "aktif": true
+      }
+    },
+    {
+      "id": 12,
+      "nama": "Samsung Galaxy Buds FE",
+      "kategori": "Elektronik",
+      "satuan": "pcs",
+      "gambar": "12_samsung_galaxy_buds_fe.jpeg",
+      "toko_id": 4,
+      "harga_acuan": 799000,
+      "stok": 7,
+      "toko": {
+        "id": 4,
+        "nama": "Samsung Experience Store",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Ratu Indah Lt.1, Makassar",
+        "kategori": "Elektronik",
+        "aktif": true
+      }
+    },
+    {
+      "id": 13,
+      "nama": "Samsung 25W Type-C Charger",
+      "kategori": "Elektronik",
+      "satuan": "pcs",
+      "gambar": "13_samsung_25w_typec_charger.jpg",
+      "toko_id": 4,
+      "harga_acuan": 199000,
+      "stok": 15,
+      "toko": {
+        "id": 4,
+        "nama": "Samsung Experience Store",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Ratu Indah Lt.1, Makassar",
+        "kategori": "Elektronik",
+        "aktif": true
+      }
+    },
+    {
+      "id": 14,
+      "nama": "Samsung Clear Case Galaxy A55",
+      "kategori": "Elektronik",
+      "satuan": "pcs",
+      "gambar": "14_samsung_clear_case_galaxy_a55.webp",
+      "toko_id": 4,
+      "harga_acuan": 149000,
+      "stok": 20,
+      "toko": {
+        "id": 4,
+        "nama": "Samsung Experience Store",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Ratu Indah Lt.1, Makassar",
+        "kategori": "Elektronik",
+        "aktif": true
+      }
+    },
+    {
+      "id": 15,
+      "nama": "Mie Instan Indomie Goreng",
+      "kategori": "Minimarket",
+      "satuan": "bungkus",
+      "gambar": "15_mie_instan_indomie_goreng.jpg",
+      "toko_id": 5,
+      "harga_acuan": 3500,
+      "stok": 100,
+      "toko": {
+        "id": 5,
+        "nama": "Indomaret Tamalanrea",
+        "pemilik": "PT Indomarco Prismatama",
+        "lokasi": "Jl. Perintis Kemerdekaan KM.10, Tamalanrea, Makassar",
+        "kategori": "Minimarket",
+        "aktif": true
+      }
+    },
+    {
+      "id": 16,
+      "nama": "Aqua Air Mineral 600ml",
+      "kategori": "Minimarket",
+      "satuan": "botol",
+      "gambar": "16_aqua_air_mineral_600ml.webp",
+      "toko_id": 5,
+      "harga_acuan": 5000,
+      "stok": 80,
+      "toko": {
+        "id": 5,
+        "nama": "Indomaret Tamalanrea",
+        "pemilik": "PT Indomarco Prismatama",
+        "lokasi": "Jl. Perintis Kemerdekaan KM.10, Tamalanrea, Makassar",
+        "kategori": "Minimarket",
+        "aktif": true
+      }
+    },
+    {
+      "id": 17,
+      "nama": "Snack Chitato Sapi Panggang",
+      "kategori": "Minimarket",
+      "satuan": "pcs",
+      "gambar": "17_snack_chitato_sapi_panggang.jpeg",
+      "toko_id": 5,
+      "harga_acuan": 12000,
+      "stok": 45,
+      "toko": {
+        "id": 5,
+        "nama": "Indomaret Tamalanrea",
+        "pemilik": "PT Indomarco Prismatama",
+        "lokasi": "Jl. Perintis Kemerdekaan KM.10, Tamalanrea, Makassar",
+        "kategori": "Minimarket",
+        "aktif": true
+      }
+    },
+    {
+      "id": 18,
+      "nama": "Pocari Sweat 500ml",
+      "kategori": "Minimarket",
+      "satuan": "botol",
+      "gambar": "18_pocari_sweat_500ml.webp",
+      "toko_id": 5,
+      "harga_acuan": 9000,
+      "stok": 60,
+      "toko": {
+        "id": 5,
+        "nama": "Indomaret Tamalanrea",
+        "pemilik": "PT Indomarco Prismatama",
+        "lokasi": "Jl. Perintis Kemerdekaan KM.10, Tamalanrea, Makassar",
+        "kategori": "Minimarket",
+        "aktif": true
+      }
+    },
+    {
+      "id": 19,
+      "nama": "Pallubasa Sapi Spesial",
+      "kategori": "Kuliner Khas",
+      "satuan": "porsi",
+      "gambar": "19_pallubasa_sapi_spesial.webp",
+      "toko_id": 6,
+      "harga_acuan": 35000,
+      "stok": 15,
+      "toko": {
+        "id": 6,
+        "nama": "Pallubasa Serigala",
+        "pemilik": "Hj. Budi Rahayu",
+        "lokasi": "Jl. Penghibur No.48A, Pantai Losari, Makassar",
+        "kategori": "Kuliner Khas",
+        "aktif": true
+      }
+    },
+    {
+      "id": 20,
+      "nama": "Pallubasa Ayam",
+      "kategori": "Kuliner Khas",
+      "satuan": "porsi",
+      "gambar": "20_pallubasa_ayam.webp",
+      "toko_id": 6,
+      "harga_acuan": 28000,
+      "stok": 15,
+      "toko": {
+        "id": 6,
+        "nama": "Pallubasa Serigala",
+        "pemilik": "Hj. Budi Rahayu",
+        "lokasi": "Jl. Penghibur No.48A, Pantai Losari, Makassar",
+        "kategori": "Kuliner Khas",
+        "aktif": true
+      }
+    },
+    {
+      "id": 21,
+      "nama": "Americano Hot",
+      "kategori": "Kafe & Kopi",
+      "satuan": "cup",
+      "gambar": "21_americano_hot.jpg",
+      "toko_id": 7,
+      "harga_acuan": 22000,
+      "stok": 25,
+      "toko": {
+        "id": 7,
+        "nama": "Kopi Janji Jiwa Unhas",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Perintis Kemerdekaan Km.10, Makassar",
+        "kategori": "Kafe & Kopi",
+        "aktif": true
+      }
+    },
+    {
+      "id": 22,
+      "nama": "Kopi Susu Gula Aren",
+      "kategori": "Kafe & Kopi",
+      "satuan": "cup",
+      "gambar": "22_kopi_susu_gula_aren.jpg",
+      "toko_id": 7,
+      "harga_acuan": 25000,
+      "stok": 30,
+      "toko": {
+        "id": 7,
+        "nama": "Kopi Janji Jiwa Unhas",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Perintis Kemerdekaan Km.10, Makassar",
+        "kategori": "Kafe & Kopi",
+        "aktif": true
+      }
+    },
+    {
+      "id": 23,
+      "nama": "Es Kopi Hitam",
+      "kategori": "Kafe & Kopi",
+      "satuan": "cup",
+      "gambar": "23_es_kopi_hitam.jpg",
+      "toko_id": 7,
+      "harga_acuan": 18000,
+      "stok": 30,
+      "toko": {
+        "id": 7,
+        "nama": "Kopi Janji Jiwa Unhas",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Perintis Kemerdekaan Km.10, Makassar",
+        "kategori": "Kafe & Kopi",
+        "aktif": true
+      }
+    },
+    {
+      "id": 24,
+      "nama": "McFlurry Oreo",
+      "kategori": "Fast Food",
+      "satuan": "pcs",
+      "gambar": "24_mcflurry_oreo.jpeg",
+      "toko_id": 8,
+      "harga_acuan": 32000,
+      "stok": 20,
+      "toko": {
+        "id": 8,
+        "nama": "McDonald's Panakukang",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Panakukang Lt.1, Makassar",
+        "kategori": "Fast Food",
+        "aktif": true
+      }
+    },
+    {
+      "id": 25,
+      "nama": "Paket McChicken Value",
+      "kategori": "Fast Food",
+      "satuan": "paket",
+      "gambar": "25_paket_mcchicken_value.jpg",
+      "toko_id": 8,
+      "harga_acuan": 45000,
+      "stok": 25,
+      "toko": {
+        "id": 8,
+        "nama": "McDonald's Panakukang",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Panakukang Lt.1, Makassar",
+        "kategori": "Fast Food",
+        "aktif": true
+      }
+    },
+    {
+      "id": 26,
+      "nama": "French Fries Large",
+      "kategori": "Fast Food",
+      "satuan": "pcs",
+      "gambar": "26_french_fries_large.jpeg",
+      "toko_id": 8,
+      "harga_acuan": 28000,
+      "stok": 30,
+      "toko": {
+        "id": 8,
+        "nama": "McDonald's Panakukang",
+        "pemilik": "Data Workbook",
+        "lokasi": "Mall Panakukang Lt.1, Makassar",
+        "kategori": "Fast Food",
+        "aktif": true
+      }
+    },
+    {
+      "id": 27,
+      "nama": "Es Pisang Ijo Original",
+      "kategori": "Kuliner Khas",
+      "satuan": "pcs",
+      "gambar": "27_es_pisang_ijo_original.jpg",
+      "toko_id": 9,
+      "harga_acuan": 18000,
+      "stok": 20,
+      "toko": {
+        "id": 9,
+        "nama": "Es Pisang Ijo Irwan",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Penghibur No.8, Makassar",
+        "kategori": "Kuliner Khas",
+        "aktif": true
+      }
+    },
+    {
+      "id": 28,
+      "nama": "Goodday Kopi Sachet 10pcs",
+      "kategori": "Minimarket",
+      "satuan": "pack",
+      "gambar": "28_goodday_kopi_sachet_10pcs.jpg",
+      "toko_id": 10,
+      "harga_acuan": 20000,
+      "stok": 40,
+      "toko": {
+        "id": 10,
+        "nama": "Alfamart Hertasning",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Hertasning No.22, Makassar",
+        "kategori": "Minimarket",
+        "aktif": true
+      }
+    },
+    {
+      "id": 29,
+      "nama": "KFC Original 2pcs",
+      "kategori": "Fast Food",
+      "satuan": "paket",
+      "gambar": "29_kfc_original_2pcs.jpg",
+      "toko_id": 11,
+      "harga_acuan": 55000,
+      "stok": 20,
+      "toko": {
+        "id": 11,
+        "nama": "KFC Hasanuddin",
+        "pemilik": "PT Sumber Alfaria Trijaya",
+        "lokasi": "Jl. Perintis Kemerdekaan KM.12, Makassar",
+        "kategori": "Fast Food",
+        "aktif": true
+      }
+    },
+    {
+      "id": 30,
+      "nama": "Buku Kuliah Akuntansi Dasar",
+      "kategori": "Buku & Alat Tulis",
+      "satuan": "pcs",
+      "gambar": "30_buku_kuliah_akuntansi_dasar.jpeg",
+      "toko_id": 12,
+      "harga_acuan": 95000,
+      "stok": 8,
+      "toko": {
+        "id": 12,
+        "nama": "Toko Buku Fajar",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Cokroaminoto No.9, Makassar",
+        "kategori": "Buku & Alat Tulis",
+        "aktif": true
+      }
+    },
+    {
+      "id": 31,
+      "nama": "Pisang Goreng Keju",
+      "kategori": "Kuliner Khas",
+      "satuan": "pcs",
+      "gambar": "31_pisang_goreng_keju.jpeg",
+      "toko_id": 13,
+      "harga_acuan": 15000,
+      "stok": 30,
+      "toko": {
+        "id": 13,
+        "nama": "Pisang Goreng Mafia",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Boulevard No.3, Makassar",
+        "kategori": "Kuliner Khas",
+        "aktif": true
+      }
+    },
+    {
+      "id": 32,
+      "nama": "Miniso Tumbler 500ml",
+      "kategori": "Lifestyle & Aksesoris",
+      "satuan": "pcs",
+      "gambar": "32_miniso_tumbler_500ml.jpeg",
+      "toko_id": 14,
+      "harga_acuan": 85000,
+      "stok": 12,
+      "toko": {
+        "id": 14,
+        "nama": "Miniso Panakukang",
+        "pemilik": "PT Fast Food Indonesia",
+        "lokasi": "Mall Panakkukang Lt.GF, Jl. Boulevard, Makassar",
+        "kategori": "Lifestyle & Aksesoris",
+        "aktif": true
+      }
+    },
+    {
+      "id": 33,
+      "nama": "Paracetamol 500mg 10 tablet",
+      "kategori": "Apotek & Kesehatan",
+      "satuan": "strip",
+      "gambar": "33_paracetamol_500mg_10_tablet.png",
+      "toko_id": 15,
+      "harga_acuan": 8500,
+      "stok": 50,
+      "toko": {
+        "id": 15,
+        "nama": "Apotek Kimia Farma",
+        "pemilik": "Data Workbook",
+        "lokasi": "Jl. Veteran Selatan No.8, Makassar",
+        "kategori": "Apotek & Kesehatan",
+        "aktif": true
+      }
+    },
+    {
+      "id": 34,
+      "nama": "Sop Saudara Daging Reguler",
+      "kategori": "Makanan Khas",
+      "satuan": "porsi",
+      "gambar": "34_sop_saudara_daging_reguler.jpg",
+      "toko_id": 16,
+      "harga_acuan": 35000,
+      "stok": 18,
+      "toko": {
+        "id": 16,
+        "nama": "Sop Saudara Mandiri",
+        "pemilik": "PT Miniso Lifestyle Trading",
+        "lokasi": "Mall Panakkukang Lt.2, Jl. Boulevard, Makassar",
+        "kategori": "Makanan Khas",
+        "aktif": true
+      }
+    }
   ]
 }

@@ -4,23 +4,27 @@ import * as ImagePicker from "expo-image-picker";
 import NetInfo from "@react-native-community/netinfo";
 import { API_URL, api } from "../lib/api";
 import { enqueue, flushOutbox, storage } from "../lib/offline";
+import { AppButton } from "../components/ui";
+import { colors } from "../theme/tokens";
 
-const C = { bg: "#f4f7fb", card: "#fff", blue: "#1266f1", ink: "#10213a", muted: "#64748b", green: "#059669", red: "#dc2626", line: "#dbe4ef" };
+const C = { bg: colors.bg, card: colors.surface, blue: colors.pink, ink: colors.text, muted: colors.textSoft, green: colors.success, red: colors.danger, line: colors.border };
 const money = (n) => `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
 const futureIso = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0); if (d <= new Date()) d.setDate(d.getDate() + 1); return d.toISOString(); };
 
-function Button({ title, onPress, secondary, disabled }) { return <Pressable disabled={disabled} onPress={onPress} style={[s.button, secondary && s.secondary, disabled && { opacity: .5 }]}><Text style={[s.buttonText, secondary && { color: C.blue }]}>{title}</Text></Pressable>; }
-function Input({ label, ...props }) { return <View style={{ marginBottom: 12 }}><Text style={s.label}>{label}</Text><TextInput placeholderTextColor="#94a3b8" style={s.input} {...props} /></View>; }
+function Button({ title, onPress, secondary, disabled }) { return <AppButton title={title} onPress={onPress} secondary={secondary} disabled={disabled} style={s.button} textStyle={secondary ? { color: C.blue } : null} />; }
+function Input({ label, ...props }) { return <View style={{ marginBottom: 12 }}><Text style={s.label}>{label}</Text><TextInput placeholderTextColor={C.muted} style={s.input} {...props} /></View>; }
 function Card({ title, children }) { return <View style={s.card}>{title ? <Text style={s.cardTitle}>{title}</Text> : null}{children}</View>; }
 function Photo({ product, large }) { const uri=product?.foto_url?.startsWith("http")?product.foto_url:product?.foto_url?`${API_URL}${product.foto_url}`:null; return uri ? <Image source={{ uri }} style={[s.photo, large && { height: 220 }]} /> : <View style={[s.photo, s.placeholder, large && { height: 220 }]}><Text style={s.placeholderText}>Foto belum tersedia</Text></View>; }
-function Shell({ title, children, logout, offline }) { return <SafeAreaView style={s.root}><View style={s.top}><Text style={s.title}>{title}</Text>{logout ? <Pressable onPress={logout}><Text style={{ color: C.red, fontWeight: "700" }}>Keluar</Text></Pressable> : null}</View>{offline ? <Text style={s.offline}>Mode offline - perubahan membutuhkan koneksi</Text> : null}<ScrollView contentContainerStyle={s.content}>{children}</ScrollView></SafeAreaView>; }
+function Shell({ title, children, logout, offline }) { return <SafeAreaView style={s.root}><View style={s.headerWrap}><View style={s.top}><Text style={s.title}>{title}</Text>{logout ? <Pressable onPress={logout} style={s.logoutButton}><Text style={s.logoutText}>Keluar</Text></Pressable> : null}</View></View>{offline ? <Text style={s.offline}>Mode offline - perubahan membutuhkan koneksi</Text> : null}<ScrollView contentContainerStyle={s.content}>{children}</ScrollView></SafeAreaView>; }
 
 function Auth({ onAuth }) {
+  const { width } = useWindowDimensions();
+  const wide = width >= 920;
   const [mode, setMode] = useState("login"); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ nama: "", email: "", password: "", noHp: "", kampus: "" });
   const set = (k, v) => setForm((x) => ({ ...x, [k]: v }));
   async function submit() { setError(""); if (mode === "register" && form.password.length < 8) { setError("Password minimal 8 karakter"); return; } setLoading(true); try { if (mode === "register") { await api.register(form); setMode("login"); } else { await onAuth(await api.login(form.email, form.password)); } } catch (e) { setError(e.message); } finally { setLoading(false); } }
-  return <Shell title="Jastip Kampus"><Card title={mode === "login" ? "Masuk" : "Buat akun"}>{mode === "register" ? <><Input label="Nama" value={form.nama} onChangeText={(v) => set("nama", v)} /><Input label="No. HP" value={form.noHp} onChangeText={(v) => set("noHp", v)} /><Input label="Kampus" value={form.kampus} onChangeText={(v) => set("kampus", v)} /><Text style={s.muted}>Satu akun dapat digunakan sebagai Penitip dan Penjastip.</Text></> : null}<Input label="Email" autoCapitalize="none" value={form.email} onChangeText={(v) => set("email", v)} /><Input label={mode === "register" ? "Password (minimal 8 karakter)" : "Password"} secureTextEntry value={form.password} onChangeText={(v) => set("password", v)} />{error ? <Text style={s.error}>{error}</Text> : null}<Button disabled={loading} title={loading ? "Memproses..." : mode === "login" ? "Masuk" : "Daftar"} onPress={submit} /><Button secondary title={mode === "login" ? "Belum punya akun" : "Sudah punya akun"} onPress={() => setMode(mode === "login" ? "register" : "login")} /></Card></Shell>;
+  return <Shell title="Jastip Kampus"><View style={[s.authLayout, wide && s.authLayoutWide]}><View style={s.authHero}><Text style={s.authBadge}>PLATFORM JASTIP KAMPUS</Text><Text style={s.authHeroTitle}>Titip belanja kampus, cepat dan transparan.</Text><Text style={s.authHeroText}>Masuk untuk memantau sesi, transaksi, pembayaran escrow, dan tracking dalam satu dashboard.</Text><View style={s.authPillRow}><View style={s.authPill}><Text style={s.authPillText}>Order realtime</Text></View><View style={s.authPill}><Text style={s.authPillText}>Tracking status</Text></View><View style={s.authPill}><Text style={s.authPillText}>Escrow aman</Text></View></View></View><Card title={mode === "login" ? "Masuk" : "Buat akun"}>{mode === "register" ? <><Input label="Nama" value={form.nama} onChangeText={(v) => set("nama", v)} /><Input label="No. HP" value={form.noHp} onChangeText={(v) => set("noHp", v)} /><Input label="Kampus" value={form.kampus} onChangeText={(v) => set("kampus", v)} /><Text style={s.muted}>Satu akun dapat digunakan sebagai Penitip dan Penjastip.</Text></> : null}<Input label="Email" autoCapitalize="none" value={form.email} onChangeText={(v) => set("email", v)} /><Input label={mode === "register" ? "Password (minimal 8 karakter)" : "Password"} secureTextEntry value={form.password} onChangeText={(v) => set("password", v)} />{error ? <Text style={s.error}>{error}</Text> : null}<Button disabled={loading} title={loading ? "Memproses..." : mode === "login" ? "Masuk" : "Daftar"} onPress={submit} /><Button secondary title={mode === "login" ? "Belum punya akun" : "Sudah punya akun"} onPress={() => setMode(mode === "login" ? "register" : "login")} /></Card></View></Shell>;
 }
 
 function Penjastip({ token, user, offline, logout }) {
@@ -115,4 +119,342 @@ export default function App() {
   return activeMode === "penjastip" ? <Penjastip token={auth.token} user={auth.user} offline={offline} logout={back} /> : <Penitip token={auth.token} user={auth.user} offline={offline} logout={back} />;
 }
 
-const s = StyleSheet.create({ root: { flex: 1, backgroundColor: C.bg }, top: { padding: 18, backgroundColor: C.card, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderColor: C.line }, title: { fontSize: 22, fontWeight: "900", color: C.ink }, content: { padding: 14, paddingBottom: 50, width: "100%", maxWidth: 1400, alignSelf: "center" }, card: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 15, marginBottom: 14 }, cardTitle: { color: C.ink, fontWeight: "900", fontSize: 18, marginBottom: 10 }, label: { color: C.ink, fontWeight: "700", marginBottom: 6 }, input: { borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 12, color: C.ink, backgroundColor: "#f8fafc", minWidth: 180 }, button: { backgroundColor: C.blue, borderRadius: 12, padding: 13, alignItems: "center", marginVertical: 5, flexGrow: 1 }, secondary: { backgroundColor: C.card, borderWidth: 1, borderColor: C.blue }, buttonText: { color: "white", fontWeight: "800" }, row: { flexDirection: "row", gap: 7, flexWrap: "wrap" }, wrap: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginBottom: 12 }, chip: { borderWidth: 1, borderColor: C.line, paddingHorizontal: 11, paddingVertical: 8, borderRadius: 999 }, chipOn: { backgroundColor: C.blue, borderColor: C.blue }, chipText: { color: C.ink }, chipTextOn: { color: "white", fontWeight: "700" }, list: { borderTopWidth: 1, borderColor: C.line, paddingVertical: 11 }, strong: { color: C.ink, fontWeight: "800" }, muted: { color: C.muted, marginTop: 3 }, error: { color: C.red, fontWeight: "700", marginBottom: 10 }, success: { color: C.green, fontWeight: "700", marginBottom: 10 }, offline: { backgroundColor: "#f59e0b", color: "white", padding: 8, textAlign: "center", fontWeight: "700" }, product: { flexDirection: "row", gap: 10, borderTopWidth: 1, borderColor: C.line, paddingVertical: 12 }, photo: { width: 100, height: 100, borderRadius: 12, backgroundColor: "#e2e8f0" }, placeholder: { alignItems: "center", justifyContent: "center" }, placeholderText: { color: C.muted, textAlign: "center", padding: 8 }, preview: { width: "100%", height: 180, borderRadius: 14, marginBottom: 8, backgroundColor: "#e2e8f0" }, check: { padding: 10, borderBottomWidth: 1, borderColor: C.line }, catalog: { backgroundColor: C.card, borderRadius: 18, overflow: "hidden", padding: 12, marginBottom: 14, borderWidth: 1, borderColor: C.line }, adminLayout: { flexDirection: "row", alignItems: "flex-start", gap: 18 }, adminMain: { flex: 1, minWidth: 0 }, adminNav: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginBottom: 14 }, adminSidebar: { width: 190, flexDirection: "column", flexShrink: 0 }, navItem: { borderRadius: 10, paddingHorizontal: 13, paddingVertical: 11, backgroundColor: C.card, borderWidth: 1, borderColor: C.line }, navOn: { backgroundColor: C.blue, borderColor: C.blue }, navText: { color: C.ink, fontWeight: "700" }, navTextOn: { color: "white", fontWeight: "800" }, stats: { flexDirection: "column", gap: 10, marginBottom: 14 }, statsWide: { flexDirection: "row", flexWrap: "wrap" }, stat: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, minWidth: 145, flexGrow: 1 }, statValue: { color: C.blue, fontSize: 28, fontWeight: "900" } });
+const s = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
+  headerWrap: {
+    backgroundColor: C.blue,
+    paddingBottom: 14,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  top: {
+    paddingHorizontal: 22,
+    paddingVertical: 20,
+    backgroundColor: C.blue,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: 0.4,
+  },
+  logoutButton: {
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  logoutText: {
+    color: "#ffffff",
+    fontWeight: "700",
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 56,
+    width: "100%",
+    maxWidth: 1400,
+    alignSelf: "center",
+  },
+  card: {
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 28,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.08,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
+  },
+  cardTitle: {
+    color: C.ink,
+    fontWeight: "900",
+    fontSize: 24,
+    marginBottom: 12,
+  },
+  label: {
+    color: C.ink,
+    fontWeight: "800",
+    marginBottom: 8,
+    fontSize: 15,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 18,
+    padding: 14,
+    color: C.ink,
+    backgroundColor: "#f5f9ff",
+    minWidth: 180,
+    fontSize: 17,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 1,
+  },
+  button: {
+    marginVertical: 6,
+    flexGrow: 1,
+  },
+  secondary: {
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.blue,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "800",
+  },
+  row: {
+    flexDirection: "row",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  wrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 14,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: C.line,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: "#f5f9ff",
+  },
+  chipOn: {
+    backgroundColor: C.blue,
+    borderColor: C.blue,
+  },
+  chipText: {
+    color: C.ink,
+    fontWeight: "700",
+  },
+  chipTextOn: {
+    color: "white",
+    fontWeight: "800",
+  },
+  list: {
+    borderTopWidth: 1,
+    borderColor: C.line,
+    paddingVertical: 12,
+  },
+  strong: {
+    color: C.ink,
+    fontWeight: "800",
+  },
+  muted: {
+    color: C.muted,
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  error: {
+    color: C.red,
+    fontWeight: "800",
+    marginBottom: 12,
+  },
+  success: {
+    color: C.green,
+    fontWeight: "800",
+    marginBottom: 12,
+  },
+  offline: {
+    backgroundColor: "#f59e0b",
+    color: "white",
+    padding: 9,
+    textAlign: "center",
+    fontWeight: "700",
+  },
+  product: {
+    flexDirection: "row",
+    gap: 10,
+    borderTopWidth: 1,
+    borderColor: C.line,
+    paddingVertical: 12,
+  },
+  photo: {
+    width: 100,
+    height: 100,
+    borderRadius: 14,
+    backgroundColor: "#e2e8f0",
+  },
+  placeholder: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  placeholderText: {
+    color: C.muted,
+    textAlign: "center",
+    padding: 8,
+  },
+  preview: {
+    width: "100%",
+    height: 180,
+    borderRadius: 16,
+    marginBottom: 10,
+    backgroundColor: "#e2e8f0",
+  },
+  check: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderColor: C.line,
+  },
+  catalog: {
+    backgroundColor: C.card,
+    borderRadius: 22,
+    overflow: "hidden",
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: C.line,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  adminLayout: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 18,
+  },
+  adminMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  adminNav: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 16,
+  },
+  adminSidebar: {
+    width: 190,
+    flexDirection: "column",
+    flexShrink: 0,
+  },
+  navItem: {
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+  },
+  navOn: {
+    backgroundColor: C.blue,
+    borderColor: C.blue,
+  },
+  navText: {
+    color: C.ink,
+    fontWeight: "700",
+  },
+  navTextOn: {
+    color: "white",
+    fontWeight: "800",
+  },
+  stats: {
+    flexDirection: "column",
+    gap: 10,
+    marginBottom: 14,
+  },
+  authLayout: {
+    gap: 16,
+  },
+  authLayoutWide: {
+    flexDirection: "row",
+    alignItems: "stretch",
+  },
+  authHero: {
+    flex: 1,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: C.line,
+    backgroundColor: "#0B63CE",
+    padding: 22,
+    shadowColor: "#0A3E7C",
+    shadowOpacity: 0.2,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
+    minHeight: 260,
+  },
+  authBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    color: "#ffffff",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    fontSize: 11,
+  },
+  authHeroTitle: {
+    color: "#ffffff",
+    marginTop: 14,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "900",
+  },
+  authHeroText: {
+    color: "#DBEAFE",
+    marginTop: 10,
+    lineHeight: 22,
+    fontSize: 15,
+  },
+  authPillRow: {
+    marginTop: 16,
+    gap: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  authPill: {
+    backgroundColor: "#ffffff",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  authPillText: {
+    color: "#0A3E7C",
+    fontWeight: "800",
+    fontSize: 12,
+  },
+  statsWide: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  stat: {
+    backgroundColor: C.card,
+    borderWidth: 1,
+    borderColor: C.line,
+    borderRadius: 18,
+    padding: 16,
+    minWidth: 145,
+    flexGrow: 1,
+  },
+  statValue: {
+    color: C.blue,
+    fontSize: 28,
+    fontWeight: "900",
+  },
+});

@@ -29,15 +29,30 @@ const orderById = new Map(manifest.orders.map((x) => [x.id, x]));
 async function seedOrder() {
   const passwordHash = await hashPassword(manifest.password);
   await withDb(async (db) => {
-    await db.query("TRUNCATE admin_audit,outbox_events,offers,titipan,session_products,sessions,users RESTART IDENTITY CASCADE");
-    for (const a of manifest.accounts) await db.query(
-      "INSERT INTO users(id,nama,email,no_hp,kampus,password_hash,account_type,aktif) VALUES($1,$2,$3,$4,$5,$6,'user',true)",
-      [a.id,a.nama,a.email,a.noHp,a.kampus,passwordHash]);
+    await db.query("TRUNCATE admin_audit,outbox_events,offers,titipan,session_products,sessions RESTART IDENTITY CASCADE");
+    const accountIdMap = new Map();
+    for (const a of manifest.accounts) {
+      const { rows } = await db.query(
+        `INSERT INTO users(nama,email,no_hp,kampus,password_hash,account_type,aktif)
+         VALUES($1,$2,$3,$4,$5,'user',true)
+         ON CONFLICT (email) DO UPDATE
+         SET nama=EXCLUDED.nama,
+             no_hp=EXCLUDED.no_hp,
+             kampus=EXCLUDED.kampus,
+             password_hash=EXCLUDED.password_hash,
+             account_type='user',
+             aktif=true,
+             updated_at=now()
+         RETURNING id`,
+        [a.nama, a.email.trim().toLowerCase(), a.noHp, a.kampus, passwordHash],
+      );
+      accountIdMap.set(a.id, rows[0].id);
+    }
     for (const s of manifest.sessions) {
       const deadline = s.status === "buka" ? new Date(Date.now() + (24 + s.id) * 3600000) : new Date(Date.now() - s.id * 86400000);
       const used = manifest.orders.filter((x) => x.sessionId === s.id && x.status !== "dibatalkan").reduce((n,x)=>n+x.qty,0);
       await db.query("INSERT INTO sessions(id,owner_id,store_id,store_name,batas_waktu,kapasitas_maksimal,kapasitas_terpakai,biaya_jasa_per_unit,status) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",
-        [s.id,s.ownerId,s.storeId,storeById.get(s.storeId).nama,deadline,s.capacity,used,s.fee,s.status]);
+        [s.id,accountIdMap.get(s.ownerId),s.storeId,storeById.get(s.storeId).nama,deadline,s.capacity,used,s.fee,s.status]);
       for (const productId of s.productIds) await db.query("INSERT INTO session_products(session_id,product_id) VALUES($1,$2)",[s.id,productId]);
     }
     for (const o of manifest.orders) {
@@ -46,9 +61,9 @@ async function seedOrder() {
       const expires = session.status === "buka" ? new Date(Date.now()+24*3600000) : new Date(Date.now()-3600000);
       await db.query(`INSERT INTO titipan(id,session_id,customer_id,product_id,qty,product_name,unit_price,note,mode,base_service_fee,agreed_service_fee,total,status,reservation_expires_at,capacity_released_at,idempotency_key,created_at,updated_at)
         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,now()-interval '1 day',now()-interval '1 day')`,
-        [o.id,o.sessionId,o.customerId,o.productId,o.qty,p.nama,p.harga,o.note,o.mode,session.fee,agreed,total,o.status,expires,o.status==="dibatalkan"?new Date():null,`demo-order-${o.id}`]);
+        [o.id,o.sessionId,accountIdMap.get(o.customerId),o.productId,o.qty,p.nama,p.harga,o.note,o.mode,session.fee,agreed,total,o.status,expires,o.status==="dibatalkan"?new Date():null,`demo-order-${o.id}`]);
       if (o.offer) await db.query("INSERT INTO offers(titipan_id,proposer_id,amount_per_unit,round,status,responded_at) VALUES($1,$2,$3,1,$4,now()-interval '1 day')",
-        [o.id,o.customerId,o.fee,o.offer]);
+        [o.id,accountIdMap.get(o.customerId),o.fee,o.offer]);
     }
     await db.query("SELECT setval(pg_get_serial_sequence('users','id'),(SELECT max(id) FROM users),true)");
     await db.query("SELECT setval(pg_get_serial_sequence('sessions','id'),(SELECT max(id) FROM sessions),true)");
@@ -81,7 +96,7 @@ async function seedPayment(){
   await withDb(async(db)=>{await db.query("TRUNCATE processed_events,outbox_events,transactions RESTART IDENTITY CASCADE");for(const p of manifest.payments){const o=orderById.get(p.titipanId),product=productById.get(o.productId),amount=(product.harga+o.fee)*o.qty;await db.query("INSERT INTO transactions(id,titipan_id,customer_id,amount,method,status,idempotency_key,created_at,updated_at) VALUES($1,$2,$3,$4,$5,$6,$7,now()-interval '1 day',now()-interval '1 day')",[p.id,p.titipanId,p.customerId,amount,p.method,p.status,`demo-payment-${p.id}`])}await db.query("SELECT setval(pg_get_serial_sequence('transactions','id'),(SELECT max(id) FROM transactions),true)")});
 }
 async function seedTracking(){
-  await withDb(async(db)=>{await db.query("TRUNCATE processed_events,outbox_events,tracking_events RESTART IDENTITY CASCADE");for(const t of manifest.tracking){await db.query("INSERT INTO tracking_events(id,titipan_id,status,note,actor_id,event_id,created_at) VALUES($1,$2,$3,$4,NULL,$5,now()-interval '1 day'+($1*interval '1 minute'))",[t.id,t.titipanId,t.status,t.note,crypto.randomUUID()])}await db.query("SELECT setval(pg_get_serial_sequence('tracking_events','id'),(SELECT max(id) FROM tracking_events),true)")});
+  await withDb(async(db)=>{await db.query("TRUNCATE processed_events,outbox_events,tracking_events RESTART IDENTITY CASCADE");for(const t of manifest.tracking){await db.query("INSERT INTO tracking_events(id,titipan_id,status,note,actor_id,event_id,created_at) VALUES($1,$2,$3,$4,NULL,$5,now()-interval '1 day'+(($6::int)*interval '1 minute'))",[t.id,t.titipanId,t.status,t.note,crypto.randomUUID(),t.id])}await db.query("SELECT setval(pg_get_serial_sequence('tracking_events','id'),(SELECT max(id) FROM tracking_events),true)")});
 }
 async function validate(){
   const expected={order:{users:9,sessions:5,titipan:7},catalog:{stores:20,products:34},payment:{transactions:6},tracking:{tracking_events:15}}[mode];

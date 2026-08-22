@@ -123,6 +123,26 @@ Flowchart berikut menggambarkan alur lengkap sistem — mulai dari registrasi, p
 
 ![Flowchart Alur Jastip Kampus](docs/Flowchart.jpeg)
 
+### Alur Operasional (2 Role)
+
+Alur runtime utama hanya memakai dua role pengguna reguler: `Penitip` dan `Penjastip`.
+
+1. Pengguna membuka aplikasi.
+2. Pengguna daftar akun dengan data: nama, email, no HP, password, kampus.
+3. Pengguna login.
+4. Pengguna memilih mode peran: `Penitip` atau `Penjastip`.
+5. Penjastip membuka sesi jastip (toko, batas waktu, kapasitas).
+6. Penitip melihat sesi aktif, memilih barang, lalu mengisi detail titipan (jumlah, varian, catatan).
+7. `order-service` memvalidasi sesi (masih buka, kapasitas tersedia, belum melewati deadline) dan mengambil harga acuan.
+8. Penitip memilih jalur:
+  - tanpa tawar: lanjut proses pembayaran.
+  - dengan tawar: kirim tawaran, lalu penjastip menerima/menolak. Jika ditolak, penitip revisi tawaran atau batalkan.
+9. Jika lanjut, `order-service` menetapkan total titipan final.
+10. Penitip melakukan pembayaran; `payment-service` menahan dana sebagai escrow.
+11. Tracking berjalan berurutan: `dititip -> dibelanjakan -> diantar -> diterima`.
+12. Setelah penitip konfirmasi diterima, `payment-service` melepas dana ke penjastip.
+13. Transaksi selesai.
+
 ---
 
 ## 4. Peran dalam Sistem

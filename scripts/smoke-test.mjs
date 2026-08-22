@@ -2,10 +2,20 @@ import assert from "node:assert/strict";
 
 const base = process.env.BASE_URL || "http://localhost:8080";
 const stamp = Date.now();
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 async function call(path, options = {}) {
-  const response = await fetch(`${base}${path}`, { ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
-  const body = await response.json().catch(() => ({}));
-  return { response, body };
+  const method = String(options.method || "GET").toUpperCase();
+  const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+  const idempotent = method === "GET" || method === "HEAD" || Boolean(headers["Idempotency-Key"] || headers["idempotency-key"]);
+  for (let attempt = 0; ; attempt += 1) {
+    const response = await fetch(`${base}${path}`, { ...options, headers });
+    const body = await response.json().catch(() => ({}));
+    if (idempotent && [429, 502, 503].includes(response.status) && attempt < 20) {
+      await delay(300 + (attempt * 150));
+      continue;
+    }
+    return { response, body };
+  }
 }
 
 const ownerEmail = `owner-${stamp}@test.local`;
@@ -47,8 +57,7 @@ const payment = await call("/v1/payments", {
   body: JSON.stringify({ titipanId: first.body.id, amount: first.body.total, method: "simulasi" }),
 });
 assert.equal(payment.response.status, 201, JSON.stringify(payment.body)); assert.equal(payment.body.status, "tertahan");
-const sleep=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
-async function waitFor(read,predicate,label){for(let i=0;i<15;i++){const value=await read();if(predicate(value))return value;await sleep(500)}throw new Error(`timeout menunggu ${label}`)}
+async function waitFor(read,predicate,label){for(let i=0;i<15;i++){const value=await read();if(predicate(value))return value;await delay(500)}throw new Error(`timeout menunggu ${label}`)}
 async function finishFlow(orderId){
   await waitFor(async()=>(await call(`/v1/tracking/${orderId}`,{headers:{Authorization:`Bearer ${buyer}`}})).body,x=>x.events?.at(-1)?.status==="dititip","tracking dititip");
   for(const status of ["dibelanjakan","diantar"]){const x=await call("/v1/tracking",{method:"POST",headers:{Authorization:`Bearer ${owner}`},body:JSON.stringify({titipanId:orderId,status})});assert.equal(x.response.status,201,JSON.stringify(x.body))}

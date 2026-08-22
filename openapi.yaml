@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Jastip Kampus API
-  version: 1.0.0
-  description: Kontrak gateway katalog, sesi jastip, titipan, escrow, dan tracking.
+  version: 2.0.0
+  description: Kontrak gateway katalog, sesi jastip, titipan, escrow, dan tracking. Dibekukan 2026-08-22 untuk serah artefak.
 servers:
   - url: http://localhost:8080
 components:
@@ -139,7 +139,17 @@ paths:
   /v1/sessions:
     get:
       summary: Daftar sesi jastip terbuka
-      responses: { "200": { description: Daftar sesi } }
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+          description: Nomor halaman
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 50, default: 20 }
+          description: Ukuran halaman
+      responses:
+        "200": { description: Daftar sesi }
     post:
       summary: Buka sesi jastip
       security: [{ bearerAuth: [] }]
@@ -170,7 +180,18 @@ paths:
         "201": { description: Titipan dibuat }
         "200": { description: Hasil request idempoten }
         "409": { description: Sesi penuh/tutup/kedaluwarsa }
-        "429": { description: Batas laju terlampaui }
+        "429":
+          description: Batas laju terlampaui
+          headers:
+            X-RateLimit-Limit:
+              schema: { type: integer }
+              description: Batas request per jendela waktu
+            X-RateLimit-Remaining:
+              schema: { type: integer }
+              description: Sisa request pada jendela saat ini
+            Retry-After:
+              schema: { type: integer }
+              description: Lama tunggu (detik) sebelum mencoba lagi
   /v1/titipan/me:
     get:
       summary: Daftar titipan milik akun

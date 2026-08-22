@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Image,
   SafeAreaView,
   ScrollView,
@@ -13,22 +12,8 @@ import {
   View,
 } from "react-native";
 import { buatTitipan, login } from "../api/endpoints";
-
-const C = {
-  bg: "#F4F9FF",
-  bgSoft: "#EAF4FF",
-  surface: "#FFFFFF",
-  border: "#C9DDF4",
-  pink: "#0B63CE",
-  pinkDark: "#0A3E7C",
-  purple: "#1B88E5",
-  peach: "#D7EAFF",
-  mint: "#D9ECFF",
-  success: "#2FA36B",
-  danger: "#D95C74",
-  text: "#17375E",
-  textSoft: "#5C7DA4",
-};
+import { AppButton } from "../components/ui";
+import { colors as C, radius, shadow, spacing, typography } from "../theme/tokens";
 
 function formatRupiah(angka = 0) {
   return `Rp ${Number(angka || 0).toLocaleString("id-ID")}`;
@@ -194,17 +179,7 @@ export default function TransaksiScreen({ route, navigation }) {
                 </View>
               ) : null}
 
-              <TouchableOpacity
-                style={[styles.primaryButton, memuat && styles.buttonDisabled]}
-                onPress={pesan}
-                disabled={memuat}
-              >
-                {memuat ? (
-                  <ActivityIndicator color="#FFFFFF" />
-                ) : (
-                  <Text style={styles.primaryButtonText}>Kirim Titipan</Text>
-                )}
-              </TouchableOpacity>
+              <AppButton title="Kirim Titipan" onPress={pesan} loading={memuat} style={styles.primaryButton} />
 
               <Text style={styles.footerNote}>
                 Setelah terkirim, order-service akan menyimpan permintaan dan statusnya akan masuk ke tracking.
@@ -219,19 +194,15 @@ export default function TransaksiScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  scroll: { padding: 18, paddingBottom: 32 },
+  scroll: { padding: spacing.lg, paddingBottom: 32 },
   page: { width: "100%", maxWidth: 1180, alignSelf: "center" },
   heroCard: {
     backgroundColor: C.pink,
-    borderRadius: 28,
-    padding: 22,
+    borderRadius: radius.xxl,
+    padding: spacing.xl,
     borderWidth: 1,
     borderColor: C.border,
-    shadowColor: "#0A3E7C",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    ...shadow.hero,
   },
   rolePill: {
     alignSelf: "flex-start",
@@ -242,7 +213,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   rolePillText: { color: C.pinkDark, fontWeight: "800", fontSize: 11, letterSpacing: 0.8 },
-  heroTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800" },
+  heroTitle: { color: "#FFFFFF", fontSize: typography.h1, fontWeight: "800" },
   heroSubtitle: { color: "#DCEAFF", marginTop: 8, lineHeight: 22 },
   bodyGrid: { marginTop: 16, gap: 16 },
   bodyGridWide: { flexDirection: "row", alignItems: "flex-start" },
@@ -250,15 +221,11 @@ const styles = StyleSheet.create({
   sideColumn: { flex: 0.82, gap: 16 },
   productCard: {
     backgroundColor: C.surface,
-    borderRadius: 24,
-    padding: 18,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: C.border,
-    shadowColor: "#0A3E7C",
-    shadowOpacity: 0.05,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    ...shadow.card,
   },
   productImage: {
     width: "100%",
@@ -284,26 +251,17 @@ const styles = StyleSheet.create({
   stockPillText: { color: C.pink, fontWeight: "700", fontSize: 12 },
   productStore: { color: C.pink, fontWeight: "700", fontSize: 13 },
   productName: { color: C.text, fontSize: 20, fontWeight: "800", marginTop: 6, lineHeight: 28 },
-  productMeta: { color: C.textSoft, marginTop: 6, lineHeight: 20 },
-  productPrice: { color: C.purple, fontSize: 22, fontWeight: "800", marginTop: 14 },
+  productMeta: { color: C.textSoft, marginTop: 6, lineHeight: 20, fontSize: typography.body },
+  productPrice: { color: C.purple, fontSize: typography.h2, fontWeight: "800", marginTop: spacing.md },
   formCard: {
     backgroundColor: C.surface,
-    borderRadius: 24,
-    padding: 18,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: C.border,
-    shadowColor: "#0A3E7C",
-    shadowOpacity: 0.05,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    ...shadow.card,
   },
-  sectionLabel: {
-    color: C.text,
-    fontSize: 18,
-    fontWeight: "800",
-    marginBottom: 14,
-  },
+  sectionLabel: { color: C.text, fontSize: typography.h3, fontWeight: "800", marginBottom: spacing.md },
   inputLabel: { color: C.textSoft, fontWeight: "700", marginBottom: 8, marginTop: 4 },
   qtyRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
   qtyButton: {
@@ -321,7 +279,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: C.bgSoft,
     borderWidth: 1,
-    borderColor: C.borderStrong,
+    borderColor: C.border,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -365,12 +323,7 @@ const styles = StyleSheet.create({
   },
   errorText: { color: C.danger, fontWeight: "700", lineHeight: 20 },
   primaryButton: {
-    backgroundColor: C.pink,
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: "center",
+    marginTop: 2,
   },
-  buttonDisabled: { opacity: 0.6 },
-  primaryButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
   footerNote: { color: C.textSoft, textAlign: "center", lineHeight: 20, fontSize: 12 },
 });

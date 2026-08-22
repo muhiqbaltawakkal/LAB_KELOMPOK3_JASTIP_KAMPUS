@@ -73,7 +73,12 @@ app.get("/health", async (_req, res) => {
 
 app.get("/v1/items", async (req, res) => {
   await ready;
-  const ids = String(req.query.ids || "").split(",").map(Number).filter(Number.isInteger);
+  const ids = String(req.query.ids || "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter((x) => x.length > 0)
+    .map(Number)
+    .filter(Number.isInteger);
   const key = `catalog:items:${ids.join(",") || "all"}`;
   const cached = await cacheGet(key);
   if (cached) return res.json({ items: cached, stale: false, cached: true });

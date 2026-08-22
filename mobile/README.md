@@ -18,12 +18,31 @@ npx expo start
 
 Pindai QR code dengan aplikasi Expo Go di HP.
 
-## Konfigurasi BASE_URL
+## Konfigurasi URL API
 
-Buka `config.js` dan ganti `BASE_URL` dengan IP laptop:
+Secara default aplikasi akan otomatis mencoba URL API dari:
+
+- `EXPO_PUBLIC_API_URL` (jika di-set)
+- `extra.apiUrl` dari Expo config
+- host web/Codespaces
+- host Metro Expo (IP laptop saat dibuka dari Expo Go)
+
+Jika ingin set manual, jalankan:
+
+```bash
+EXPO_PUBLIC_API_URL=http://192.168.x.x:8080 npx expo start
+```
+
+Untuk GitHub Codespaces gunakan launcher berikut (otomatis set URL API):
+
+```bash
+npm run start:codespaces
+```
+
+Contoh URL API valid:
 
 ```js
-export const BASE_URL = "http://192.168.x.x:8080"; // IP laptop di jaringan WiFi
+http://192.168.x.x:8080
 ```
 
 Jangan pakai `localhost` — dari HP, localhost berarti HP itu sendiri.
@@ -43,7 +62,7 @@ npx expo start --tunnel
 ```
 mobile/
 ├── App.js                  # Layar utama: daftar barang jastip
-├── config.js               # BASE_URL + aturan scalable
+├── lib/api.js              # Resolver URL API + semua endpoint
 ├── babel.config.js
 ├── api/
 │   ├── client.js           # HTTP client dengan retry 429 otomatis

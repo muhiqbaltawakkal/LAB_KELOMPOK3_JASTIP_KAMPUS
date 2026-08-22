@@ -1,16 +1,6 @@
-import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
-
-const C = {
-  bg: "#F4F9FF",
-  surface: "#FFFFFF",
-  border: "#C9DDF4",
-  pink: "#0B63CE",
-  purple: "#1B88E5",
-  mint: "#D9ECFF",
-  success: "#2FA36B",
-  text: "#17375E",
-  textSoft: "#5C7DA4",
-};
+import { Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { AppButton } from "../components/ui";
+import { colors as C, radius, shadow, spacing, typography } from "../theme/tokens";
 
 function formatRupiah(angka = 0) {
   return `Rp ${Number(angka || 0).toLocaleString("id-ID")}`;
@@ -104,16 +94,13 @@ export default function SuksesScreen({ route, navigation }) {
             </View>
           </View>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
+          <AppButton
+            title="Kembali ke Beranda"
             onPress={() => navigation.navigate("Beranda", { peran, profil })}
-          >
-            <Text style={styles.primaryButtonText}>Kembali ke Beranda</Text>
-          </TouchableOpacity>
+            style={styles.primaryButton}
+          />
 
-          <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.secondaryButtonText}>Kembali ke Login</Text>
-          </TouchableOpacity>
+          <AppButton title="Kembali ke Login" secondary onPress={() => navigation.navigate("Login")} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -122,20 +109,16 @@ export default function SuksesScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bg },
-  scroll: { padding: 18, paddingBottom: 32 },
+  scroll: { padding: spacing.lg, paddingBottom: 32 },
   page: { width: "100%", maxWidth: 1040, alignSelf: "center" },
   heroCard: {
     backgroundColor: C.pink,
-    borderRadius: 28,
-    padding: 22,
+    borderRadius: radius.xxl,
+    padding: spacing.xl,
     borderWidth: 1,
     borderColor: C.border,
     alignItems: "center",
-    shadowColor: "#0A3E7C",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 3,
+    ...shadow.hero,
   },
   successCircle: {
     width: 94,
@@ -149,7 +132,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   successCheck: { color: C.success, fontSize: 40, fontWeight: "800" },
-  heroTitle: { color: "#FFFFFF", fontSize: 26, fontWeight: "800", textAlign: "center" },
+  heroTitle: { color: "#FFFFFF", fontSize: typography.h1, fontWeight: "800", textAlign: "center" },
   heroSubtitle: { color: "#DCEAFF", marginTop: 8, lineHeight: 22, textAlign: "center" },
   detailGrid: { marginTop: 16, gap: 16 },
   detailGridWide: { flexDirection: "row", alignItems: "flex-start" },
@@ -157,15 +140,11 @@ const styles = StyleSheet.create({
   detailSide: { flex: 0.95 },
   summaryCard: {
     backgroundColor: C.surface,
-    borderRadius: 24,
-    padding: 18,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: C.border,
-    shadowColor: "#0A3E7C",
-    shadowOpacity: 0.05,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    ...shadow.card,
   },
   summaryImage: {
     width: "100%",
@@ -174,7 +153,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: "#DDEEFF",
   },
-  sectionTitle: { color: C.text, fontSize: 18, fontWeight: "800", marginBottom: 12 },
+  sectionTitle: { color: C.text, fontSize: typography.h3, fontWeight: "800", marginBottom: 12 },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -195,28 +174,11 @@ const styles = StyleSheet.create({
   orderId: { color: C.pink },
   timelineCard: {
     backgroundColor: "#EEF6FF",
-    borderRadius: 24,
-    padding: 18,
+    borderRadius: radius.xl,
+    padding: spacing.lg,
     borderWidth: 1,
     borderColor: "#BED9FB",
   },
   timelineItem: { color: C.textSoft, lineHeight: 22, marginBottom: 8 },
-  primaryButton: {
-    marginTop: 18,
-    backgroundColor: C.pink,
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  primaryButtonText: { color: "#FFFFFF", fontWeight: "800", fontSize: 16 },
-  secondaryButton: {
-    marginTop: 12,
-    backgroundColor: C.surface,
-    borderRadius: 18,
-    paddingVertical: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: C.border,
-  },
-  secondaryButtonText: { color: C.text, fontWeight: "800", fontSize: 16 },
+  primaryButton: { marginTop: spacing.lg, marginBottom: spacing.sm },
 });
