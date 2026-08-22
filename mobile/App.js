@@ -315,7 +315,7 @@ function AuthScreen({ navigation }) {
           <Text style={auth.heroEmoji}>🎓</Text>
           <Text style={auth.heroTitle}>Jastip Kampus</Text>
           <Text style={auth.heroSubtitle}>
-            Alur lengkap sesuai flowchart: register, login, pilih peran, lalu masuk ke dashboard yang berbeda.
+              Titip belanja dari kampus dengan mudah, cepat, dan terpercaya.
           </Text>
         </View>
 
@@ -340,7 +340,7 @@ function AuthScreen({ navigation }) {
               <SectionHeader
                 eyebrow="Langkah 1"
                 title="Buat akun baru"
-                subtitle="Isi data diri mahasiswa atau penjastip sebelum masuk ke aplikasi."
+                subtitle="Isi data diri kamu untuk mulai menggunakan Jastip Kampus."
               />
               <TextInput
                 style={auth.input}
@@ -408,7 +408,7 @@ function AuthScreen({ navigation }) {
               <SectionHeader
                 eyebrow="Langkah 2"
                 title="Login ke aplikasi"
-                subtitle="Masuk sesuai peran agar tampilan beranda berbeda antara Penitip dan Penjastip."
+                subtitle="Masuk sesuai peran untuk melihat tampilan yang sesuai."
               />
               <TextInput
                 style={auth.input}
@@ -510,7 +510,7 @@ function PenitipDashboard({
         <View style={penitip.heroStatsRow}>
           <StatCard label="Barang Ready" value={filteredItems.length} tone="pink" />
           <StatCard label="Toko Aktif" value={tokoList.length} tone="purple" />
-          <StatCard label="Flow" value="3 Langkah" tone="mint" />
+          <StatCard label="Kategori" value={daftarKategori.length - 1} tone="mint" />
         </View>
       </View>
 
@@ -525,7 +525,7 @@ function PenitipDashboard({
 
       {modeDemo ? (
         <View style={shared.demoBanner}>
-          <Text style={shared.demoBannerText}>{demoReason || "Mode demo aktif karena backend belum merespons."}</Text>
+          <Text style={shared.demoBannerText}>⚠️ Mode demo — data offline karena server belum merespons.</Text>
         </View>
       ) : null}
 
@@ -533,7 +533,7 @@ function PenitipDashboard({
         <Text style={shared.searchIcon}>🔎</Text>
         <TextInput
           style={shared.searchInput}
-          placeholder="Cari barang, toko, atau kategori..."
+          placeholder="Cari barang atau toko..."
           placeholderTextColor={C.textSoft}
           value={cari}
           onChangeText={setCari}
@@ -563,8 +563,7 @@ function PenitipDashboard({
 
       <SectionHeader
         eyebrow="Toko Pilihan"
-        title="Buka daftar jastip berdasarkan toko"
-        subtitle="Flowchart bagian penitip: lihat toko, pilih barang, lalu kirim detail titipan."
+        title="Pilih toko untuk dilihat"
       />
 
       <ScrollView
@@ -593,9 +592,8 @@ function PenitipDashboard({
       </ScrollView>
 
       <SectionHeader
-        eyebrow="Katalog Penitip"
+        eyebrow="Katalog Barang"
         title="Pilih barang untuk dititipkan"
-        subtitle="Setiap kartu menampilkan toko, kategori, harga, dan stok."
       />
     </View>
   );
@@ -731,7 +729,7 @@ function PenjastipDashboard({
 
         {modeDemo ? (
           <View style={shared.demoBanner}>
-            <Text style={shared.demoBannerText}>{demoReason || "Mode demo aktif karena backend belum merespons."}</Text>
+            <Text style={shared.demoBannerText}>⚠️ Mode demo — data offline karena server belum merespons.</Text>
           </View>
         ) : null}
 
@@ -739,7 +737,6 @@ function PenjastipDashboard({
           <SectionHeader
             eyebrow="Buka Sesi"
             title="Atur sesi jastip"
-            subtitle="Sesuai flowchart: pilih toko, atur batas waktu, lalu buka sesi agar muncul di aplikasi."
           />
 
           <Text style={penjastip.inputLabel}>Pilih toko</Text>
@@ -802,7 +799,7 @@ function PenjastipDashboard({
         ) : null}
 
         <SectionHeader
-          eyebrow="Daftar Titipan Masuk"
+          eyebrow="Titipan Masuk"
           title="Permintaan yang bisa kamu ambil"
           subtitle={`Toko prioritas: ${tokoAktif?.nama || "pilih toko dulu"}`}
         />
