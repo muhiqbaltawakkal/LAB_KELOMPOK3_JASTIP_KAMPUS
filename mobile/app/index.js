@@ -37,7 +37,7 @@ const IMG = {
   kopiAren: require("../assets/products/22_kopi_susu_gula_aren.jpg"),
   esKopi: require("../assets/products/23_es_kopi_hitam.jpg"),
   mcflurry: require("../assets/products/24_mcflurry_oreo.jpeg"),
-  mcchicken: require("../assets/products/25_paket_mcchicken_value.jpg"),
+  mcchicken: require("../assets/products/25_paket_mcchicken_value.jpeg"),
   fries: require("../assets/products/26_french_fries_large.jpeg"),
   pisangIjo: require("../assets/products/27_es_pisang_ijo_original.jpg"),
   goodday: require("../assets/products/28_goodday_kopi_sachet_10pcs.jpg"),
