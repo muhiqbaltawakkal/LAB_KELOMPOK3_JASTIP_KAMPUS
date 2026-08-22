@@ -39,7 +39,11 @@ jobs:
           npm --prefix services/tracking-service test
       - name: Check service syntax
         run: |
+          node --test scripts/demo-manifest.test.mjs
+          node --check database/demo-seed-runner.js
+          node --check dataset/demo-seed.js
           node --check services/catalog-service/index.js
+          node --check services/order-service/index.js
           node --check services/payment-service/index.js
           node --check services/tracking-service/index.js
       - name: Build Expo web bundle

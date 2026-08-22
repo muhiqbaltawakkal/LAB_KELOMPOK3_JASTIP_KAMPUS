@@ -17,6 +17,25 @@
 
 Jastip Kampus adalah platform layanan **titip-beli antar mahasiswa**. Mahasiswa dapat membuka layanan jastip, memilih barang, melakukan pembayaran, dan melacak status titipan hingga barang diterima.
 
+## Reset dan seed demo workbook
+
+Perintah berikut bersifat destruktif dan hanya untuk Codespaces/lingkungan demo. Perintah menghapus volume PostgreSQL, Redis, serta upload milik Compose project ini, lalu memasukkan tepat 9 akun, 20 toko, 34 produk/foto, 5 sesi, 7 titipan, 6 pembayaran, dan 15 event tracking.
+
+```bash
+npm run demo:reset-and-seed -- --confirm-reset
+```
+
+Password semua akun demo adalah `Penjastip2026!` (jangan digunakan di produksi). Empat akun berlabel Penjastip:
+
+| Nama | Email |
+| --- | --- |
+| Rizki Amalia Rasyid | `rizki.amalia@unismuh.ac.id` |
+| Muh. Iqbal Tawakkal | `iqbal.tawakkal@unhas.ac.id` |
+| Putri Handayani | `putri.handa@uin-alauddin.ac.id` |
+| Dika Pratama | `dika.pratama@polmed.ac.id` |
+
+Lima akun berlabel Penitip: `andi.rizki@unismuh.ac.id`, `siti.rahma@unhas.ac.id`, `m.fauzi@uin-alauddin.ac.id`, `nurul.hidayah@stie-tri.ac.id`, dan `bagas.suli@polmed.ac.id`. Semua akun reguler tetap dapat memilih kedua mode. Admin dibuat terpisah dengan `npm run bootstrap:admin`.
+
 Sistem dirancang menggunakan pendekatan **Microservices Architecture** — setiap layanan berdiri sendiri dengan data dan tanggung jawabnya masing-masing.
 
 ---

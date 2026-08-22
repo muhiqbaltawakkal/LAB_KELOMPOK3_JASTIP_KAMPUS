@@ -36,6 +36,9 @@ services:
       UPLOAD_DIR: /data/uploads
     volumes:
       - catalog-uploads:/data/uploads
+      - ./database:/seed:ro
+      - ./dataset:/seed-data:ro
+      - ./dataset/JastipKampus_Gambar_Produk:/seed-images:ro
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -53,6 +56,10 @@ services:
       CATALOG_URL: http://catalog-service:3001
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      DEMO_MANIFEST: /seed-data/demo-seed.js
+    volumes:
+      - ./database:/seed:ro
+      - ./dataset:/seed-data:ro
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -75,6 +82,10 @@ services:
       ORDER_URL: http://order-service-1:3002
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      DEMO_MANIFEST: /seed-data/demo-seed.js
+    volumes:
+      - ./database:/seed:ro
+      - ./dataset:/seed-data:ro
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
@@ -92,6 +103,10 @@ services:
       ORDER_URL: http://order-service-1:3002
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      DEMO_MANIFEST: /seed-data/demo-seed.js
+    volumes:
+      - ./database:/seed:ro
+      - ./dataset:/seed-data:ro
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

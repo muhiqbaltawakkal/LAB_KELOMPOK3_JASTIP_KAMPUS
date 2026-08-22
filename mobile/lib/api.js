@@ -56,7 +56,7 @@ export const api = {
     Object.entries(data).forEach(([key, value]) => {
       if (key !== "foto") form.append(key, String(value));
     });
-    form.append("foto", data.foto.file || { uri: data.foto.uri, name: data.foto.fileName || `produk.${data.foto.mimeType?.split("/")[1] || "jpg"}`, type: data.foto.mimeType || "image/jpeg" });
+    if (data.foto) form.append("foto", data.foto.file || { uri: data.foto.uri, name: data.foto.fileName || `produk.${data.foto.mimeType?.split("/")[1] || "jpg"}`, type: data.foto.mimeType || "image/jpeg" });
     const response = await fetch(`${API_URL}/v1/products`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(payload.error || `HTTP ${response.status}`), { status: response.status });
@@ -74,6 +74,7 @@ export const api = {
   pay: (data, key, token) => request("/v1/payments", {
     method: "POST", token, headers: { "Idempotency-Key": key }, body: JSON.stringify(data),
   }),
+  payment: (id, token) => request(`/v1/payments/${id}`, { token }),
   confirmReceived: (id, token) => request(`/v1/tracking/${id}/confirm-received`, { method: "POST", token }),
   tracking: (id, token) => request(`/v1/tracking/${id}`, { token }),
   advanceTracking: (data, token) => request("/v1/tracking", { method: "POST", token, body: JSON.stringify(data) }),
