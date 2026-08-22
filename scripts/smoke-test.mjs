@@ -32,19 +32,19 @@ const productResponse = await fetch(`${base}/v1/products`, { method: "POST", hea
 const product = await productResponse.json(); assert.equal(productResponse.status, 201);
 const { response: sessionResponse, body: session } = await call("/v1/sessions", {
   method: "POST", headers: { Authorization: `Bearer ${owner}` },
-  body: JSON.stringify({ storeId: storeResult.body.id, productIds: [product.id], kapasitas: 1, batasWaktu: new Date(Date.now() + 3600000).toISOString() }),
+  body: JSON.stringify({ storeId: storeResult.body.id, productIds: [product.id], kapasitas: 1, biayaJasaPerUnit: 5000, batasWaktu: new Date(Date.now() + 3600000).toISOString() }),
 });
 assert.equal(sessionResponse.status, 201);
 const submit = (key) => call("/v1/titipan", {
   method: "POST", headers: { Authorization: `Bearer ${buyer}`, "Idempotency-Key": key },
-  body: JSON.stringify({ sesiId: session.id, barangId: product.id, qty: 1, biayaJasa: 5000 }),
+  body: JSON.stringify({ sesiId: session.id, barangId: product.id, qty: 1, mode: "langsung" }),
 });
 const first = await submit(`smoke-${stamp}`); assert.equal(first.response.status, 201);
 assert.equal((await submit(`smoke-${stamp}`)).response.status, 200);
 assert.equal((await submit(`smoke-over-${stamp}`)).response.status, 409);
 const payment = await call("/v1/payments", {
   method: "POST", headers: { Authorization: `Bearer ${buyer}`, "Idempotency-Key": `pay-${stamp}` },
-  body: JSON.stringify({ titipanId: first.body.id, jumlah: first.body.total, metode: "QRIS" }),
+  body: JSON.stringify({ titipanId: first.body.id, amount: first.body.total, method: "simulasi" }),
 });
 assert.equal(payment.response.status, 201, JSON.stringify(payment.body)); assert.equal(payment.body.status, "tertahan");
 console.log(JSON.stringify({ ok: true, sessionId: session.id, titipanId: first.body.id, payment: payment.body }, null, 2));

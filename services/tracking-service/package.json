@@ -2,11 +2,12 @@
   "name": "tracking-service",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": { "start": "node index.js" },
+  "scripts": { "start": "node index.js", "test": "node --test" },
   "type": "commonjs",
   "dependencies": {
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "pg": "^8.16.3",
     "redis": "^6.2.1"
   }
 }

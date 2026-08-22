@@ -1,90 +1,119 @@
-version: '3.8'
-
 services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-postgres-dev-only}
+      CATALOG_DB_PASSWORD: ${CATALOG_DB_PASSWORD:-catalog-dev-only}
+      ORDER_DB_PASSWORD: ${ORDER_DB_PASSWORD:-order-dev-only}
+      PAYMENT_DB_PASSWORD: ${PAYMENT_DB_PASSWORD:-payment-dev-only}
+      TRACKING_DB_PASSWORD: ${TRACKING_DB_PASSWORD:-tracking-dev-only}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sh:/docker-entrypoint-initdb.d/10-jastip-databases.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      retries: 5
+      interval: 3s
+      timeout: 3s
+      retries: 10
 
   catalog-service:
     build: ./services/catalog-service
-    volumes:
-      - ./dataset:/dataset:ro
-      - catalog-data:/data
     environment:
+      DATABASE_URL: postgresql://catalog_app:${CATALOG_DB_PASSWORD:-catalog-dev-only}@postgres:5432/catalog_db
       REDIS_URL: redis://redis:6379
-      SEED_PATH: /dataset/catalog-seed.json
-      DB_PATH: /data/catalog.db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      ORDER_URL: http://order-service-1:3002
       UPLOAD_DIR: /data/uploads
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
-      ORDER_URL: http://order-service:3002
-    depends_on:
-      redis:
-        condition: service_healthy
-
-  order-service:
-    build: ./services/order-service
-    ports:
-      - "3002:3002"
-    environment:
-      CATALOG_URL: http://catalog-service:3001
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
-      DB_PATH: /data/order.db
     volumes:
-      - order-data:/data
+      - catalog-uploads:/data/uploads
     depends_on:
-      - catalog-service
-      - redis
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  order-service-1: &order-service
+    build: ./services/order-service
+    environment:
+      DATABASE_URL: postgresql://order_app:${ORDER_DB_PASSWORD:-order-dev-only}@postgres:5432/order_db
+      REDIS_URL: redis://redis:6379
+      CATALOG_URL: http://catalog-service:3001
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      catalog-service: { condition: service_started }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3002/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  order-service-2:
+    <<: *order-service
+  order-service-3:
+    <<: *order-service
 
   payment-service:
     build: ./services/payment-service
-    ports:
-      - "3003:3003"
     environment:
+      DATABASE_URL: postgresql://payment_app:${PAYMENT_DB_PASSWORD:-payment-dev-only}@postgres:5432/payment_db
       REDIS_URL: redis://redis:6379
-      ORDER_URL: http://order-service:3002
-      DB_PATH: /data/payment.db
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
-    volumes:
-      - payment-data:/data
+      ORDER_URL: http://order-service-1:3002
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
     depends_on:
-      - redis
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3003/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
 
   tracking-service:
     build: ./services/tracking-service
-    ports:
-      - "3004:3004"
     environment:
+      DATABASE_URL: postgresql://tracking_app:${TRACKING_DB_PASSWORD:-tracking-dev-only}@postgres:5432/tracking_db
       REDIS_URL: redis://redis:6379
-      DB_PATH: /data/tracking.db
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
-      ORDER_URL: http://order-service:3002
-    volumes:
-      - tracking-data:/data
+      ORDER_URL: http://order-service-1:3002
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
     depends_on:
-      - redis
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3004/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
 
   nginx:
     image: nginx:alpine
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    ports:
-      - "8080:8080"
+    ports: ["8080:8080"]
     depends_on:
       - catalog-service
-      - order-service
+      - order-service-1
+      - order-service-2
+      - order-service-3
+      - payment-service
+      - tracking-service
 
 volumes:
-  catalog-data:
-  order-data:
-  payment-data:
-  tracking-data:
+  postgres-data:
+  catalog-uploads:

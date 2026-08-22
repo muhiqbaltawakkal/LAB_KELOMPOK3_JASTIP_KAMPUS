@@ -1,24 +1,5 @@
-import http from "k6/http";
-import { check } from "k6";
-
-export const options = {
-  scenarios: {
-    kapasitas: { executor: "constant-arrival-rate", rate: 50, timeUnit: "1s", duration: "30s", preAllocatedVUs: 50, maxVUs: 200 },
-  },
-  thresholds: {
-    http_req_duration: ["p(95)<500"],
-    http_req_failed: ["rate<0.95"],
-  },
-};
-
-const base = __ENV.BASE_URL || "http://localhost:8080";
-const token = __ENV.TOKEN;
-const sessionId = Number(__ENV.SESSION_ID || 1);
-
-export default function () {
-  const key = `k6-${__VU}-${__ITER}`;
-  const response = http.post(`${base}/v1/titipan`, JSON.stringify({ sesiId: sessionId, barangId: 1, qty: 1 }), {
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, "Idempotency-Key": key },
-  });
-  check(response, { "created or capacity rejected": (r) => [200, 201, 409, 429].includes(r.status) });
-}
+import http from "k6/http";import{check}from"k6";import{Counter,Rate}from"k6/metrics";
+const accepted=new Counter("business_accepted"),rejected=new Counter("business_rejected"),serverErrors=new Rate("server_errors");
+export const options={scenarios:{kapasitas:{executor:"shared-iterations",vus:200,iterations:2000,maxDuration:"2m"}},thresholds:{http_req_duration:["p(95)<500"],server_errors:["rate<0.01"]}};
+const base=__ENV.BASE_URL||"http://localhost:8080",token=__ENV.TOKEN,sessionId=Number(__ENV.SESSION_ID),productId=Number(__ENV.PRODUCT_ID);
+export default function(){const r=http.post(base+"/v1/titipan",JSON.stringify({sesiId:sessionId,barangId:productId,qty:1,mode:"langsung"}),{headers:{"Content-Type":"application/json",Authorization:"Bearer "+token,"Idempotency-Key":"k6-"+__VU+"-"+__ITER}});if([200,201].includes(r.status))accepted.add(1);else if([409,429].includes(r.status))rejected.add(1);serverErrors.add(r.status>=500);check(r,{"created or business rejection":x=>[200,201,409,429].includes(x.status)})}

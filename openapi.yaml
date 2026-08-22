@@ -128,12 +128,11 @@ paths:
           application/json:
             schema:
               type: object
-              required: [nama, email, password, role]
+              required: [nama, email, password]
               properties:
                 nama: { type: string }
                 email: { type: string, format: email }
                 password: { type: string, minLength: 6 }
-                role: { type: string, enum: [penitip, penjastip], description: Registrasi publik tidak menerima admin }
       responses:
         "201": { description: Akun dibuat }
         "409": { description: Email telah terdaftar }
@@ -172,6 +171,26 @@ paths:
         "200": { description: Hasil request idempoten }
         "409": { description: Sesi penuh/tutup/kedaluwarsa }
         "429": { description: Batas laju terlampaui }
+  /v1/titipan/me:
+    get:
+      summary: Daftar titipan milik akun
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: Riwayat titipan } }
+  /v1/titipan/{id}/cancel:
+    post:
+      summary: Batalkan titipan dan lepaskan kapasitas tepat sekali
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: Dibatalkan }, "409": { description: Tidak dapat dibatalkan } }
+  /v1/titipan/{id}/offers:
+    post:
+      summary: Revisi tawaran biaya jasa
+      security: [{ bearerAuth: [] }]
+      responses: { "201": { description: Tawaran dibuat }, "409": { description: Reservasi/titipan tidak valid } }
+  /v1/offers/{id}:
+    patch:
+      summary: Penjastip menerima atau menolak tawaran
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: Keputusan tersimpan }, "409": { description: Transisi tidak valid } }
   /v1/payments:
     post:
       summary: Tahan dana titipan dalam escrow
@@ -184,12 +203,12 @@ paths:
         "201": { description: Dana tertahan }
         "409": { description: Titipan telah dibayar }
         "503": { description: Order service tidak tersedia }
-  /v1/tracking/{orderId}:
+  /v1/tracking/{titipanId}:
     get:
       summary: Riwayat tracking
       parameters:
         - in: path
-          name: orderId
+          name: titipanId
           required: true
           schema: { type: integer }
       responses: { "200": { description: Riwayat status } }
@@ -199,6 +218,11 @@ paths:
       responses:
         "201": { description: Status dicatat }
         "409": { description: Transisi tidak berurutan }
+  /v1/tracking/{titipanId}/confirm-received:
+    post:
+      summary: Penitip mengonfirmasi diterima dan memicu pelepasan escrow
+      security: [{ bearerAuth: [] }]
+      responses: { "201": { description: Barang diterima }, "409": { description: Barang belum diantar } }
   /v1/admin/users:
     get:
       summary: Daftar akun dengan pencarian, filter, dan pagination
