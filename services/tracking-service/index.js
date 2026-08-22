@@ -1,117 +1,16 @@
-const express = require("express");
-const { DatabaseSync } = require("node:sqlite");
-const { createClient } = require("redis");
-const path = require("node:path");
-const os = require("node:os");
-const crypto = require("node:crypto");
-const jwt = require("jsonwebtoken");
-
-const app = express();
-app.use(express.json());
-const SECRET = process.env.JWT_SECRET;
-const ORDER_URL = process.env.ORDER_URL || "http://localhost:3002";
-const SERVICE_TOKEN = process.env.SERVICE_TOKEN;
-if (!SECRET || SECRET.length < 32 || !SERVICE_TOKEN || SERVICE_TOKEN.length < 32) throw new Error("JWT_SECRET dan SERVICE_TOKEN minimal 32 karakter wajib diisi");
-async function auth(req, res, next) { try { req.user = jwt.verify((req.headers.authorization || "").replace(/^Bearer\s+/i, ""), SECRET); const check = await fetch(`${ORDER_URL}/internal/users/${req.user.sub}/access`, { headers: { "x-service-token": SERVICE_TOKEN }, signal: AbortSignal.timeout(2000) }); if (!check.ok || (await check.json()).user.role !== req.user.role) return res.status(401).json({ error: "akun tidak aktif atau token kedaluwarsa" }); next(); } catch { res.status(401).json({ error: "token tidak valid" }); } }
-function allowedRoles(...roles) { return (req, res, next) => roles.includes(req.user?.role) ? next() : res.status(403).json({ error: "role tidak diizinkan" }); }
-function adminAudit(req, id, after) { if (req.user?.role === "admin") fetch(`${ORDER_URL}/internal/admin-audit`, { method: "POST", headers: { "Content-Type": "application/json", "x-service-token": SERVICE_TOKEN }, body: JSON.stringify({ actorId: req.user.sub, action: "create", resourceType: "tracking", resourceId: id, before: null, after }) }).catch(() => null); }
-
-app.use((req, res, next) => {
-  req.rid = req.headers["x-request-id"] || crypto.randomUUID();
-  res.setHeader("x-request-id", req.rid);
-  next();
-});
-
-function log(level, msg, extra = {}) {
-  console.log(JSON.stringify({ ts: new Date().toISOString(), service: "tracking", level, msg, ...extra }));
-}
-
-const db = new DatabaseSync(process.env.DB_PATH || path.join(__dirname, "tracking.db"));
-db.exec(`
-  CREATE TABLE IF NOT EXISTS tracking_events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    order_id INTEGER NOT NULL,
-    status TEXT NOT NULL,
-    keterangan TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-  CREATE INDEX IF NOT EXISTS idx_tracking_order ON tracking_events(order_id);
-`);
-
-// Redis subscriber
-let redisSub = null;
-(async () => {
-  try {
-    redisSub = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" });
-    redisSub.on("error", () => {});
-    await redisSub.connect();
-
-    // Subscribe ke event titipan.dibuat dan order.paid
-    await redisSub.subscribe("titipan.dibuat", (msg) => {
-      try {
-        const data = JSON.parse(msg);
-        db.prepare("INSERT INTO tracking_events (order_id, status, keterangan) VALUES (?,?,?)").run(
-          data.orderId || data.titipanId || 0, "dibuat", JSON.stringify(data)
-        );
-        log("info", "event titipan.dibuat dicatat", data);
-      } catch {}
-    });
-
-    await redisSub.subscribe("order.paid", (msg) => {
-      try {
-        const data = JSON.parse(msg);
-        db.prepare("INSERT INTO tracking_events (order_id, status, keterangan) VALUES (?,?,?)").run(
-          data.orderId || 0, "dibayar", JSON.stringify(data)
-        );
-        log("info", "event order.paid dicatat", data);
-      } catch {}
-    });
-
-    log("info", "redis subscriber aktif");
-  } catch {
-    log("warn", "redis tidak tersedia, tracking manual saja");
-  }
-})();
-
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "tracking", instance: os.hostname(), pid: process.pid });
-});
-
-app.get("/v1/tracking/:orderId", auth, (req, res) => {
-  const events = db.prepare(
-    "SELECT * FROM tracking_events WHERE order_id = ? ORDER BY created_at ASC"
-  ).all(req.params.orderId);
-  res.json({ orderId: req.params.orderId, events });
-});
-
-// Manual tracking entry
-app.post("/v1/tracking", auth, allowedRoles("penjastip", "admin"), (req, res) => {
-  const { orderId, status, keterangan } = req.body;
-  if (!orderId || !status) return res.status(400).json({ error: "orderId dan status wajib diisi" });
-  const flow = ["dititip", "dibelanjakan", "diantar", "diterima"];
-  const nextIndex = flow.indexOf(String(status).toLowerCase());
-  if (nextIndex < 0) return res.status(400).json({ error: "status tidak valid", allowed: flow });
-  const latest = db.prepare("SELECT status FROM tracking_events WHERE order_id = ? ORDER BY id DESC LIMIT 1").get(orderId);
-  const expectedIndex = latest ? flow.indexOf(latest.status) + 1 : 0;
-  if (nextIndex !== expectedIndex) {
-    return res.status(409).json({ error: "transisi status tidak berurutan", expected: flow[expectedIndex] || null });
-  }
-  const result = db.prepare(
-    "INSERT INTO tracking_events (order_id, status, keterangan) VALUES (?,?,?)"
-  ).run(orderId, flow[nextIndex], keterangan || null);
-  log("info", "tracking manual dicatat", { rid: req.rid, orderId, status });
-  adminAudit(req, result.lastInsertRowid, { orderId, status: flow[nextIndex] });
-  res.status(201).json({ id: result.lastInsertRowid, orderId, status: flow[nextIndex] });
-});
-
-app.get("/v1/admin/tracking", auth, allowedRoles("admin"), (req, res) => {
-  const page = Math.max(1, parseInt(req.query.page, 10) || 1); const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
-  const total = db.prepare("SELECT COUNT(*) AS n FROM tracking_events").get().n;
-  const tracking = db.prepare("SELECT * FROM tracking_events ORDER BY id DESC LIMIT ? OFFSET ?").all(limit, (page - 1) * limit);
-  res.json({ tracking, pagination: { page, limit, total } });
-});
-
-if (require.main === module) {
-  app.listen(3004, () => log("info", "tracking berjalan di :3004"));
-}
-module.exports = app;
+const express=require("express"),jwt=require("jsonwebtoken"),crypto=require("node:crypto");const{createClient}=require("redis");const{pool,ready}=require("./db");
+const app=express();app.use(express.json());const SECRET=process.env.JWT_SECRET,SERVICE_TOKEN=process.env.SERVICE_TOKEN,ORDER_URL=process.env.ORDER_URL||"http://localhost:3002";
+if(!SECRET||SECRET.length<32||!SERVICE_TOKEN||SERVICE_TOKEN.length<32)throw new Error("JWT_SECRET dan SERVICE_TOKEN minimal 32 karakter wajib diisi");
+async function order(p){const r=await fetch(ORDER_URL+p,{headers:{"x-service-token":SERVICE_TOKEN},signal:AbortSignal.timeout(3000)}),b=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(b.error||"order-service gagal"),{status:r.status});return b}
+async function auth(req,res,next){try{req.user=jwt.verify((req.headers.authorization||"").replace(/^Bearer\s+/i,""),SECRET);await order("/internal/users/"+req.user.sub+"/access");next()}catch{res.status(401).json({error:"token tidak valid atau akun nonaktif"})}}
+const admin=(req,res,next)=>req.user.roles?.includes("admin")?next():res.status(403).json({error:"khusus admin"});let pub,sub;
+async function publish(){const c=await pool.connect();try{await c.query("BEGIN");const{rows}=await c.query("SELECT * FROM outbox_events WHERE published_at IS NULL ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 50");for(const e of rows){if(pub?.isReady)await pub.publish(e.topic,JSON.stringify({...e.payload,eventId:e.id}));await c.query("UPDATE outbox_events SET published_at=now() WHERE id=$1",[e.id])}await c.query("COMMIT")}catch{await c.query("ROLLBACK")}finally{c.release()}}
+async function paid(event){if(!event.eventId||!event.titipanId)return;const c=await pool.connect();try{await c.query("BEGIN");if(!(await c.query("INSERT INTO processed_events(event_id) VALUES($1) ON CONFLICT DO NOTHING RETURNING event_id",[event.eventId])).rowCount){await c.query("ROLLBACK");return}await c.query("INSERT INTO tracking_events(titipan_id,status,note,event_id) VALUES($1,'dititip','Pembayaran escrow diterima',$2) ON CONFLICT(event_id) DO NOTHING",[event.titipanId,event.eventId]);await c.query("COMMIT")}catch(e){await c.query("ROLLBACK");console.error(e)}finally{c.release()}}
+ready.then(async()=>{if(process.env.REDIS_URL){pub=createClient({url:process.env.REDIS_URL});sub=pub.duplicate();await Promise.all([pub.connect(),sub.connect()]);await sub.subscribe("order.paid",m=>paid(JSON.parse(m)).catch(console.error));setInterval(publish,1000).unref()}}).catch(console.error);
+async function access(req,id){const t=await order("/internal/titipan/"+id);if(!req.user.roles?.includes("admin")&&+t.customer_id!==+req.user.sub&&+t.session_owner_id!==+req.user.sub)throw Object.assign(new Error("akses ditolak"),{status:403});return t}
+app.get("/v1/tracking/:titipanId",auth,async(req,res,next)=>{try{await access(req,req.params.titipanId);res.json({events:(await pool.query("SELECT * FROM tracking_events WHERE titipan_id=$1 ORDER BY id",[req.params.titipanId])).rows})}catch(e){next(e)}});
+app.post("/v1/tracking",auth,async(req,res,next)=>{try{const t=await access(req,req.body.titipanId);if(+t.session_owner_id!==+req.user.sub&&!req.user.roles?.includes("admin"))return res.status(403).json({error:"hanya penjastip pemilik sesi"});const nextStatus=req.body.status;if(!["dibelanjakan","diantar"].includes(nextStatus))return res.status(400).json({error:"status tidak valid"});const latest=(await pool.query("SELECT status FROM tracking_events WHERE titipan_id=$1 ORDER BY id DESC LIMIT 1",[t.id])).rows[0]?.status,expected={dititip:"dibelanjakan",dibelanjakan:"diantar"}[latest];if(nextStatus!==expected)return res.status(409).json({error:"urutan tracking tidak valid"});const x=(await pool.query("INSERT INTO tracking_events(titipan_id,status,note,actor_id,event_id) VALUES($1,$2,$3,$4,$5) RETURNING *",[t.id,nextStatus,req.body.note||null,req.user.sub,crypto.randomUUID()])).rows[0];res.status(201).json(x)}catch(e){next(e)}});
+app.post("/v1/tracking/:titipanId/confirm-received",auth,async(req,res,next)=>{try{const t=await access(req,req.params.titipanId);if(+t.customer_id!==+req.user.sub)return res.status(403).json({error:"hanya penitip pemilik"});const c=await pool.connect();try{await c.query("BEGIN");const latest=(await c.query("SELECT status FROM tracking_events WHERE titipan_id=$1 ORDER BY id DESC LIMIT 1 FOR UPDATE",[t.id])).rows[0]?.status;if(latest!=="diantar"){await c.query("ROLLBACK");return res.status(409).json({error:"barang belum diantar"})}const eventId=crypto.randomUUID(),x=(await c.query("INSERT INTO tracking_events(titipan_id,status,note,actor_id,event_id) VALUES($1,'diterima','Dikonfirmasi penitip',$2,$3) RETURNING *",[t.id,req.user.sub,eventId])).rows[0];await c.query("INSERT INTO outbox_events(id,topic,payload) VALUES($1,'titipan.diterima',$2)",[eventId,JSON.stringify({titipanId:t.id})]);await c.query("COMMIT");res.status(201).json(x)}catch(e){await c.query("ROLLBACK");throw e}finally{c.release()}}catch(e){next(e)}});
+app.get("/v1/admin/tracking",auth,admin,async(_q,res)=>res.json({events:(await pool.query("SELECT * FROM tracking_events ORDER BY id DESC LIMIT 200")).rows}));
+app.get("/health",async(_q,res)=>{try{await ready;await pool.query("SELECT 1");res.json({status:"ok",service:"tracking"})}catch{res.status(503).json({status:"error"})}});app.use((e,_q,res,_n)=>res.status(e.status||500).json({error:e.message||"kesalahan internal"}));
+if(require.main===module)ready.then(()=>app.listen(3004));module.exports={app,ready,paid};

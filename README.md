@@ -1,5 +1,7 @@
 # 🛍️ Jastip Kampus
 
+> Runtime terbaru memakai PostgreSQL/Redis, tiga replika Order Service, akun reguler dua mode, negosiasi biaya jasa, escrow simulasi, dan Expo Router. Petunjuk konfigurasi serta batas hasil uji aktual ada di [docs/POSTGRESQL-OVERHAUL.md](docs/POSTGRESQL-OVERHAUL.md). Dokumentasi lama yang masih menyebut SQLite dipertahankan sebagai arsip historis dan bukan acuan runtime.
+
 <div align="center">
 
 **Sistem Titip-Beli Antarr Mahasiswa berbasis Microservices**

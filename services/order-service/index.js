@@ -1,549 +1,149 @@
 const express = require("express");
-const { DatabaseSync } = require("node:sqlite");
 const jwt = require("jsonwebtoken");
-const path = require("node:path");
-const os = require("node:os");
 const crypto = require("node:crypto");
+const os = require("node:os");
 const { promisify } = require("node:util");
+const { createClient } = require("redis");
+const { pool, ready } = require("./db");
+
 const scrypt = promisify(crypto.scrypt);
+const SECRET = process.env.JWT_SECRET;
+const SERVICE_TOKEN = process.env.SERVICE_TOKEN;
+const CATALOG_URL = process.env.CATALOG_URL || "http://localhost:3001";
+if (!SECRET || SECRET.length < 32 || !SERVICE_TOKEN || SERVICE_TOKEN.length < 32 || !process.env.DATABASE_URL) throw new Error("DATABASE_URL, JWT_SECRET, dan SERVICE_TOKEN wajib diisi");
 
 const app = express();
 app.use(express.json());
+app.use((req, res, next) => { req.rid = req.headers["x-request-id"] || crypto.randomUUID(); res.setHeader("x-request-id", req.rid); next(); });
+const log = (level, message, extra = {}) => console.log(JSON.stringify({ ts: new Date().toISOString(), service: "order", instance: os.hostname(), level, message, ...extra }));
+const rolesFor = (accountType) => accountType === "admin" ? ["admin"] : ["penitip", "penjastip"];
+const publicUser = (row) => ({ id: row.id, nama: row.nama, email: row.email, noHp: row.no_hp, kampus: row.kampus, accountType: row.account_type, role: row.account_type === "admin" ? "admin" : "penjastip", roles: rolesFor(row.account_type), aktif: row.aktif });
+const pageArgs = (req) => { const page = Math.max(1, parseInt(req.query.page, 10) || 1); const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20)); return { page, limit, offset: (page - 1) * limit }; };
 
-const CATALOG_URL = process.env.CATALOG_URL || "http://localhost:3001";
-const SECRET = process.env.JWT_SECRET;
-const SERVICE_TOKEN = process.env.SERVICE_TOKEN;
-if (!SECRET || SECRET.length < 32 || !SERVICE_TOKEN || SERVICE_TOKEN.length < 32) throw new Error("JWT_SECRET dan SERVICE_TOKEN minimal 32 karakter wajib diisi");
-
-// Request ID middleware
-app.use((req, res, next) => {
-  req.rid = req.headers["x-request-id"] || crypto.randomUUID();
-  res.setHeader("x-request-id", req.rid);
-  next();
-});
-
-function log(level, msg, extra = {}) {
-  console.log(JSON.stringify({ ts: new Date().toISOString(), service: "order", level, msg, ...extra }));
+let redis;
+async function startRedis() {
+  try { redis = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" }); redis.on("error", () => {}); await redis.connect(); }
+  catch { redis = null; log("warn", "redis tidak tersedia"); }
 }
+startRedis();
 
-// SQLite setup
-const db = new DatabaseSync(process.env.DB_PATH || path.join(__dirname, "order.db"));
-db.exec(`
-  CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    barang_id INTEGER NOT NULL,
-    nama_barang TEXT,
-    qty INTEGER NOT NULL,
-    total INTEGER NOT NULL,
-    status TEXT DEFAULT 'pending',
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-  CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
-  CREATE INDEX IF NOT EXISTS idx_orders_barang ON orders(barang_id);
-  CREATE TABLE IF NOT EXISTS sesi_jastip (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    pembuka TEXT NOT NULL,
-    toko_id INTEGER NOT NULL,
-    toko_nama TEXT NOT NULL,
-    batas_waktu TEXT NOT NULL,
-    kapasitas_maksimal INTEGER NOT NULL CHECK (kapasitas_maksimal > 0),
-    kapasitas_terpakai INTEGER NOT NULL DEFAULT 0 CHECK (kapasitas_terpakai >= 0),
-    status TEXT NOT NULL DEFAULT 'buka' CHECK (status IN ('buka','ditutup')),
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-  CREATE TABLE IF NOT EXISTS titipan (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sesi_id INTEGER NOT NULL,
-    pemesan TEXT NOT NULL,
-    barang_id INTEGER NOT NULL,
-    qty INTEGER NOT NULL CHECK (qty > 0),
-    nama_barang TEXT,
-    harga_satuan INTEGER NOT NULL DEFAULT 0,
-    total INTEGER NOT NULL DEFAULT 0,
-    catatan TEXT,
-    status TEXT NOT NULL DEFAULT 'menunggu_pembayaran',
-    idempotency_key TEXT NOT NULL UNIQUE,
-    created_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (sesi_id) REFERENCES sesi_jastip(id)
-  );
-  CREATE INDEX IF NOT EXISTS idx_titipan_sesi ON titipan(sesi_id);
-  CREATE TABLE IF NOT EXISTS sesi_produk (
-    sesi_id INTEGER NOT NULL REFERENCES sesi_jastip(id) ON DELETE CASCADE,
-    barang_id INTEGER NOT NULL,
-    PRIMARY KEY (sesi_id, barang_id)
-  );
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nama TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    no_hp TEXT,
-    kampus TEXT,
-    password_hash TEXT NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('penitip','penjastip')),
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-`);
-// SQLite cannot alter CHECK constraints. Rebuild legacy users table once while
-// preserving its rows, then add the account status used by authorization.
-const usersSql = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'").get()?.sql || "";
-if (!usersSql.includes("'admin'")) {
-  db.exec(`
-    BEGIN IMMEDIATE;
-    ALTER TABLE users RENAME TO users_legacy;
-    CREATE TABLE users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nama TEXT NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      no_hp TEXT,
-      kampus TEXT,
-      password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK (role IN ('penitip','penjastip','admin')),
-      aktif INTEGER NOT NULL DEFAULT 1,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-    INSERT INTO users (id,nama,email,no_hp,kampus,password_hash,role,created_at)
-      SELECT id,nama,email,no_hp,kampus,password_hash,role,created_at FROM users_legacy;
-    DROP TABLE users_legacy;
-    COMMIT;
-  `);
-} else {
-  try { db.exec("ALTER TABLE users ADD COLUMN aktif INTEGER NOT NULL DEFAULT 1"); } catch {}
+async function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) { const derived = await scrypt(password, salt, 64); return `${salt}:${derived.toString("hex")}`; }
+async function passwordMatches(password, stored) { const [salt, expectedHex] = String(stored).split(":"); if (!salt || !expectedHex) return false; const actual = await scrypt(password, salt, 64); const expected = Buffer.from(expectedHex, "hex"); return actual.length === expected.length && crypto.timingSafeEqual(actual, expected); }
+async function auth(req, res, next) {
+  try {
+    const token = jwt.verify((req.headers.authorization || "").replace(/^Bearer\s+/i, ""), SECRET);
+    const { rows } = await pool.query("SELECT * FROM users WHERE id=$1 AND aktif", [token.sub]);
+    if (!rows[0]) throw new Error(); req.user = { ...token, roles: rolesFor(rows[0].account_type), accountType: rows[0].account_type }; next();
+  } catch { res.status(401).json({ error: "akun tidak aktif atau token tidak valid" }); }
 }
-db.exec(`
-  CREATE TABLE IF NOT EXISTS admin_audit (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    actor_id INTEGER NOT NULL,
-    action TEXT NOT NULL,
-    resource_type TEXT NOT NULL,
-    resource_id TEXT,
-    before_json TEXT,
-    after_json TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-  CREATE INDEX IF NOT EXISTS idx_admin_audit_created ON admin_audit(created_at DESC);
-`);
-for (const sql of [
-  "ALTER TABLE titipan ADD COLUMN nama_barang TEXT",
-  "ALTER TABLE titipan ADD COLUMN harga_satuan INTEGER NOT NULL DEFAULT 0",
-  "ALTER TABLE titipan ADD COLUMN total INTEGER NOT NULL DEFAULT 0",
-  "ALTER TABLE titipan ADD COLUMN catatan TEXT",
-]) { try { db.exec(sql); } catch {} }
+const allow = (...roles) => (req, res, next) => roles.some((role) => req.user?.roles.includes(role)) ? next() : res.status(403).json({ error: "role tidak diizinkan" });
+const internal = (req, res, next) => req.headers["x-service-token"] === SERVICE_TOKEN ? next() : res.status(401).json({ error: "akses internal ditolak" });
+async function jsonFetch(url, options = {}, retries = 1) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try { const response = await fetch(url, { ...options, signal: AbortSignal.timeout(2000) }); const body = await response.json().catch(() => ({})); return { ok: response.ok, status: response.status, body }; }
+    catch (error) { if (attempt === retries) return { ok: false, status: 503, body: { error: "service tidak tersedia" } }; }
+  }
+}
+async function rateLimit(req, res, next) {
+  if (!redis) return next();
+  try { const key = `rate:titipan:${req.user.sub}:${Math.floor(Date.now() / 60000)}`; const count = await redis.incr(key); if (count === 1) await redis.expire(key, 60); if (count > 120) { res.setHeader("Retry-After", "60"); return res.status(429).json({ error: "batas laju terlampaui" }); } }
+  catch {} next();
+}
+async function addOutbox(client, topic, payload) { const id = crypto.randomUUID(); await client.query("INSERT INTO outbox_events(id,topic,payload) VALUES($1,$2,$3)", [id, topic, JSON.stringify({ eventId: id, ...payload })]); return id; }
+async function publishOutbox() {
+  if (!redis) return;
+  const { rows } = await pool.query("SELECT * FROM outbox_events WHERE published_at IS NULL ORDER BY created_at LIMIT 100");
+  for (const event of rows) { try { await redis.publish(event.topic, JSON.stringify(event.payload)); await pool.query("UPDATE outbox_events SET published_at=now() WHERE id=$1", [event.id]); } catch { break; } }
+}
+setInterval(() => publishOutbox().catch(() => {}), 1000).unref();
 
-async function hashPassword(password, salt = crypto.randomBytes(16).toString("hex")) {
-  const derived = await scrypt(password, salt, 64);
-  return `${salt}:${derived.toString("hex")}`;
+async function expireReservations() {
+  await ready;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(`WITH expired AS (
+      UPDATE titipan SET status='kedaluwarsa',capacity_released_at=now(),updated_at=now()
+      WHERE capacity_released_at IS NULL AND reservation_expires_at<=now() AND status IN ('menunggu_tawaran','tawaran_ditolak','menunggu_pembayaran')
+      RETURNING session_id,qty
+    ), totals AS (SELECT session_id,sum(qty)::int qty FROM expired GROUP BY session_id)
+    UPDATE sessions s SET kapasitas_terpakai=GREATEST(0,s.kapasitas_terpakai-t.qty) FROM totals t WHERE s.id=t.session_id`);
+    await client.query("UPDATE offers SET status='expired',responded_at=now() WHERE status='pending' AND titipan_id IN (SELECT id FROM titipan WHERE status='kedaluwarsa')");
+    await client.query("COMMIT");
+  } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
 }
-
-async function passwordMatches(password, stored) {
-  const [salt, expectedHex] = String(stored).split(":");
-  if (!salt || !expectedHex) return false;
-  const actual = await scrypt(password, salt, 64);
-  const expected = Buffer.from(expectedHex, "hex");
-  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
-}
+setInterval(() => expireReservations().catch((error) => log("error", "expiry gagal", { error: error.message })), 60000).unref();
 
 app.post("/v1/register", async (req, res) => {
-  const { nama, email, password, noHp = null, kampus = null } = req.body;
-  const role = req.body.role === "penjastip" ? "penjastip" : "penitip";
-  if (!nama || !email || !password || password.length < 6) {
-    return res.status(400).json({ error: "nama, email, dan password minimal 6 karakter wajib diisi" });
-  }
-  try {
-    const passwordHash = await hashPassword(password);
-    const result = db.prepare("INSERT INTO users (nama,email,no_hp,kampus,password_hash,role) VALUES (?,?,?,?,?,?)")
-      .run(nama.trim(), email.trim().toLowerCase(), noHp, kampus, passwordHash, role);
-    return res.status(201).json({ id: Number(result.lastInsertRowid), nama, email: email.trim().toLowerCase(), role });
-  } catch (err) {
-    if (String(err.message).includes("UNIQUE")) return res.status(409).json({ error: "email sudah terdaftar" });
-    throw err;
-  }
+  await ready; const { nama, email, password, noHp = null, kampus = null } = req.body;
+  if (!nama || !email || !password || password.length < 8) return res.status(400).json({ error: "nama, email, dan password minimal 8 karakter wajib" });
+  try { const { rows } = await pool.query("INSERT INTO users(nama,email,no_hp,kampus,password_hash) VALUES($1,$2,$3,$4,$5) RETURNING *", [nama.trim(), email.trim().toLowerCase(), noHp, kampus, await hashPassword(password)]); res.status(201).json(publicUser(rows[0])); }
+  catch (error) { if (error.code === "23505") return res.status(409).json({ error: "email sudah terdaftar" }); throw error; }
 });
+app.post("/v1/login", async (req, res) => { await ready; const { rows } = await pool.query("SELECT * FROM users WHERE email=$1", [String(req.body.email || "").trim().toLowerCase()]); const user = rows[0]; if (!user || !user.aktif || !(await passwordMatches(req.body.password || "", user.password_hash))) return res.status(401).json({ error: "email atau password salah" }); const roles = rolesFor(user.account_type); const token = jwt.sign({ sub: String(user.id), email: user.email, nama: user.nama, roles, accountType: user.account_type }, SECRET, { expiresIn: "8h" }); res.json({ token, user: publicUser(user) }); });
+app.get("/v1/me", auth, async (req, res) => { const { rows } = await pool.query("SELECT * FROM users WHERE id=$1", [req.user.sub]); res.json({ user: publicUser(rows[0]) }); });
 
-app.post("/v1/login", async (req, res) => {
-  const email = String(req.body.email || "").trim().toLowerCase();
-  const user = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
-  if (!user || !user.aktif || !(await passwordMatches(req.body.password || "", user.password_hash))) {
-    return res.status(401).json({ error: "email atau password salah" });
-  }
-  const token = jwt.sign({ sub: String(user.id), email: user.email, role: user.role, nama: user.nama }, SECRET, { expiresIn: "8h" });
-  res.json({ token, user: { id: user.id, nama: user.nama, email: user.email, role: user.role, kampus: user.kampus } });
-});
-
-function butuhAuth(req, res, next) {
-  const header = req.headers.authorization || "";
-  try {
-    req.user = jwt.verify(header.replace("Bearer ", ""), SECRET);
-    const current = db.prepare("SELECT id,role,aktif FROM users WHERE id=?").get(Number(req.user.sub));
-    if (!current || !current.aktif || current.role !== req.user.role) return res.status(401).json({ error: "akun tidak aktif atau token kedaluwarsa" });
-    next();
-  } catch {
-    res.status(401).json({ error: "tidak sah, sertakan token" });
-  }
+async function attachProducts(rows) {
+  const ids = [...new Set(rows.flatMap((row) => row.product_ids || []))]; if (!ids.length) return rows.map((row) => ({ ...row, products: [] }));
+  const result = await jsonFetch(`${CATALOG_URL}/v1/items?ids=${ids.join(",")}`); if (!result.ok) return rows.map((row) => ({ ...row, products: [], catalogUnavailable: true }));
+  return rows.map((row) => ({ ...row, products: result.body.items.filter((p) => row.product_ids.includes(p.id)) }));
 }
+const sessionSelect = `SELECT s.*,COALESCE(array_agg(sp.product_id) FILTER(WHERE sp.product_id IS NOT NULL),'{}') product_ids,(s.kapasitas_maksimal-s.kapasitas_terpakai) kapasitas_tersisa FROM sessions s LEFT JOIN session_products sp ON sp.session_id=s.id`;
+app.get("/v1/sessions", async (req, res) => { await expireReservations(); const { page, limit, offset } = pageArgs(req); const { rows } = await pool.query(`${sessionSelect} WHERE s.status='buka' AND s.batas_waktu>now() GROUP BY s.id ORDER BY s.batas_waktu LIMIT $1 OFFSET $2`, [limit, offset]); const total = await pool.query("SELECT count(*)::int n FROM sessions WHERE status='buka' AND batas_waktu>now()"); res.json({ sessions: await attachProducts(rows), pagination: { page, limit, total: total.rows[0].n } }); });
+app.get("/v1/sessions/:id", async (req, res) => { await expireReservations(); const { rows } = await pool.query(`${sessionSelect} WHERE s.id=$1 GROUP BY s.id`, [req.params.id]); if (!rows[0]) return res.status(404).json({ error: "sesi tidak ditemukan" }); res.json((await attachProducts(rows))[0]); });
+app.get("/v1/sessions/me", auth, allow("penjastip"), async (req, res) => { const { rows } = await pool.query(`${sessionSelect} WHERE s.owner_id=$1 GROUP BY s.id ORDER BY s.id DESC`, [req.user.sub]); res.json({ sessions: await attachProducts(rows) }); });
+app.post("/v1/sessions", auth, allow("penjastip"), async (req, res) => {
+  const storeId = Number(req.body.storeId), capacity = Number(req.body.kapasitas), fee = Number(req.body.biayaJasaPerUnit), deadline = new Date(req.body.batasWaktu), productIds = [...new Set((req.body.productIds || []).map(Number))];
+  if (!Number.isInteger(storeId) || !Number.isInteger(capacity) || capacity < 1 || !Number.isInteger(fee) || fee < 0 || Number.isNaN(deadline.valueOf()) || deadline <= new Date() || !productIds.length) return res.status(400).json({ error: "data sesi tidak valid" });
+  const ownership = await jsonFetch(`${CATALOG_URL}/internal/ownership?ownerId=${req.user.sub}&storeId=${storeId}&productIds=${productIds.join(",")}`, { headers: { "x-service-token": SERVICE_TOKEN } });
+  if (!ownership.ok) return res.status(ownership.status === 503 ? 503 : 403).json({ error: ownership.body.error || "ownership katalog tidak valid" });
+  const client = await pool.connect(); try { await client.query("BEGIN"); const inserted = await client.query("INSERT INTO sessions(owner_id,store_id,store_name,batas_waktu,kapasitas_maksimal,biaya_jasa_per_unit) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [req.user.sub, storeId, ownership.body.store.nama, deadline, capacity, fee]); for (const id of productIds) await client.query("INSERT INTO session_products(session_id,product_id) VALUES($1,$2)", [inserted.rows[0].id, id]); await client.query("COMMIT"); res.status(201).json({ ...inserted.rows[0], products: ownership.body.products }); } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); }
+});
+app.post("/v1/sessions/:id/close", auth, allow("penjastip"), async (req, res) => { const result = await pool.query("UPDATE sessions SET status='ditutup' WHERE id=$1 AND owner_id=$2 AND status='buka'", [req.params.id, req.user.sub]); if (!result.rowCount) return res.status(404).json({ error: "sesi tidak ditemukan" }); res.json({ ok: true }); });
 
-function khususRole(role) {
-  return (req, res, next) => req.user?.role === role
-    ? next()
-    : res.status(403).json({ error: `aksi ini hanya untuk ${role}` });
-}
-
-const adminOnly = khususRole("admin");
-function internalOnly(req, res, next) {
-  return req.headers["x-service-token"] === SERVICE_TOKEN ? next() : res.status(401).json({ error: "akses internal ditolak" });
-}
-function audit(actor, action, type, id, before, after) {
-  db.prepare("INSERT INTO admin_audit (actor_id,action,resource_type,resource_id,before_json,after_json) VALUES (?,?,?,?,?,?)")
-    .run(Number(actor), action, type, id == null ? null : String(id), before ? JSON.stringify(before) : null, after ? JSON.stringify(after) : null);
-}
-function pageArgs(req) {
-  const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
-  const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
-  return { page, limit, offset: (page - 1) * limit };
-}
-app.get("/v1/me", butuhAuth, (req, res) => {
-  const user = db.prepare("SELECT id,nama,email,no_hp,kampus,role,aktif FROM users WHERE id=?").get(Number(req.user.sub));
-  if (!user) return res.status(401).json({ error: "akun tidak ditemukan" });
-  res.json({ user });
+app.post("/v1/titipan", auth, allow("penitip"), rateLimit, async (req, res) => {
+  await expireReservations(); const sessionId = Number(req.body.sesiId), productId = Number(req.body.barangId), qty = Number(req.body.qty), mode = req.body.mode === "tawar" ? "tawar" : "langsung", offered = Number(req.body.tawaranJasaPerUnit); const key = req.headers["idempotency-key"];
+  if (!key || !Number.isInteger(sessionId) || !Number.isInteger(productId) || !Number.isInteger(qty) || qty < 1 || (mode === "tawar" && (!Number.isInteger(offered) || offered < 0))) return res.status(400).json({ error: "payload titipan atau Idempotency-Key tidak valid" });
+  const existing = await pool.query("SELECT * FROM titipan WHERE idempotency_key=$1", [key]); if (existing.rows[0]) return res.json(existing.rows[0]);
+  const productMember = await pool.query("SELECT 1 FROM session_products WHERE session_id=$1 AND product_id=$2", [sessionId, productId]); if (!productMember.rowCount) return res.status(409).json({ error: "produk tidak tersedia pada sesi" });
+  const product = await jsonFetch(`${CATALOG_URL}/v1/items/${productId}`); if (!product.ok) return res.status(product.status === 404 ? 404 : 503).json({ error: "katalog tidak tersedia" });
+  const client = await pool.connect(); try {
+    await client.query("BEGIN");
+    const reserved = await client.query(`UPDATE sessions SET kapasitas_terpakai=kapasitas_terpakai+$1 WHERE id=$2 AND status='buka' AND batas_waktu>now() AND kapasitas_terpakai+$1<=kapasitas_maksimal RETURNING *`, [qty, sessionId]);
+    if (!reserved.rows[0]) { await client.query("ROLLBACK"); return res.status(409).json({ error: "sesi tutup, kedaluwarsa, atau kapasitas tidak cukup" }); }
+    const session = reserved.rows[0]; const expiry = new Date(Math.min(Date.now() + 30 * 60 * 1000, new Date(session.batas_waktu).valueOf())); const agreedFee = mode === "langsung" ? session.biaya_jasa_per_unit : null; const total = agreedFee == null ? null : (product.body.harga + agreedFee) * qty; const status = mode === "tawar" ? "menunggu_tawaran" : "menunggu_pembayaran";
+    const inserted = await client.query(`INSERT INTO titipan(session_id,customer_id,product_id,qty,product_name,unit_price,variant,note,mode,base_service_fee,agreed_service_fee,total,status,reservation_expires_at,idempotency_key) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`, [sessionId, req.user.sub, productId, qty, product.body.nama, product.body.harga, req.body.varian || null, req.body.catatan || null, mode, session.biaya_jasa_per_unit, agreedFee, total, status, expiry, key]);
+    let offer = null; if (mode === "tawar") offer = (await client.query("INSERT INTO offers(titipan_id,proposer_id,amount_per_unit,round) VALUES($1,$2,$3,1) RETURNING *", [inserted.rows[0].id, req.user.sub, offered])).rows[0];
+    await addOutbox(client, "titipan.dibuat", { titipanId: inserted.rows[0].id, sessionId, customerId: Number(req.user.sub), qty, status }); await client.query("COMMIT"); res.status(201).json({ ...inserted.rows[0], offer });
+  } catch (error) { await client.query("ROLLBACK"); if (error.code === "23505") return res.json((await pool.query("SELECT * FROM titipan WHERE idempotency_key=$1", [key])).rows[0]); throw error; } finally { client.release(); }
 });
 
-async function sessionsWithProducts(req, rows) {
-  const ids = [...new Set(rows.flatMap((row) => db.prepare("SELECT barang_id FROM sesi_produk WHERE sesi_id=?").all(row.id).map((x) => x.barang_id)))];
-  let products = [];
-  if (ids.length) {
-    const result = await panggilTahan(`${CATALOG_URL}/v1/items?ids=${ids.join(",")}`);
-    products = result?.items || [];
-  }
-  return rows.map((row) => ({ ...row, products: products.filter((p) => db.prepare("SELECT 1 FROM sesi_produk WHERE sesi_id=? AND barang_id=?").get(row.id, p.id)) }));
-}
+app.get("/v1/titipan/me", auth, async (req, res) => { await expireReservations(); const { rows } = await pool.query(`SELECT t.*,s.store_name,(SELECT row_to_json(o) FROM offers o WHERE o.titipan_id=t.id ORDER BY o.round DESC LIMIT 1) latest_offer FROM titipan t JOIN sessions s ON s.id=t.session_id WHERE t.customer_id=$1 ORDER BY t.id DESC`, [req.user.sub]); res.json({ titipan: rows }); });
+app.get("/v1/penjastip/titipan", auth, allow("penjastip"), async (req, res) => { await expireReservations(); const { rows } = await pool.query(`SELECT t.*,s.store_name,(SELECT row_to_json(o) FROM offers o WHERE o.titipan_id=t.id ORDER BY o.round DESC LIMIT 1) latest_offer FROM titipan t JOIN sessions s ON s.id=t.session_id WHERE s.owner_id=$1 ORDER BY t.id DESC`, [req.user.sub]); res.json({ titipan: rows }); });
+app.post("/v1/titipan/:id/offers", auth, allow("penitip"), async (req, res) => { await expireReservations(); const amount = Number(req.body.tawaranJasaPerUnit); if (!Number.isInteger(amount) || amount < 0) return res.status(400).json({ error: "tawaran tidak valid" }); const client = await pool.connect(); try { await client.query("BEGIN"); const locked = (await client.query("SELECT * FROM titipan WHERE id=$1 AND customer_id=$2 FOR UPDATE", [req.params.id, req.user.sub])).rows[0]; if (!locked || locked.status !== "tawaran_ditolak" || new Date(locked.reservation_expires_at) <= new Date()) { await client.query("ROLLBACK"); return res.status(409).json({ error: "titipan tidak dapat direvisi" }); } const round = (await client.query("SELECT COALESCE(max(round),0)+1 round FROM offers WHERE titipan_id=$1", [locked.id])).rows[0].round; const offer = (await client.query("INSERT INTO offers(titipan_id,proposer_id,amount_per_unit,round) VALUES($1,$2,$3,$4) RETURNING *", [locked.id, req.user.sub, amount, round])).rows[0]; await client.query("UPDATE titipan SET status='menunggu_tawaran',updated_at=now() WHERE id=$1", [locked.id]); await client.query("COMMIT"); res.status(201).json(offer); } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); } });
+app.patch("/v1/offers/:id", auth, allow("penjastip"), async (req, res) => { const decision = req.body.decision; if (!["accepted","rejected"].includes(decision)) return res.status(400).json({ error: "decision harus accepted atau rejected" }); const client = await pool.connect(); try { await client.query("BEGIN"); const { rows } = await client.query(`SELECT o.*,t.qty,t.unit_price,t.reservation_expires_at,t.status titipan_status,s.owner_id FROM offers o JOIN titipan t ON t.id=o.titipan_id JOIN sessions s ON s.id=t.session_id WHERE o.id=$1 FOR UPDATE`, [req.params.id]); const offer = rows[0]; if (!offer || Number(offer.owner_id) !== Number(req.user.sub) || offer.status !== "pending" || offer.titipan_status !== "menunggu_tawaran" || new Date(offer.reservation_expires_at) <= new Date()) { await client.query("ROLLBACK"); return res.status(409).json({ error: "tawaran tidak dapat diproses" }); } await client.query("UPDATE offers SET status=$1,responded_at=now() WHERE id=$2", [decision, offer.id]); if (decision === "accepted") await client.query("UPDATE titipan SET agreed_service_fee=$1,total=($2+$1)*qty,status='menunggu_pembayaran',updated_at=now() WHERE id=$3", [offer.amount_per_unit, offer.unit_price, offer.titipan_id]); else await client.query("UPDATE titipan SET status='tawaran_ditolak',updated_at=now() WHERE id=$1", [offer.titipan_id]); await client.query("COMMIT"); res.json({ ...offer, status: decision }); } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); } });
 
-app.get("/v1/sessions", async (req, res) => {
-  const rows = db.prepare(`
-    SELECT *, kapasitas_maksimal - kapasitas_terpakai AS kapasitas_tersisa
-    FROM sesi_jastip
-    WHERE status = 'buka' AND datetime(batas_waktu) > datetime('now')
-    ORDER BY batas_waktu ASC
-  `).all();
-  res.json({ sessions: await sessionsWithProducts(req, rows) });
-});
+async function cancelTitipan(id, actorId, admin = false) { const client = await pool.connect(); try { await client.query("BEGIN"); const { rows } = await client.query(`SELECT t.*,s.owner_id FROM titipan t JOIN sessions s ON s.id=t.session_id WHERE t.id=$1 FOR UPDATE`, [id]); const item = rows[0]; if (!item || (!admin && Number(item.customer_id) !== Number(actorId)) || !["menunggu_tawaran","tawaran_ditolak","menunggu_pembayaran"].includes(item.status)) { await client.query("ROLLBACK"); return null; } await client.query("UPDATE titipan SET status='dibatalkan',capacity_released_at=COALESCE(capacity_released_at,now()),updated_at=now() WHERE id=$1", [id]); if (!item.capacity_released_at) await client.query("UPDATE sessions SET kapasitas_terpakai=GREATEST(0,kapasitas_terpakai-$1) WHERE id=$2", [item.qty, item.session_id]); await client.query("UPDATE offers SET status='expired',responded_at=now() WHERE titipan_id=$1 AND status='pending'", [id]); await client.query("COMMIT"); return { ...item, status: "dibatalkan" }; } catch (error) { await client.query("ROLLBACK"); throw error; } finally { client.release(); } }
+app.post("/v1/titipan/:id/cancel", auth, allow("penitip"), async (req, res) => { const result = await cancelTitipan(req.params.id, req.user.sub); if (!result) return res.status(409).json({ error: "titipan tidak dapat dibatalkan" }); res.json(result); });
 
-app.get("/v1/sessions/me", butuhAuth, khususRole("penjastip"), async (req, res) => {
-  const rows = db.prepare(`SELECT *, kapasitas_maksimal-kapasitas_terpakai AS kapasitas_tersisa FROM sesi_jastip WHERE pembuka=? ORDER BY id DESC`).all(req.user.sub);
-  res.json({ sessions: await sessionsWithProducts(req, rows) });
-});
+app.get("/internal/titipan/:id", internal, async (req, res) => { await expireReservations(); const { rows } = await pool.query(`SELECT t.*,s.owner_id session_owner_id FROM titipan t JOIN sessions s ON s.id=t.session_id WHERE t.id=$1`, [req.params.id]); if (!rows[0]) return res.status(404).json({ error: "titipan tidak ditemukan" }); res.json(rows[0]); });
+app.patch("/internal/titipan/:id/status", internal, async (req, res) => { const allowed = { menunggu_pembayaran: ["dibayar","dibatalkan"], dibayar: ["selesai","dibatalkan"] }; const current = (await pool.query("SELECT * FROM titipan WHERE id=$1", [req.params.id])).rows[0]; if (!current) return res.status(404).json({ error: "titipan tidak ditemukan" }); if (!(allowed[current.status] || []).includes(req.body.status)) return res.status(409).json({ error: "transisi titipan tidak valid" }); const { rows } = await pool.query("UPDATE titipan SET status=$1,updated_at=now() WHERE id=$2 RETURNING *", [req.body.status, current.id]); res.json(rows[0]); });
+app.get("/internal/users/:id/access", internal, async (req, res) => { const { rows } = await pool.query("SELECT * FROM users WHERE id=$1 AND aktif", [req.params.id]); if (!rows[0]) return res.status(404).json({ error: "akun aktif tidak ditemukan" }); res.json({ user: publicUser(rows[0]) }); });
+app.get("/internal/users/:id/penjastip", internal, async (req, res) => { const { rows } = await pool.query("SELECT * FROM users WHERE id=$1 AND aktif AND account_type='user'", [req.params.id]); if (!rows[0]) return res.status(404).json({ error: "pengguna aktif tidak ditemukan" }); res.json({ user: publicUser(rows[0]) }); });
+app.post("/internal/admin-audit", internal, async (req, res) => { await pool.query("INSERT INTO admin_audit(actor_id,action,resource_type,resource_id,before_json,after_json) VALUES($1,$2,$3,$4,$5,$6)", [req.body.actorId, req.body.action, req.body.resourceType, req.body.resourceId == null ? null : String(req.body.resourceId), req.body.before || null, req.body.after || null]); res.status(201).json({ ok: true }); });
 
-app.post("/v1/sessions", butuhAuth, khususRole("penjastip"), async (req, res) => {
-  const tokoId = Number(req.body.storeId);
-  const kapasitas = Number(req.body.kapasitas);
-  const batasWaktu = req.body.batasWaktu;
-  const productIds = [...new Set((req.body.productIds || []).map(Number))];
-  if (!Number.isInteger(tokoId) || !Number.isInteger(kapasitas) || kapasitas < 1 || !batasWaktu || Number.isNaN(Date.parse(batasWaktu)) || !productIds.length || productIds.some((id) => !Number.isInteger(id))) {
-    return res.status(400).json({ error: "storeId, productIds, kapasitas, dan batasWaktu yang valid wajib diisi" });
-  }
-  if (Date.parse(batasWaktu) <= Date.now()) return res.status(400).json({ error: "batasWaktu harus di masa depan" });
-  const catalog = await panggilTahan(`${CATALOG_URL}/v1/items?ids=${productIds.join(",")}`);
-  const products = catalog?.items || [];
-  if (products.length !== productIds.length || products.some((p) => String(p.owner_id) !== String(req.user.sub) || Number(p.toko_id) !== tokoId)) {
-    return res.status(403).json({ error: "toko dan seluruh produk harus aktif serta milik Anda" });
-  }
-  const storeName = products[0].toko_nama;
-  try {
-    db.exec("BEGIN IMMEDIATE");
-    const result = db.prepare(`INSERT INTO sesi_jastip (pembuka,toko_id,toko_nama,batas_waktu,kapasitas_maksimal) VALUES (?,?,?,?,?)`)
-      .run(req.user.sub, tokoId, storeName, batasWaktu, kapasitas);
-    const sessionId = Number(result.lastInsertRowid);
-    const insert = db.prepare("INSERT INTO sesi_produk (sesi_id,barang_id) VALUES (?,?)");
-    productIds.forEach((id) => insert.run(sessionId, id));
-    db.exec("COMMIT");
-    const row = db.prepare("SELECT * FROM sesi_jastip WHERE id=?").get(sessionId);
-    res.status(201).json({ ...row, products });
-  } catch (err) { try { db.exec("ROLLBACK"); } catch {} throw err; }
-});
+app.get("/v1/admin/users", auth, allow("admin"), async (req, res) => { const { page, limit, offset } = pageArgs(req); const q = `%${req.query.q || ""}%`; const data = await pool.query("SELECT * FROM users WHERE nama ILIKE $1 OR email ILIKE $1 ORDER BY id DESC LIMIT $2 OFFSET $3", [q, limit, offset]); const total = await pool.query("SELECT count(*)::int n FROM users WHERE nama ILIKE $1 OR email ILIKE $1", [q]); res.json({ users: data.rows.map(publicUser), pagination: { page, limit, total: total.rows[0].n } }); });
+app.post("/v1/admin/users", auth, allow("admin"), async (req, res) => { if (!req.body.nama || !req.body.email || !req.body.password || req.body.password.length < 8) return res.status(400).json({ error: "data akun tidak valid" }); const type = req.body.accountType === "admin" ? "admin" : "user"; const { rows } = await pool.query("INSERT INTO users(nama,email,password_hash,account_type,no_hp,kampus) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [req.body.nama, req.body.email.toLowerCase(), await hashPassword(req.body.password), type, req.body.noHp || null, req.body.kampus || null]); res.status(201).json(publicUser(rows[0])); });
+app.patch("/v1/admin/users/:id", auth, allow("admin"), async (req, res) => { const old = (await pool.query("SELECT * FROM users WHERE id=$1", [req.params.id])).rows[0]; if (!old) return res.status(404).json({ error: "akun tidak ditemukan" }); if (Number(old.id) === Number(req.user.sub) && req.body.aktif === false) return res.status(409).json({ error: "admin tidak dapat menonaktifkan diri" }); const hash = req.body.password ? await hashPassword(req.body.password) : old.password_hash; const { rows } = await pool.query("UPDATE users SET nama=$1,email=$2,no_hp=$3,kampus=$4,account_type=$5,aktif=$6,password_hash=$7,updated_at=now() WHERE id=$8 RETURNING *", [req.body.nama ?? old.nama, req.body.email?.toLowerCase() ?? old.email, req.body.noHp ?? old.no_hp, req.body.kampus ?? old.kampus, req.body.accountType ?? old.account_type, req.body.aktif ?? old.aktif, hash, old.id]); res.json(publicUser(rows[0])); });
+app.delete("/v1/admin/users/:id", auth, allow("admin"), async (req, res) => { if (Number(req.params.id) === Number(req.user.sub)) return res.status(409).json({ error: "admin tidak dapat menonaktifkan diri" }); const target = (await pool.query("SELECT * FROM users WHERE id=$1", [req.params.id])).rows[0]; if (!target) return res.status(404).json({ error: "akun tidak ditemukan" }); if (target.account_type === "admin") { const count = (await pool.query("SELECT count(*)::int n FROM users WHERE account_type='admin' AND aktif")).rows[0].n; if (count <= 1) return res.status(409).json({ error: "admin aktif terakhir tidak dapat dinonaktifkan" }); } await pool.query("UPDATE users SET aktif=FALSE,updated_at=now() WHERE id=$1", [target.id]); res.status(204).end(); });
+app.get("/v1/admin/sessions", auth, allow("admin"), async (req, res) => { const { page, limit, offset } = pageArgs(req); const { rows } = await pool.query("SELECT *,(kapasitas_maksimal-kapasitas_terpakai) kapasitas_tersisa FROM sessions ORDER BY id DESC LIMIT $1 OFFSET $2", [limit, offset]); const total = (await pool.query("SELECT count(*)::int n FROM sessions")).rows[0].n; res.json({ sessions: rows, pagination: { page, limit, total } }); });
+app.patch("/v1/admin/sessions/:id", auth, allow("admin"), async (req, res) => { if (!["ditutup","dibatalkan"].includes(req.body.status)) return res.status(400).json({ error: "status sesi tidak valid" }); const { rows } = await pool.query("UPDATE sessions SET status=$1 WHERE id=$2 RETURNING *", [req.body.status, req.params.id]); if (!rows[0]) return res.status(404).json({ error: "sesi tidak ditemukan" }); res.json(rows[0]); });
+app.get("/v1/admin/orders", auth, allow("admin"), async (req, res) => { const { page, limit, offset } = pageArgs(req); const data = await pool.query("SELECT t.*,s.store_name,s.owner_id session_owner_id FROM titipan t JOIN sessions s ON s.id=t.session_id ORDER BY t.id DESC LIMIT $1 OFFSET $2", [limit, offset]); const total = (await pool.query("SELECT count(*)::int n FROM titipan")).rows[0].n; res.json({ orders: data.rows, pagination: { page, limit, total } }); });
+app.get("/v1/admin/offers", auth, allow("admin"), async (req, res) => { const { rows } = await pool.query("SELECT * FROM offers ORDER BY id DESC LIMIT 100"); res.json({ offers: rows }); });
+app.get("/v1/admin/audit", auth, allow("admin"), async (req, res) => { const { rows } = await pool.query("SELECT * FROM admin_audit ORDER BY id DESC LIMIT 100"); res.json({ audit: rows }); });
 
-app.post("/v1/sessions/:id/close", butuhAuth, khususRole("penjastip"), (req, res) => {
-  const result = db.prepare("UPDATE sesi_jastip SET status = 'ditutup' WHERE id = ? AND pembuka = ?").run(Number(req.params.id), req.user.sub);
-  if (!result.changes) return res.status(404).json({ error: "sesi tidak ditemukan atau bukan milik Anda" });
-  res.json({ ok: true });
-});
+app.get("/health", async (_req, res) => { try { await ready; await pool.query("SELECT 1"); res.json({ status: "ok", service: "order", instance: os.hostname() }); } catch { res.status(503).json({ status: "error", service: "order" }); } });
+app.use((error, req, res, _next) => { log("error", "request gagal", { rid: req.rid, error: error.message }); res.status(500).json({ error: "kesalahan internal" }); });
 
-// Resource-contention endpoint: reserves one carrying-capacity slot atomically.
-app.post("/v1/titipan", butuhAuth, khususRole("penitip"), async (req, res) => {
-  const sesiId = Number(req.body.sesiId);
-  const barangId = Number(req.body.barangId);
-  const qty = Number(req.body.qty);
-  const key = req.headers["idempotency-key"];
-  if (!Number.isInteger(sesiId) || !Number.isInteger(barangId) || !Number.isInteger(qty) || qty < 1 || !key) {
-    return res.status(400).json({ error: "sesiId, barangId, qty, dan header Idempotency-Key wajib valid" });
-  }
-  const existing = db.prepare("SELECT * FROM titipan WHERE idempotency_key = ?").get(key);
-  if (existing) return res.status(200).json(existing);
-
-  if (!db.prepare("SELECT 1 FROM sesi_produk WHERE sesi_id=? AND barang_id=?").get(sesiId, barangId)) {
-    return res.status(409).json({ error: "produk tidak tersedia pada sesi ini" });
-  }
-
-  const item = await panggilTahan(`${CATALOG_URL}/v1/items/${barangId}`);
-  if (!item || item._status === 404) return res.status(item?._status === 404 ? 404 : 503).json({ error: "barang tidak ditemukan atau katalog tidak tersedia" });
-  const total = Number(item.harga) * qty + Number(req.body.biayaJasa || 0);
-
-  try {
-    db.exec("BEGIN IMMEDIATE");
-    const reserved = db.prepare(`
-      UPDATE sesi_jastip SET kapasitas_terpakai = kapasitas_terpakai + 1
-      WHERE id = ? AND status = 'buka'
-        AND datetime(batas_waktu) > datetime('now')
-        AND kapasitas_terpakai < kapasitas_maksimal
-    `).run(sesiId);
-    if (!reserved.changes) {
-      db.exec("ROLLBACK");
-      return res.status(409).json({ error: "sesi ditutup, kedaluwarsa, atau kapasitas penuh" });
-    }
-    const result = db.prepare(`
-      INSERT INTO titipan (sesi_id, pemesan, barang_id, qty, nama_barang, harga_satuan, total, catatan, idempotency_key)
-      VALUES (?,?,?,?,?,?,?,?,?)
-    `).run(sesiId, req.user.sub, barangId, qty, item.nama, item.harga, total, req.body.catatan || null, key);
-    db.exec("COMMIT");
-    return res.status(201).json({ id: Number(result.lastInsertRowid), sesiId, barangId, qty, namaBarang: item.nama, hargaSatuan: item.harga, total, status: "menunggu_pembayaran" });
-  } catch (err) {
-    try { db.exec("ROLLBACK"); } catch {}
-    if (String(err.message).includes("UNIQUE")) {
-      return res.status(200).json(db.prepare("SELECT * FROM titipan WHERE idempotency_key = ?").get(key));
-    }
-    throw err;
-  }
-});
-
-app.get("/v1/titipan/me", butuhAuth, (req, res) => {
-  res.json({ titipan: db.prepare("SELECT * FROM titipan WHERE pemesan = ? ORDER BY id DESC").all(req.user.sub) });
-});
-
-app.get("/internal/titipan/:id", internalOnly, (req, res) => {
-  const row = db.prepare("SELECT * FROM titipan WHERE id = ?").get(Number(req.params.id));
-  if (!row) return res.status(404).json({ error: "titipan tidak ditemukan" });
-  res.json(row);
-});
-
-app.patch("/internal/titipan/:id/status", internalOnly, (req, res) => {
-  const allowed = ["menunggu_pembayaran", "dibayar", "dibatalkan", "selesai"];
-  if (!allowed.includes(req.body.status)) return res.status(400).json({ error: "status tidak valid" });
-  const result = db.prepare("UPDATE titipan SET status = ? WHERE id = ?").run(req.body.status, Number(req.params.id));
-  if (!result.changes) return res.status(404).json({ error: "titipan tidak ditemukan" });
-  res.json({ ok: true });
-});
-
-app.get("/internal/users/:id/penjastip", internalOnly, (req, res) => {
-  const user = db.prepare("SELECT id,nama,email FROM users WHERE id=? AND role='penjastip' AND aktif=1").get(Number(req.params.id));
-  if (!user) return res.status(404).json({ error: "penjastip aktif tidak ditemukan" });
-  res.json({ user });
-});
-app.get("/internal/users/:id/access", internalOnly, (req, res) => {
-  const user = db.prepare("SELECT id,role,aktif FROM users WHERE id=?").get(Number(req.params.id));
-  if (!user || !user.aktif) return res.status(404).json({ error: "akun aktif tidak ditemukan" });
-  res.json({ user });
-});
-
-app.get("/internal/stores/:id/active-session", internalOnly, (req, res) => {
-  const found = db.prepare("SELECT id FROM sesi_jastip WHERE toko_id=? AND status='buka' AND datetime(batas_waktu)>datetime('now') LIMIT 1").get(Number(req.params.id));
-  res.json({ active: Boolean(found), sessionId: found?.id || null });
-});
-app.post("/internal/admin-audit", internalOnly, (req, res) => {
-  const { actorId, action, resourceType, resourceId, before = null, after = null } = req.body;
-  if (!actorId || !action || !resourceType) return res.status(400).json({ error: "audit tidak valid" });
-  audit(actorId, action, resourceType, resourceId, before, after);
-  res.status(201).json({ ok: true });
-});
-
-app.get("/v1/admin/users", butuhAuth, adminOnly, (req, res) => {
-  const { page, limit, offset } = pageArgs(req);
-  const q = `%${String(req.query.q || "").trim()}%`;
-  const role = ["penitip", "penjastip", "admin"].includes(req.query.role) ? req.query.role : null;
-  const active = req.query.aktif === undefined ? null : req.query.aktif === "1" ? 1 : 0;
-  const where = "WHERE (nama LIKE ? OR email LIKE ?) AND (? IS NULL OR role=?) AND (? IS NULL OR aktif=?)";
-  const params = [q, q, role, role, active, active];
-  const total = db.prepare(`SELECT COUNT(*) AS n FROM users ${where}`).get(...params).n;
-  const users = db.prepare(`SELECT id,nama,email,no_hp,kampus,role,aktif,created_at FROM users ${where} ORDER BY id DESC LIMIT ? OFFSET ?`).all(...params, limit, offset);
-  res.json({ users, pagination: { page, limit, total } });
-});
-
-app.get("/v1/admin/users/:id", butuhAuth, adminOnly, (req, res) => {
-  const user = db.prepare("SELECT id,nama,email,no_hp,kampus,role,aktif,created_at FROM users WHERE id=?").get(Number(req.params.id));
-  if (!user) return res.status(404).json({ error: "akun tidak ditemukan" });
-  res.json({ user });
-});
-
-app.post("/v1/admin/users", butuhAuth, adminOnly, async (req, res) => {
-  const { nama, email, password, noHp = null, kampus = null, role } = req.body;
-  if (!nama?.trim() || !email?.trim() || typeof password !== "string" || password.length < 8 || !["penitip", "penjastip", "admin"].includes(role)) return res.status(400).json({ error: "nama, email, password minimal 8 karakter, dan role valid wajib diisi" });
-  try {
-    const result = db.prepare("INSERT INTO users (nama,email,no_hp,kampus,password_hash,role) VALUES (?,?,?,?,?,?)")
-      .run(nama.trim(), email.trim().toLowerCase(), noHp, kampus, await hashPassword(password), role);
-    const user = db.prepare("SELECT id,nama,email,no_hp,kampus,role,aktif,created_at FROM users WHERE id=?").get(Number(result.lastInsertRowid));
-    audit(req.user.sub, "create", "user", user.id, null, user);
-    res.status(201).json({ user });
-  } catch (err) { if (String(err.message).includes("UNIQUE")) return res.status(409).json({ error: "email sudah terdaftar" }); throw err; }
-});
-
-app.patch("/v1/admin/users/:id", butuhAuth, adminOnly, async (req, res) => {
-  const id = Number(req.params.id); const before = db.prepare("SELECT * FROM users WHERE id=?").get(id);
-  if (!before) return res.status(404).json({ error: "akun tidak ditemukan" });
-  const role = req.body.role ?? before.role; const aktif = req.body.aktif === undefined ? before.aktif : req.body.aktif ? 1 : 0;
-  if (!["penitip", "penjastip", "admin"].includes(role)) return res.status(400).json({ error: "role tidak valid" });
-  if (id === Number(req.user.sub) && !aktif) return res.status(409).json({ error: "admin tidak dapat menonaktifkan akun sendiri" });
-  if (before.role === "admin" && before.aktif && (role !== "admin" || !aktif) && db.prepare("SELECT COUNT(*) AS n FROM users WHERE role='admin' AND aktif=1").get().n <= 1) return res.status(409).json({ error: "admin aktif terakhir tidak dapat dinonaktifkan" });
-  const hash = req.body.password ? await hashPassword(req.body.password) : before.password_hash;
-  db.prepare("UPDATE users SET nama=?,email=?,no_hp=?,kampus=?,role=?,aktif=?,password_hash=? WHERE id=?")
-    .run(req.body.nama?.trim() || before.nama, req.body.email?.trim().toLowerCase() || before.email, req.body.noHp ?? before.no_hp, req.body.kampus ?? before.kampus, role, aktif, hash, id);
-  const after = db.prepare("SELECT id,nama,email,no_hp,kampus,role,aktif,created_at FROM users WHERE id=?").get(id);
-  audit(req.user.sub, "update", "user", id, { ...before, password_hash: undefined }, after);
-  res.json({ user: after });
-});
-
-app.delete("/v1/admin/users/:id", butuhAuth, adminOnly, (req, res, next) => {
-  req.body = { ...req.body, aktif: false };
-  next();
-}, async (req, res) => {
-  // Keep DELETE semantics explicit without duplicating the safety rules.
-  const id = Number(req.params.id); const before = db.prepare("SELECT * FROM users WHERE id=?").get(id);
-  if (!before) return res.status(404).json({ error: "akun tidak ditemukan" });
-  if (id === Number(req.user.sub)) return res.status(409).json({ error: "admin tidak dapat menonaktifkan akun sendiri" });
-  if (before.role === "admin" && before.aktif && db.prepare("SELECT COUNT(*) AS n FROM users WHERE role='admin' AND aktif=1").get().n <= 1) return res.status(409).json({ error: "admin aktif terakhir tidak dapat dinonaktifkan" });
-  db.prepare("UPDATE users SET aktif=0 WHERE id=?").run(id);
-  audit(req.user.sub, "deactivate", "user", id, { aktif: before.aktif }, { aktif: 0 });
-  res.status(204).end();
-});
-
-app.get("/v1/admin/sessions", butuhAuth, adminOnly, async (req, res) => {
-  const { page, limit, offset } = pageArgs(req); const status = req.query.status || null;
-  const total = db.prepare("SELECT COUNT(*) AS n FROM sesi_jastip WHERE (? IS NULL OR status=?)").get(status, status).n;
-  const rows = db.prepare("SELECT *,kapasitas_maksimal-kapasitas_terpakai AS kapasitas_tersisa FROM sesi_jastip WHERE (? IS NULL OR status=?) ORDER BY id DESC LIMIT ? OFFSET ?").all(status, status, limit, offset);
-  res.json({ sessions: await sessionsWithProducts(req, rows), pagination: { page, limit, total } });
-});
-
-app.patch("/v1/admin/sessions/:id", butuhAuth, adminOnly, (req, res) => {
-  const before = db.prepare("SELECT * FROM sesi_jastip WHERE id=?").get(Number(req.params.id));
-  if (!before) return res.status(404).json({ error: "sesi tidak ditemukan" });
-  if (req.body.status !== "ditutup") return res.status(409).json({ error: "admin hanya dapat menutup sesi" });
-  db.prepare("UPDATE sesi_jastip SET status='ditutup' WHERE id=?").run(before.id);
-  audit(req.user.sub, "close", "session", before.id, { status: before.status }, { status: "ditutup" });
-  res.json({ session: db.prepare("SELECT * FROM sesi_jastip WHERE id=?").get(before.id) });
-});
-
-app.get("/v1/admin/orders", butuhAuth, adminOnly, (req, res) => {
-  const { page, limit, offset } = pageArgs(req); const status = req.query.status || null;
-  const total = db.prepare("SELECT COUNT(*) AS n FROM titipan WHERE (? IS NULL OR status=?)").get(status, status).n;
-  const orders = db.prepare("SELECT * FROM titipan WHERE (? IS NULL OR status=?) ORDER BY id DESC LIMIT ? OFFSET ?").all(status, status, limit, offset);
-  res.json({ orders, pagination: { page, limit, total } });
-});
-
-const adminOrderTransitions = { menunggu_pembayaran: ["dibatalkan"], dibayar: ["dibatalkan", "selesai"], dibatalkan: [], selesai: [] };
-app.patch("/v1/admin/orders/:id/status", butuhAuth, adminOnly, (req, res) => {
-  const before = db.prepare("SELECT * FROM titipan WHERE id=?").get(Number(req.params.id));
-  if (!before) return res.status(404).json({ error: "titipan tidak ditemukan" });
-  if (!(adminOrderTransitions[before.status] || []).includes(req.body.status)) return res.status(409).json({ error: "transisi status tidak diizinkan", allowed: adminOrderTransitions[before.status] || [] });
-  db.prepare("UPDATE titipan SET status=? WHERE id=?").run(req.body.status, before.id);
-  audit(req.user.sub, "status", "order", before.id, { status: before.status }, { status: req.body.status });
-  res.json({ order: db.prepare("SELECT * FROM titipan WHERE id=?").get(before.id) });
-});
-
-app.get("/v1/admin/audit", butuhAuth, adminOnly, (req, res) => {
-  const { page, limit, offset } = pageArgs(req); const total = db.prepare("SELECT COUNT(*) AS n FROM admin_audit").get().n;
-  res.json({ audit: db.prepare("SELECT * FROM admin_audit ORDER BY id DESC LIMIT ? OFFSET ?").all(limit, offset), pagination: { page, limit, total } });
-});
-
-// Timeout + retry
-async function panggilTahan(url, opts = {}, { retries = 2, timeoutMs = 2000 } = {}) {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const r = await fetch(url, { signal: AbortSignal.timeout(timeoutMs), ...opts });
-      if (r.ok) return await r.json();
-      if (r.status === 404) return { _status: 404 };
-      if (r.status === 409) return { _status: 409 };
-    } catch {}
-    if (attempt < retries) await new Promise((s) => setTimeout(s, 300 * (attempt + 1)));
-  }
-  return null;
-}
-
-// Circuit breaker
-let gagalBeruntun = 0;
-let bukaSampai = 0;
-
-async function lewatBreaker(url, opts, timeoutOpts) {
-  if (Date.now() < bukaSampai) return null;
-  const hasil = await panggilTahan(url, opts, timeoutOpts);
-  if (hasil === null) {
-    if (++gagalBeruntun >= 3) { bukaSampai = Date.now() + 30_000; gagalBeruntun = 0; }
-  } else {
-    gagalBeruntun = 0;
-  }
-  return hasil;
-}
-
-// Cache katalog fallback
-let cacheKatalog = null;
-
-app.get("/v1/catalog", async (req, res) => {
-  const segar = await lewatBreaker(`${CATALOG_URL}/v1/items`);
-  if (segar) {
-    cacheKatalog = segar.items || segar;
-    log("info", "katalog segar", { rid: req.rid });
-    return res.json({ items: cacheKatalog, stale: false });
-  }
-  if (cacheKatalog) {
-    log("warn", "katalog dari cache lama", { rid: req.rid });
-    return res.json({ items: cacheKatalog, stale: true });
-  }
-  res.status(503).json({ error: "katalog belum tersedia, coba lagi" });
-});
-
-// POST /v1/orders — buat order dengan kurangi stok atomik di catalog
-app.post("/v1/orders", butuhAuth, async (req, res) => {
-  try {
-    const { itemId, qty } = req.body;
-    if (!Number.isInteger(itemId) || !Number.isInteger(Number(qty)) || qty < 1) {
-      return res.status(400).json({ error: "itemId dan qty wajib angka, qty minimal 1" });
-    }
-
-    // Kurangi stok di catalog (atomik)
-    const hasil = await lewatBreaker(
-      `${CATALOG_URL}/v1/items/${itemId}/ambil`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-request-id": req.rid },
-        body: JSON.stringify({ qty }),
-      }
-    );
-
-    if (hasil === null) {
-      log("warn", "catalog tidak tersedia saat order", { rid: req.rid, itemId });
-      return res.status(503).json({ error: "catalog tidak tersedia, coba lagi nanti" });
-    }
-    if (hasil._status === 404) return res.status(404).json({ error: "barang tidak ditemukan" });
-    if (hasil._status === 409) return res.status(409).json({ error: "stok habis" });
-
-    // Ambil detail barang untuk harga
-    const item = await panggilTahan(`${CATALOG_URL}/v1/items/${itemId}`);
-    const harga = item ? item.harga : 0;
-    const namaBarang = item ? item.nama : `barang #${itemId}`;
-    const total = harga * qty;
-
-    const result = db.prepare(
-      "INSERT INTO orders (barang_id, nama_barang, qty, total) VALUES (?,?,?,?)"
-    ).run(itemId, namaBarang, qty, total);
-
-    log("info", "order dibuat", { rid: req.rid, orderId: result.lastInsertRowid, itemId, total });
-    res.status(201).json({ orderId: result.lastInsertRowid, barangId: itemId, namaBarang, qty, total, status: "pending" });
-  } catch (err) {
-    log("error", "order gagal", { rid: req.rid, err: err.message });
-    res.status(500).json({ error: "terjadi kesalahan internal, coba lagi" });
-  }
-});
-
-// GET /health
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok", service: "order", instance: os.hostname(), pid: process.pid });
-});
-
-if (require.main === module) {
-  app.listen(3002, () => log("info", "order berjalan di :3002"));
-}
-module.exports = app;
+if (require.main === module) ready.then(() => app.listen(3002, () => log("info", "listening", { port: 3002 })));
+module.exports = { app, ready, expireReservations };

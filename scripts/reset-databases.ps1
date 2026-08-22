@@ -14,26 +14,13 @@ foreach ($port in $ports) {
     ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }
 }
 
-if (Get-Command docker -ErrorAction SilentlyContinue) {
-  Push-Location $repoRoot
-  try { docker compose down --volumes --remove-orphans } finally { Pop-Location }
-}
-
-$databaseFiles = @(
-  "services/catalog-service/catalog.db",
-  "services/order-service/order.db",
-  "services/payment-service/payment.db",
-  "services/tracking-service/tracking.db"
-)
-foreach ($relative in $databaseFiles) {
-  $target = [IO.Path]::GetFullPath((Join-Path $repoRoot $relative))
-  if (-not $target.StartsWith($repoRoot, [StringComparison]::OrdinalIgnoreCase)) { throw "Target reset di luar repository: $target" }
-  Remove-Item -LiteralPath $target -Force -ErrorAction SilentlyContinue
-}
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { throw "Docker Desktop wajib untuk reset PostgreSQL." }
+Push-Location $repoRoot
+try { docker compose down --volumes --remove-orphans } finally { Pop-Location }
 
 $uploadDir = [IO.Path]::GetFullPath((Join-Path $repoRoot "services/catalog-service/uploads"))
 if (-not $uploadDir.StartsWith($repoRoot, [StringComparison]::OrdinalIgnoreCase)) { throw "Target upload di luar repository" }
 if (Test-Path -LiteralPath $uploadDir) { Remove-Item -LiteralPath $uploadDir -Recurse -Force }
 
-Write-Host "Reset selesai: database dan seluruh foto upload telah dihapus."
+Write-Host "Reset selesai: volume PostgreSQL, Redis, dan seluruh foto upload telah dihapus."
 Write-Host "Jalankan scripts/start-local.ps1 untuk membuat schema kosong dan menyalakan service."
