@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: "**/package-lock.json" }
+      - name: Install and test order service
+        working-directory: services/order-service
+        run: npm ci && npm test
+      - name: Check service syntax
+        run: |
+          node --check services/catalog-service/index.js
+          node --check services/payment-service/index.js
+          node --check services/tracking-service/index.js
+      - name: Build Expo web bundle
+        working-directory: mobile
+        run: npm ci && npx expo export --platform web --output-dir dist-ci

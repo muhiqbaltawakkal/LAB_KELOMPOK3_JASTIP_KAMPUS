@@ -14,9 +14,15 @@ services:
     build: ./services/catalog-service
     volumes:
       - ./dataset:/dataset:ro
+      - catalog-data:/data
     environment:
       REDIS_URL: redis://redis:6379
       SEED_PATH: /dataset/catalog-seed.json
+      DB_PATH: /data/catalog.db
+      UPLOAD_DIR: /data/uploads
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
+      ORDER_URL: http://order-service:3002
     depends_on:
       redis:
         condition: service_healthy
@@ -28,7 +34,11 @@ services:
     environment:
       CATALOG_URL: http://catalog-service:3001
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: rahasia-kelompok-ganti-ini
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
+      DB_PATH: /data/order.db
+    volumes:
+      - order-data:/data
     depends_on:
       - catalog-service
       - redis
@@ -39,6 +49,12 @@ services:
       - "3003:3003"
     environment:
       REDIS_URL: redis://redis:6379
+      ORDER_URL: http://order-service:3002
+      DB_PATH: /data/payment.db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
+    volumes:
+      - payment-data:/data
     depends_on:
       - redis
 
@@ -48,6 +64,12 @@ services:
       - "3004:3004"
     environment:
       REDIS_URL: redis://redis:6379
+      DB_PATH: /data/tracking.db
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi melalui .env}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi melalui .env}
+      ORDER_URL: http://order-service:3002
+    volumes:
+      - tracking-data:/data
     depends_on:
       - redis
 
@@ -60,3 +82,9 @@ services:
     depends_on:
       - catalog-service
       - order-service
+
+volumes:
+  catalog-data:
+  order-data:
+  payment-data:
+  tracking-data:

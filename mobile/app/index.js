@@ -1,796 +1,97 @@
-import React, { useMemo, useState, useCallback } from "react";
-import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, FlatList, Image,
-  StyleSheet, StatusBar, KeyboardAvoidingView, Platform, useWindowDimensions,
-} from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import React, { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Image, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import NetInfo from "@react-native-community/netinfo";
+import { api } from "../lib/api";
+import { storage } from "../lib/offline";
 
-const C = {
-  primary: "#0B5FFF", primaryDark: "#0847C7", primarySoft: "#E8F0FF",
-  accent: "#00A86B", accentSoft: "#E6F8F0", warn: "#E67E22", warnSoft: "#FFF4E8",
-  danger: "#E74C3C", dangerSoft: "#FDECEC", bg: "#F5F7FB", surface: "#FFFFFF",
-  border: "#E3E8F2", text: "#0F172A", muted: "#64748B", light: "#F1F5F9", ink: "#1E293B",
-};
+const C = { bg: "#f4f7fb", card: "#fff", blue: "#1266f1", ink: "#10213a", muted: "#64748b", green: "#059669", red: "#dc2626", line: "#dbe4ef" };
+const money = (n) => `Rp ${Number(n || 0).toLocaleString("id-ID")}`;
+const futureIso = (hhmm) => { const [h, m] = hhmm.split(":").map(Number); const d = new Date(); d.setHours(h, m, 0, 0); if (d <= new Date()) d.setDate(d.getDate() + 1); return d.toISOString(); };
 
-const IMG = {
-  bobaBrown: require("../assets/products/01_brown_sugar_boba_milk_tea_L.jpg"),
-  matcha: require("../assets/products/02_matcha_latte_M.jpeg"),
-  tigerBoba: require("../assets/products/03_tiger_sugar_boba.jpg"),
-  taro: require("../assets/products/04_taro_milk_tea_L.jpg"),
-  mieTiti: require("../assets/products/05_mie_titi_original_reguler.jpg"),
-  mieTitiJumbo: require("../assets/products/06_mie_titi_spesial_jumbo.jpg"),
-  esTeh: require("../assets/products/07_es_teh_manis.jpg"),
-  novel: require("../assets/products/08_novel_terlaris_bulan_ini.jpeg"),
-  bukuTulis: require("../assets/products/09_buku_tulis_sinar_dunia_40_lembar.jpeg"),
-  pulpen: require("../assets/products/10_pulpen_pilot_g2_hitam.jpeg"),
-  spidol: require("../assets/products/11_spidol_snowman_whiteboard.jpeg"),
-  buds: require("../assets/products/12_samsung_galaxy_buds_fe.jpeg"),
-  charger: require("../assets/products/13_samsung_25w_typec_charger.jpg"),
-  caseA55: require("../assets/products/14_samsung_clear_case_galaxy_a55.webp"),
-  indomie: require("../assets/products/15_mie_instan_indomie_goreng.jpg"),
-  aqua: require("../assets/products/16_aqua_air_mineral_600ml.webp"),
-  chitato: require("../assets/products/17_snack_chitato_sapi_panggang.jpeg"),
-  pocari: require("../assets/products/18_pocari_sweat_500ml.webp"),
-  pallubasaSapi: require("../assets/products/19_pallubasa_sapi_spesial.webp"),
-  pallubasaAyam: require("../assets/products/20_pallubasa_ayam.webp"),
-  americano: require("../assets/products/21_americano_hot.jpg"),
-  kopiAren: require("../assets/products/22_kopi_susu_gula_aren.jpg"),
-  esKopi: require("../assets/products/23_es_kopi_hitam.jpg"),
-  mcflurry: require("../assets/products/24_mcflurry_oreo.jpeg"),
-  mcchicken: require("../assets/products/25_paket_mcchicken_value.jpeg"),
-  fries: require("../assets/products/26_french_fries_large.jpeg"),
-  pisangIjo: require("../assets/products/27_es_pisang_ijo_original.jpg"),
-  goodday: require("../assets/products/28_goodday_kopi_sachet_10pcs.jpg"),
-  kfc: require("../assets/products/29_kfc_original_2pcs.jpg"),
-  akuntansi: require("../assets/products/30_buku_kuliah_akuntansi_dasar.jpeg"),
-  pisangGoreng: require("../assets/products/31_pisang_goreng_keju.jpeg"),
-  tumbler: require("../assets/products/32_miniso_tumbler_500ml.jpeg"),
-  paracetamol: require("../assets/products/33_paracetamol_500mg_10_tablet.png"),
-  sopSaudara: require("../assets/products/34_sop_saudara_daging_reguler.jpg"),
-};
+function Button({ title, onPress, secondary, disabled }) { return <Pressable disabled={disabled} onPress={onPress} style={[s.button, secondary && s.secondary, disabled && { opacity: .5 }]}><Text style={[s.buttonText, secondary && { color: C.blue }]}>{title}</Text></Pressable>; }
+function Input({ label, ...props }) { return <View style={{ marginBottom: 12 }}><Text style={s.label}>{label}</Text><TextInput placeholderTextColor="#94a3b8" style={s.input} {...props} /></View>; }
+function Card({ title, children }) { return <View style={s.card}>{title ? <Text style={s.cardTitle}>{title}</Text> : null}{children}</View>; }
+function Photo({ product, large }) { return product?.foto_url ? <Image source={{ uri: product.foto_url }} style={[s.photo, large && { height: 220 }]} /> : <View style={[s.photo, s.placeholder, large && { height: 220 }]}><Text style={s.placeholderText}>Foto belum tersedia</Text></View>; }
+function Shell({ title, children, logout, offline }) { return <SafeAreaView style={s.root}><View style={s.top}><Text style={s.title}>{title}</Text>{logout ? <Pressable onPress={logout}><Text style={{ color: C.red, fontWeight: "700" }}>Keluar</Text></Pressable> : null}</View>{offline ? <Text style={s.offline}>Mode offline - perubahan membutuhkan koneksi</Text> : null}<ScrollView contentContainerStyle={s.content}>{children}</ScrollView></SafeAreaView>; }
 
-const CATALOG = [
-  { id: 1, toko: "Chatime Losari", nama: "Brown Sugar Boba Milk Tea (L)", kategori: "Minuman", harga: 42000, satuan: "cup", img: IMG.bobaBrown, deskripsi: "Teh susu creamy dengan boba brown sugar legit." },
-  { id: 2, toko: "Chatime Losari", nama: "Matcha Latte (M)", kategori: "Minuman", harga: 35000, satuan: "cup", img: IMG.matcha, deskripsi: "Matcha latte premium rasa Jepang." },
-  { id: 3, toko: "Chatime Losari", nama: "Tiger Sugar Boba", kategori: "Minuman", harga: 40000, satuan: "cup", img: IMG.tigerBoba, deskripsi: "Signature tiger sugar dengan boba kenyal." },
-  { id: 4, toko: "Chatime Losari", nama: "Taro Milk Tea (L)", kategori: "Minuman", harga: 38000, satuan: "cup", img: IMG.taro, deskripsi: "Taro milk tea creamy ukuran large." },
-  { id: 5, toko: "Mie Titi Makassar", nama: "Mie Titi Original Reguler", kategori: "Makanan", harga: 35000, satuan: "porsi", img: IMG.mieTiti, deskripsi: "Mie kering khas Makassar kuah kental." },
-  { id: 6, toko: "Mie Titi Makassar", nama: "Mie Titi Spesial Jumbo", kategori: "Makanan", harga: 55000, satuan: "porsi", img: IMG.mieTitiJumbo, deskripsi: "Porsi jumbo topping lengkap." },
-  { id: 7, toko: "Mie Titi Makassar", nama: "Es Teh Manis", kategori: "Minuman", harga: 8000, satuan: "gelas", img: IMG.esTeh, deskripsi: "Es teh manis segar pelengkap makan." },
-  { id: 8, toko: "Gramedia Karebosi", nama: "Novel Terlaris Bulan Ini", kategori: "Buku", harga: 89000, satuan: "pcs", img: IMG.novel, deskripsi: "Rekomendasi novel best seller terkini." },
-  { id: 9, toko: "Gramedia Karebosi", nama: "Buku Tulis Sinar Dunia 40 Lembar", kategori: "Alat Tulis", harga: 5500, satuan: "pcs", img: IMG.bukuTulis, deskripsi: "Buku tulis SIDU 40 lembar." },
-  { id: 10, toko: "Gramedia Karebosi", nama: "Pulpen Pilot G2 Hitam", kategori: "Alat Tulis", harga: 25000, satuan: "pcs", img: IMG.pulpen, deskripsi: "Pulpen gel halus tinta hitam." },
-  { id: 11, toko: "Gramedia Karebosi", nama: "Spidol Snowman Whiteboard", kategori: "Alat Tulis", harga: 12000, satuan: "pcs", img: IMG.spidol, deskripsi: "Spidol papan tulis mudah dihapus." },
-  { id: 12, toko: "Samsung Experience Store", nama: "Samsung Galaxy Buds FE", kategori: "Elektronik", harga: 799000, satuan: "pcs", img: IMG.buds, deskripsi: "Earphone wireless resmi Samsung." },
-  { id: 13, toko: "Samsung Experience Store", nama: "Samsung 25W Type-C Charger", kategori: "Elektronik", harga: 250000, satuan: "pcs", img: IMG.charger, deskripsi: "Charger cepat 25W USB-C original." },
-  { id: 14, toko: "Samsung Experience Store", nama: "Clear Case Galaxy A55", kategori: "Elektronik", harga: 149000, satuan: "pcs", img: IMG.caseA55, deskripsi: "Case transparan pelindung Galaxy A55." },
-  { id: 15, toko: "Indomaret Tamalanrea", nama: "Indomie Goreng", kategori: "Kebutuhan", harga: 3500, satuan: "bungkus", img: IMG.indomie, deskripsi: "Mie instan goreng favorit mahasiswa." },
-  { id: 16, toko: "Indomaret Tamalanrea", nama: "Aqua 600ml", kategori: "Minuman", harga: 4500, satuan: "botol", img: IMG.aqua, deskripsi: "Air mineral kemasan 600ml." },
-  { id: 17, toko: "Indomaret Tamalanrea", nama: "Chitato Sapi Panggang", kategori: "Kebutuhan", harga: 12000, satuan: "pcs", img: IMG.chitato, deskripsi: "Snack kentang rasa sapi panggang." },
-  { id: 18, toko: "Alfamart Perintis", nama: "Pocari Sweat 500ml", kategori: "Minuman", harga: 8000, satuan: "botol", img: IMG.pocari, deskripsi: "Minuman isotonik penyegar." },
-  { id: 19, toko: "Warung Pallubasa Serigala", nama: "Pallubasa Sapi Spesial", kategori: "Makanan", harga: 40000, satuan: "mangkuk", img: IMG.pallubasaSapi, deskripsi: "Pallubasa daging sapi kuah santan." },
-  { id: 20, toko: "Warung Pallubasa Serigala", nama: "Pallubasa Ayam", kategori: "Makanan", harga: 32000, satuan: "mangkuk", img: IMG.pallubasaAyam, deskripsi: "Pallubasa ayam khas Makassar." },
-  { id: 21, toko: "Kopi Kanneng", nama: "Americano Hot", kategori: "Minuman", harga: 22000, satuan: "cup", img: IMG.americano, deskripsi: "Espresso hot dengan air panas." },
-  { id: 22, toko: "Kopi Kanneng", nama: "Kopi Susu Gula Aren", kategori: "Minuman", harga: 25000, satuan: "cup", img: IMG.kopiAren, deskripsi: "Kopi susu manis gula aren." },
-  { id: 23, toko: "Kopi Kanneng", nama: "Es Kopi Hitam", kategori: "Minuman", harga: 18000, satuan: "cup", img: IMG.esKopi, deskripsi: "Kopi hitam dingin tanpa gula." },
-  { id: 24, toko: "McDonald's Panakkukang", nama: "McFlurry Oreo", kategori: "Makanan", harga: 27000, satuan: "cup", img: IMG.mcflurry, deskripsi: "Es krim lembut topping Oreo." },
-  { id: 25, toko: "McDonald's Panakkukang", nama: "Paket McChicken Value", kategori: "Makanan", harga: 45000, satuan: "paket", img: IMG.mcchicken, deskripsi: "McChicken + fries + minuman." },
-  { id: 26, toko: "McDonald's Panakkukang", nama: "French Fries Large", kategori: "Makanan", harga: 28000, satuan: "pcs", img: IMG.fries, deskripsi: "Kentang goreng ukuran large." },
-  { id: 27, toko: "Es Pisang Ijo Anugerah", nama: "Es Pisang Ijo Original", kategori: "Makanan", harga: 18000, satuan: "porsi", img: IMG.pisangIjo, deskripsi: "Pisang ijo santan khas Makassar." },
-  { id: 28, toko: "Indomaret Tamalanrea", nama: "Good Day Kopi Sachet 10pcs", kategori: "Kebutuhan", harga: 12000, satuan: "pack", img: IMG.goodday, deskripsi: "Kopi sachet siap seduh 10 pcs." },
-  { id: 29, toko: "KFC Panakkukang", nama: "KFC Original 2pcs", kategori: "Makanan", harga: 42000, satuan: "paket", img: IMG.kfc, deskripsi: "Ayam goreng original 2 potong." },
-  { id: 30, toko: "Gramedia Karebosi", nama: "Buku Kuliah Akuntansi Dasar", kategori: "Buku", harga: 95000, satuan: "pcs", img: IMG.akuntansi, deskripsi: "Buku pengantar akuntansi dasar." },
-  { id: 31, toko: "Es Pisang Ijo Anugerah", nama: "Pisang Goreng Keju", kategori: "Makanan", harga: 15000, satuan: "porsi", img: IMG.pisangGoreng, deskripsi: "Pisang goreng renyah tabur keju." },
-  { id: 32, toko: "Miniso Panakkukang", nama: "Miniso Tumbler 500ml", kategori: "Aksesoris", harga: 89000, satuan: "pcs", img: IMG.tumbler, deskripsi: "Tumbler stylish tahan panas/dingin." },
-  { id: 33, toko: "Apotik Kimia Farma", nama: "Paracetamol 500mg (10 Tablet)", kategori: "Kesehatan", harga: 8000, satuan: "strip", img: IMG.paracetamol, deskripsi: "Obat penurun demam & pereda nyeri." },
-  { id: 34, toko: "Sop Saudara", nama: "Sop Saudara Daging Reguler", kategori: "Makanan", harga: 35000, satuan: "mangkuk", img: IMG.sopSaudara, deskripsi: "Sop saudara daging kuah gurih." },
-];
-
-const TOKO_OPTIONS = [
-  "Chatime Losari", "Mie Titi Makassar", "Gramedia Karebosi", "Samsung Experience Store",
-  "Indomaret Tamalanrea", "Alfamart Perintis", "Warung Pallubasa Serigala", "Kopi Kanneng",
-  "McDonald's Panakkukang", "Es Pisang Ijo Anugerah", "KFC Panakkukang", "Miniso Panakkukang",
-  "Apotik Kimia Farma", "Sop Saudara",
-];
-
-const DEFAULT_SESI = [
-  { id: "S003", penjastip: "Andi", toko: "Indomaret Tamalanrea", batas: "19:00", kapasitas: 15, diisi: 3 },
-  { id: "S004", penjastip: "Sari", toko: "Kopi Kanneng", batas: "16:00", kapasitas: 12, diisi: 4 },
-  { id: "S005", penjastip: "Bima", toko: "McDonald's Panakkukang", batas: "20:00", kapasitas: 10, diisi: 2 },
-  { id: "S006", penjastip: "Rina", toko: "Chatime Losari", batas: "18:30", kapasitas: 12, diisi: 5 },
-];
-
-const rp = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
-
-function Badge({ label, color = C.primary, bg }) {
-  return (
-    <View style={[st.badge, { backgroundColor: bg || color + "18" }]}>
-      <Text style={[st.badgeText, { color }]}>{label}</Text>
-    </View>
-  );
+function Auth({ onAuth }) {
+  const [mode, setMode] = useState("login"); const [error, setError] = useState(""); const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ nama: "", email: "", password: "", noHp: "", kampus: "", role: "penitip" });
+  const set = (k, v) => setForm((x) => ({ ...x, [k]: v }));
+  async function submit() { setLoading(true); setError(""); try { if (mode === "register") { await api.register(form); setMode("login"); } else { await onAuth(await api.login(form.email, form.password)); } } catch (e) { setError(e.message); } finally { setLoading(false); } }
+  return <Shell title="Jastip Kampus"><Card title={mode === "login" ? "Masuk" : "Buat akun"}>{mode === "register" ? <><Input label="Nama" value={form.nama} onChangeText={(v) => set("nama", v)} /><Input label="No. HP" value={form.noHp} onChangeText={(v) => set("noHp", v)} /><Input label="Kampus" value={form.kampus} onChangeText={(v) => set("kampus", v)} /><Text style={s.label}>Peran</Text><View style={s.row}><Button title="Penitip" secondary={form.role !== "penitip"} onPress={() => set("role", "penitip")} /><Button title="Penjastip" secondary={form.role !== "penjastip"} onPress={() => set("role", "penjastip")} /></View></> : null}<Input label="Email" autoCapitalize="none" value={form.email} onChangeText={(v) => set("email", v)} /><Input label="Password" secureTextEntry value={form.password} onChangeText={(v) => set("password", v)} />{error ? <Text style={s.error}>{error}</Text> : null}<Button disabled={loading} title={loading ? "Memproses..." : mode === "login" ? "Masuk" : "Daftar"} onPress={submit} /><Button secondary title={mode === "login" ? "Belum punya akun" : "Sudah punya akun"} onPress={() => setMode(mode === "login" ? "register" : "login")} /></Card></Shell>;
 }
 
-function SvcTag({ name }) {
-  const map = {
-    "order-service": { bg: "#EEF4FF", c: "#1D4ED8" },
-    "catalog-service": { bg: "#ECFDF5", c: "#047857" },
-    "payment-service": { bg: "#FFF7ED", c: "#C2410C" },
-    "tracking-service": { bg: "#F5F3FF", c: "#6D28D9" },
-  };
-  const col = map[name] || { bg: C.light, c: C.muted };
-  return (
-    <View style={[st.svcTag, { backgroundColor: col.bg }]}>
-      <Text style={[st.svcText, { color: col.c }]}>{name}</Text>
-    </View>
-  );
+function Penjastip({ token, user, offline, logout }) {
+  const [stores, setStores] = useState([]); const [products, setProducts] = useState([]); const [sessions, setSessions] = useState([]); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
+  const [store, setStore] = useState({ nama: "", alamat: "", kategori: "" });
+  const [product, setProduct] = useState({ tokoId: "", nama: "", kategori: "", harga: "", stok: "", satuan: "pcs", foto: null });
+  const [session, setSession] = useState({ storeId: "", productIds: [], batas: "17:00", kapasitas: "10" });
+  async function refresh() { const [a, b, c] = await Promise.all([api.myStores(token), api.myProducts(token), api.mySessions(token)]); setStores(a.stores || []); setProducts(b.products || []); setSessions(c.sessions || []); await storage.saveCache({ owner: user.id, stores: a.stores, products: b.products, sessions: c.sessions }); }
+  useEffect(() => { storage.loadCache().then((x) => { if (x?.value?.owner === user.id) { setStores(x.value.stores || []); setProducts(x.value.products || []); setSessions(x.value.sessions || []); } }); if (!offline) refresh().catch((e) => setError(e.message)); }, [offline]);
+  async function run(action) { if (offline) return setError("Aksi ini membutuhkan koneksi internet."); setBusy(true); setError(""); try { await action(); await refresh(); } catch (e) { setError(e.message); } finally { setBusy(false); } }
+  async function pick(camera) { const permission = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync(); if (!permission.granted) return setError("Izin foto ditolak. Aktifkan melalui Pengaturan."); const result = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: .8 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: .8 }); if (!result.canceled) setProduct((x) => ({ ...x, foto: result.assets[0] })); }
+  const storeProducts = products.filter((p) => String(p.toko_id) === String(session.storeId) && p.aktif);
+  return <Shell title={`Dashboard ${user.nama}`} logout={logout} offline={offline}>{error ? <Text style={s.error}>{error}</Text> : null}{busy ? <ActivityIndicator color={C.blue} /> : null}
+    <Card title="Toko Saya"><Input label="Nama toko" value={store.nama} onChangeText={(v) => setStore({ ...store, nama: v })} /><Input label="Alamat" value={store.alamat} onChangeText={(v) => setStore({ ...store, alamat: v })} /><Input label="Kategori toko" value={store.kategori} onChangeText={(v) => setStore({ ...store, kategori: v })} /><Button title="Tambah toko" onPress={() => run(async () => { await api.createStore(store, token); setStore({ nama: "", alamat: "", kategori: "" }); })} />{stores.map((x) => <View key={x.id} style={s.list}><Text style={s.strong}>{x.nama}</Text><Text style={s.muted}>{x.alamat} - {x.kategori}</Text></View>)}</Card>
+    <Card title="Produk Saya"><Text style={s.label}>Pilih toko</Text><View style={s.wrap}>{stores.map((x) => <Pressable key={x.id} onPress={() => setProduct({ ...product, tokoId: String(x.id) })} style={[s.chip, String(x.id) === product.tokoId && s.chipOn]}><Text style={String(x.id) === product.tokoId ? s.chipTextOn : s.chipText}>{x.nama}</Text></Pressable>)}</View><Input label="Nama produk" value={product.nama} onChangeText={(v) => setProduct({ ...product, nama: v })} /><Input label="Kategori" value={product.kategori} onChangeText={(v) => setProduct({ ...product, kategori: v })} /><Input label="Harga" keyboardType="numeric" value={product.harga} onChangeText={(v) => setProduct({ ...product, harga: v })} /><Input label="Stok" keyboardType="numeric" value={product.stok} onChangeText={(v) => setProduct({ ...product, stok: v })} /><Input label="Satuan" value={product.satuan} onChangeText={(v) => setProduct({ ...product, satuan: v })} />{product.foto ? <Image source={{ uri: product.foto.uri }} style={s.preview} /> : <View style={[s.preview, s.placeholder]}><Text style={s.placeholderText}>Foto wajib dipilih</Text></View>}<View style={s.row}><Button secondary title="Galeri" onPress={() => pick(false)} /><Button secondary title="Kamera" onPress={() => pick(true)} />{product.foto ? <Button secondary title="Hapus foto" onPress={() => setProduct({ ...product, foto: null })} /> : null}</View><Button title="Tambah produk" onPress={() => run(async () => { await api.createProduct(product, token); setProduct({ tokoId: "", nama: "", kategori: "", harga: "", stok: "", satuan: "pcs", foto: null }); })} />{products.map((x) => <View key={x.id} style={s.product}><Photo product={x} /><View style={{ flex: 1 }}><Text style={s.strong}>{x.nama}</Text><Text style={s.muted}>{x.toko_nama} - {money(x.harga)} - stok {x.stok}</Text><Text style={{ color: x.aktif ? C.green : C.red }}>{x.aktif ? "Aktif" : "Nonaktif"}</Text>{x.aktif ? <Pressable onPress={() => run(() => api.disableProduct(x.id, token))}><Text style={{ color: C.red, fontWeight: "700" }}>Nonaktifkan</Text></Pressable> : null}</View></View>)}</Card>
+    <Card title="Buka Sesi"><Text style={s.label}>Toko</Text><View style={s.wrap}>{stores.map((x) => <Pressable key={x.id} onPress={() => setSession({ ...session, storeId: String(x.id), productIds: [] })} style={[s.chip, String(x.id) === session.storeId && s.chipOn]}><Text style={String(x.id) === session.storeId ? s.chipTextOn : s.chipText}>{x.nama}</Text></Pressable>)}</View><Text style={s.label}>Produk sesi</Text>{storeProducts.map((x) => { const on = session.productIds.includes(x.id); return <Pressable key={x.id} onPress={() => setSession({ ...session, productIds: on ? session.productIds.filter((id) => id !== x.id) : [...session.productIds, x.id] })} style={s.check}><Text>{on ? "☑" : "☐"} {x.nama}</Text></Pressable>; })}<Input label="Batas waktu (HH:MM)" value={session.batas} onChangeText={(v) => setSession({ ...session, batas: v })} /><Input label="Kapasitas" keyboardType="numeric" value={session.kapasitas} onChangeText={(v) => setSession({ ...session, kapasitas: v })} /><Button title="Buka sesi" onPress={() => run(() => api.createSession({ storeId: Number(session.storeId), productIds: session.productIds, batasWaktu: futureIso(session.batas), kapasitas: Number(session.kapasitas) }, token))} /></Card>
+    <Card title="Sesi Saya">{sessions.length ? sessions.map((x) => <View key={x.id} style={s.list}><Text style={s.strong}>{x.toko_nama}</Text><Text style={s.muted}>{x.status} - kapasitas {x.kapasitas_terpakai}/{x.kapasitas_maksimal}</Text><Text style={s.muted}>{(x.products || []).map((p) => p.nama).join(", ")}</Text></View>) : <Text style={s.muted}>Belum ada sesi.</Text>}</Card>
+  </Shell>;
 }
 
-function Btn({ label, onPress, style, outline, danger, success, disabled }) {
-  let bg = C.primary; let tc = "#fff"; let borderColor = "transparent";
-  if (outline) { bg = "#fff"; tc = C.primary; borderColor = C.primary; }
-  if (danger) { bg = outline ? "#fff" : C.danger; tc = outline ? C.danger : "#fff"; borderColor = C.danger; }
-  if (success) { bg = outline ? "#fff" : C.accent; tc = outline ? C.accent : "#fff"; borderColor = C.accent; }
-  return (
-    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.85}
-      style={[st.btn, { backgroundColor: bg, borderColor, opacity: disabled ? 0.5 : 1 }, style]}>
-      <Text style={[st.btnText, { color: tc }]}>{label}</Text>
-    </TouchableOpacity>
-  );
+const adminTabs = ["Ringkasan", "Pengguna", "Toko", "Produk", "Sesi", "Transaksi", "Tracking", "Audit"];
+function AdminDashboard({ token, user, offline, logout }) {
+  const { width } = useWindowDimensions(); const desktop = width >= 900; const tablet = width >= 600;
+  const [tab, setTab] = useState("Ringkasan"); const [data, setData] = useState({ users: [], stores: [], products: [], sessions: [], orders: [], payments: [], tracking: [], audit: [] });
+  const [busy, setBusy] = useState(false); const [error, setError] = useState(""); const [q, setQ] = useState("");
+  const emptyUser = { nama: "", email: "", password: "", noHp: "", kampus: "", role: "penitip" };
+  const emptyStore = { ownerId: "", nama: "", alamat: "", kategori: "" };
+  const emptyProduct = { tokoId: "", nama: "", kategori: "", harga: "", stok: "", satuan: "pcs", foto: null };
+  const [userForm, setUserForm] = useState(emptyUser); const [storeForm, setStoreForm] = useState(emptyStore); const [productForm, setProductForm] = useState(emptyProduct);
+  const [editing, setEditing] = useState({ user: null, store: null, product: null });
+  async function refresh() {
+    const result = await Promise.all([api.adminUsers(token, q), api.adminStores(token, q), api.adminProducts(token, q), api.adminSessions(token), api.adminOrders(token), api.adminPayments(token), api.adminTracking(token), api.adminAudit(token)]);
+    const next = { users: result[0].users || [], stores: result[1].stores || [], products: result[2].products || [], sessions: result[3].sessions || [], orders: result[4].orders || [], payments: result[5].payments || [], tracking: result[6].tracking || [], audit: result[7].audit || [] };
+    setData(next); await storage.saveCache({ admin: user.id, data: next });
+  }
+  useEffect(() => { storage.loadCache().then((x) => { if (x?.value?.admin === user.id) setData(x.value.data || data); }); if (!offline) refresh().catch((e) => setError(e.message)); }, [offline]);
+  async function run(action) { if (offline) return setError("Perubahan data admin membutuhkan koneksi internet."); setBusy(true); setError(""); try { await action(); await refresh(); } catch (e) { setError(e.message); } finally { setBusy(false); } }
+  async function pickAdminPhoto(camera) { const permission = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync(); if (!permission.granted) return setError("Izin foto ditolak."); const result = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: .8 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: .8 }); if (!result.canceled) setProductForm({ ...productForm, foto: result.assets[0] }); }
+  const owners = data.users.filter((x) => x.role === "penjastip" && x.aktif);
+  const nav = <View style={[s.adminNav, desktop && s.adminSidebar]}>{adminTabs.map((x) => <Pressable key={x} onPress={() => setTab(x)} style={[s.navItem, tab === x && s.navOn]}><Text style={tab === x ? s.navTextOn : s.navText}>{x}</Text></Pressable>)}</View>;
+  const actions = (onEdit, onDelete, active = true) => <View style={s.row}><Button secondary title="Edit" onPress={onEdit} />{active ? <Button secondary title="Nonaktifkan" onPress={onDelete} /> : null}</View>;
+  let content;
+  if (tab === "Ringkasan") content = <><View style={[s.stats, tablet && s.statsWide]}>{[["Pengguna", data.users.length], ["Toko", data.stores.length], ["Produk", data.products.length], ["Sesi aktif", data.sessions.filter((x) => x.status === "buka").length], ["Titipan", data.orders.length], ["Pembayaran", data.payments.length]].map(([label, value]) => <View key={label} style={s.stat}><Text style={s.statValue}>{value}</Text><Text style={s.muted}>{label}</Text></View>)}</View><Card title="Status sistem"><Text style={s.success}>Dashboard tersambung ke seluruh service.</Text><Text style={s.muted}>Gunakan menu untuk mengelola master data dan memantau transaksi.</Text></Card></>;
+  if (tab === "Pengguna") content = <><Card title={editing.user ? `Edit akun #${editing.user}` : "Tambah akun"}><Input label="Nama" value={userForm.nama} onChangeText={(v) => setUserForm({ ...userForm, nama: v })} /><Input label="Email" autoCapitalize="none" value={userForm.email} onChangeText={(v) => setUserForm({ ...userForm, email: v })} /><Input label={editing.user ? "Password baru (opsional)" : "Password minimal 8 karakter"} secureTextEntry value={userForm.password} onChangeText={(v) => setUserForm({ ...userForm, password: v })} /><View style={s.wrap}>{["penitip", "penjastip", "admin"].map((role) => <Pressable key={role} onPress={() => setUserForm({ ...userForm, role })} style={[s.chip, userForm.role === role && s.chipOn]}><Text style={userForm.role === role ? s.chipTextOn : s.chipText}>{role}</Text></Pressable>)}</View><Button title="Simpan akun" onPress={() => run(async () => { const payload = { ...userForm }; if (editing.user && !payload.password) delete payload.password; editing.user ? await api.adminUpdateUser(editing.user, payload, token) : await api.adminCreateUser(payload, token); setUserForm(emptyUser); setEditing({ ...editing, user: null }); })} /></Card>{data.users.map((x) => <Card key={x.id}><Text style={s.strong}>{x.nama} · {x.role}</Text><Text style={s.muted}>{x.email} · {x.aktif ? "aktif" : "nonaktif"}</Text>{actions(() => { setEditing({ ...editing, user: x.id }); setUserForm({ nama: x.nama, email: x.email, password: "", noHp: x.no_hp || "", kampus: x.kampus || "", role: x.role }); }, () => run(() => api.adminDeleteUser(x.id, token)), x.aktif)}</Card>)}</>;
+  if (tab === "Toko") content = <><Card title={editing.store ? `Edit toko #${editing.store}` : "Tambah toko"}><Text style={s.label}>Owner penjastip</Text><View style={s.wrap}>{owners.map((x) => <Pressable key={x.id} onPress={() => setStoreForm({ ...storeForm, ownerId: String(x.id) })} style={[s.chip, storeForm.ownerId === String(x.id) && s.chipOn]}><Text style={storeForm.ownerId === String(x.id) ? s.chipTextOn : s.chipText}>{x.nama}</Text></Pressable>)}</View><Input label="Nama toko" value={storeForm.nama} onChangeText={(v) => setStoreForm({ ...storeForm, nama: v })} /><Input label="Alamat" value={storeForm.alamat} onChangeText={(v) => setStoreForm({ ...storeForm, alamat: v })} /><Input label="Kategori" value={storeForm.kategori} onChangeText={(v) => setStoreForm({ ...storeForm, kategori: v })} /><Button title="Simpan toko" onPress={() => run(async () => { editing.store ? await api.adminUpdateStore(editing.store, storeForm, token) : await api.adminCreateStore(storeForm, token); setStoreForm(emptyStore); setEditing({ ...editing, store: null }); })} /></Card>{data.stores.map((x) => <Card key={x.id}><Text style={s.strong}>{x.nama}</Text><Text style={s.muted}>{x.alamat} · owner #{x.owner_id} · {x.aktif ? "aktif" : "nonaktif"}</Text>{actions(() => { setEditing({ ...editing, store: x.id }); setStoreForm({ ownerId: String(x.owner_id), nama: x.nama, alamat: x.alamat, kategori: x.kategori }); }, () => run(() => api.adminDeleteStore(x.id, token)), x.aktif)}</Card>)}</>;
+  if (tab === "Produk") content = <><Card title={editing.product ? `Edit produk #${editing.product}` : "Tambah produk"}><Text style={s.label}>Toko</Text><View style={s.wrap}>{data.stores.filter((x) => x.aktif).map((x) => <Pressable key={x.id} onPress={() => setProductForm({ ...productForm, tokoId: String(x.id) })} style={[s.chip, productForm.tokoId === String(x.id) && s.chipOn]}><Text style={productForm.tokoId === String(x.id) ? s.chipTextOn : s.chipText}>{x.nama}</Text></Pressable>)}</View><Input label="Nama" value={productForm.nama} onChangeText={(v) => setProductForm({ ...productForm, nama: v })} /><Input label="Kategori" value={productForm.kategori} onChangeText={(v) => setProductForm({ ...productForm, kategori: v })} /><Input label="Harga" keyboardType="numeric" value={productForm.harga} onChangeText={(v) => setProductForm({ ...productForm, harga: v })} /><Input label="Stok" keyboardType="numeric" value={productForm.stok} onChangeText={(v) => setProductForm({ ...productForm, stok: v })} /><Input label="Satuan" value={productForm.satuan} onChangeText={(v) => setProductForm({ ...productForm, satuan: v })} />{productForm.foto ? <Image source={{ uri: productForm.foto.uri }} style={s.preview} /> : null}<View style={s.row}><Button secondary title="Galeri" onPress={() => pickAdminPhoto(false)} /><Button secondary title="Kamera" onPress={() => pickAdminPhoto(true)} /></View><Button title="Simpan produk" onPress={() => run(async () => { editing.product ? await api.adminUpdateProduct(editing.product, productForm, token) : await api.adminCreateProduct(productForm, token); setProductForm(emptyProduct); setEditing({ ...editing, product: null }); })} /></Card>{data.products.map((x) => <Card key={x.id}><View style={s.product}><Photo product={x} /><View style={{ flex: 1 }}><Text style={s.strong}>{x.nama}</Text><Text style={s.muted}>{x.toko_nama} · {money(x.harga)} · stok {x.stok} · {x.aktif ? "aktif" : "nonaktif"}</Text>{actions(() => { setEditing({ ...editing, product: x.id }); setProductForm({ tokoId: String(x.toko_id), nama: x.nama, kategori: x.kategori, harga: String(x.harga), stok: String(x.stok), satuan: x.satuan, foto: null }); }, () => run(() => api.adminDeleteProduct(x.id, token)), x.aktif)}</View></View></Card>)}</>;
+  if (tab === "Sesi") content = data.sessions.map((x) => <Card key={x.id}><Text style={s.strong}>#{x.id} · {x.toko_nama}</Text><Text style={s.muted}>{x.status} · {x.kapasitas_terpakai}/{x.kapasitas_maksimal} · owner #{x.pembuka}</Text>{x.status === "buka" ? <Button secondary title="Tutup sesi" onPress={() => run(() => api.adminCloseSession(x.id, token))} /> : null}</Card>);
+  if (tab === "Transaksi") content = <>{data.orders.map((x) => <Card key={`o${x.id}`}><Text style={s.strong}>Titipan #{x.id} · {x.nama_barang}</Text><Text style={s.muted}>{x.status} · {money(x.total)} · qty {x.qty}</Text><View style={s.row}>{x.status === "menunggu_pembayaran" ? <Button secondary title="Batalkan" onPress={() => run(() => api.adminOrderStatus(x.id, "dibatalkan", token))} /> : null}{x.status === "dibayar" ? <><Button secondary title="Selesaikan" onPress={() => run(() => api.adminOrderStatus(x.id, "selesai", token))} /><Button secondary title="Batalkan" onPress={() => run(() => api.adminOrderStatus(x.id, "dibatalkan", token))} /></> : null}</View></Card>)}{data.payments.map((x) => <Card key={`p${x.id}`}><Text style={s.strong}>Pembayaran #{x.id} · titipan #{x.order_id}</Text><Text style={s.muted}>{x.status} · {money(x.jumlah)}</Text>{x.status === "tertahan" ? <View style={s.row}><Button secondary title="Release" onPress={() => run(() => api.adminPaymentStatus(x.id, "dilepas", token))} /><Button secondary title="Refund" onPress={() => run(() => api.adminPaymentStatus(x.id, "dikembalikan", token))} /></View> : null}</Card>)}</>;
+  if (tab === "Tracking") content = data.tracking.length ? data.tracking.map((x) => <Card key={x.id}><Text style={s.strong}>Titipan #{x.order_id} · {x.status}</Text><Text style={s.muted}>{x.keterangan || "Tanpa keterangan"} · {x.created_at}</Text></Card>) : <Card><Text style={s.muted}>Belum ada tracking.</Text></Card>;
+  if (tab === "Audit") content = data.audit.length ? data.audit.map((x) => <Card key={x.id}><Text style={s.strong}>{x.action} · {x.resource_type} #{x.resource_id}</Text><Text style={s.muted}>Admin #{x.actor_id} · {x.created_at}</Text></Card>) : <Card><Text style={s.muted}>Belum ada aktivitas admin.</Text></Card>;
+  return <Shell title={`Admin · ${user.nama}`} logout={logout} offline={offline}><View style={desktop ? s.adminLayout : null}>{nav}<View style={desktop ? s.adminMain : null}>{error ? <Text style={s.error}>{error}</Text> : null}<View style={s.row}><Input label="Cari master data" value={q} onChangeText={setQ} /><Button secondary title="Muat ulang" disabled={busy} onPress={() => run(async () => {})} /></View>{busy ? <ActivityIndicator color={C.blue} /> : null}{content}</View></View></Shell>;
 }
 
-function Input({ label, ...props }) {
-  return (
-    <View style={{ marginBottom: 14 }}>
-      {label ? <Text style={st.label}>{label}</Text> : null}
-      <TextInput style={st.input} placeholderTextColor="#94A3B8" {...props} />
-    </View>
-  );
-}
-
-function ScreenShell({ children }) {
-  return (
-    <SafeAreaView style={st.root} edges={["top", "left", "right", "bottom"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
-      <KeyboardAvoidingView style={st.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView
-          style={st.screen}
-          contentContainerStyle={st.container}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          {children}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  );
-}
-
-function TopBar({ title, right, onBack }) {
-  return (
-    <View style={st.topBar}>
-      <View style={st.topBarLeft}>
-        {onBack ? (
-          <TouchableOpacity onPress={onBack} style={st.backBtn}><Text style={st.backBtnText}>←</Text></TouchableOpacity>
-        ) : null}
-        <Text style={st.topBarTitle}>{title}</Text>
-      </View>
-      {right || null}
-    </View>
-  );
-}
-
-function BrandHeader({ subtitle }) {
-  return (
-    <View style={st.brandWrap}>
-      <View style={st.logoCircle}><Text style={st.logoIcon}>🛵</Text></View>
-      <Text style={st.appTitle}>JastipKampus</Text>
-      {subtitle ? <Text style={st.sub}>{subtitle}</Text> : null}
-    </View>
-  );
-}
-
-function WelcomeScreen({ onNavigate, hasAccount }) {
-  return (
-    <ScreenShell>
-      <View style={st.heroPanel}>
-        <Text style={st.heroEyebrow}>JASTIP ANTAR MAHASISWA</Text>
-        <Text style={st.heroTitle}>Belanja kampus jadi lebih gampang</Text>
-        <Text style={st.heroDesc}>Titip belanja ke teman se-kampus, buka sesi jastip, tawar harga, bayar aman, dan lacak status sampai barang diterima.</Text>
-        <View style={st.heroStats}>
-          <View style={st.statBox}><Text style={st.statNum}>{CATALOG.length}</Text><Text style={st.statLabel}>Produk</Text></View>
-          <View style={st.statBox}><Text style={st.statNum}>{TOKO_OPTIONS.length}</Text><Text style={st.statLabel}>Toko</Text></View>
-          <View style={st.statBox}><Text style={st.statNum}>4</Text><Text style={st.statLabel}>Layanan</Text></View>
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Mulai sekarang</Text>
-        <Text style={st.mutedLine}>Buat akun dulu sebelum masuk ke aplikasi.</Text>
-        <Btn label="Daftar Akun Baru" onPress={() => onNavigate("Register")} />
-        <Btn label={hasAccount ? "Masuk ke Akun" : "Masuk (perlu daftar dulu)"} outline disabled={!hasAccount}
-          onPress={() => onNavigate("Login")} style={{ marginTop: 10 }} />
-        <Text style={[st.mutedLine, { marginTop: 12, textAlign: "center", color: hasAccount ? C.accent : C.muted }]}>
-          {hasAccount ? "Akun sudah tersedia. Silakan masuk." : "Belum ada akun. Silakan daftar terlebih dahulu."}
-        </Text>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Alur singkat</Text>
-        {["Daftar & login akun kampus", "Pilih peran: Penjastip atau Penitip", "Penjastip buka sesi · Penitip pilih produk", "Opsional tawar harga · bayar escrow · tracking"].map((t, i) => (
-          <View key={t} style={st.stepRow}>
-            <View style={st.stepDot}><Text style={st.stepDotText}>{i + 1}</Text></View>
-            <Text style={st.stepText}>{t}</Text>
-          </View>
-        ))}
-      </View>
-    </ScreenShell>
-  );
-}
-
-function RegisterScreen({ onNavigate, onRegister }) {
-  const [nama, setNama] = useState("");
-  const [email, setEmail] = useState("");
-  const [hp, setHp] = useState("");
-  const [kampus, setKampus] = useState("");
-  const [pass, setPass] = useState("");
-  const [error, setError] = useState("");
-  const submit = () => {
-    if (!nama.trim() || !email.trim() || !hp.trim() || !kampus.trim() || !pass.trim()) { setError("Lengkapi semua data registrasi."); return; }
-    if (pass.trim().length < 6) { setError("Password minimal 6 karakter."); return; }
-    onRegister({ nama: nama.trim(), email: email.trim().toLowerCase(), hp: hp.trim(), kampus: kampus.trim(), pass: pass.trim() });
-  };
-  return (
-    <ScreenShell>
-      <BrandHeader subtitle="Langkah A–D · Registrasi akun" />
-      <Text style={st.heading}>Buat Akun</Text>
-      <Text style={st.subCenter}>Isi nama, email/HP, password, dan kampus</Text>
-      <View style={st.card}>
-        <Input label="Nama Lengkap" value={nama} onChangeText={setNama} placeholder="Nama kamu" />
-        <Input label="Email" value={email} onChangeText={setEmail} placeholder="email@kampus.ac.id" keyboardType="email-address" autoCapitalize="none" />
-        <Input label="No. HP" value={hp} onChangeText={setHp} placeholder="08xxxxxxxxxx" keyboardType="phone-pad" />
-        <Input label="Kampus" value={kampus} onChangeText={setKampus} placeholder="Universitas Muhammadiyah Makassar" />
-        <Input label="Password" value={pass} onChangeText={setPass} placeholder="Minimal 6 karakter" secureTextEntry />
-        {error ? <Text style={st.errorText}>{error}</Text> : null}
-        <Btn label="Buat Akun" onPress={submit} />
-        <TouchableOpacity onPress={() => onNavigate("Login")} style={{ marginTop: 14, alignItems: "center" }}>
-          <Text style={{ color: C.muted }}>Sudah punya akun? <Text style={{ color: C.primary, fontWeight: "700" }}>Masuk</Text></Text>
-        </TouchableOpacity>
-      </View>
-      <Btn label="← Kembali" outline onPress={() => onNavigate("Welcome")} />
-    </ScreenShell>
-  );
-}
-
-function LoginScreen({ onNavigate, onLogin, accounts }) {
-  const [email, setEmail] = useState(accounts[0]?.email || "");
-  const [pass, setPass] = useState("");
-  const [error, setError] = useState("");
-  const submit = () => {
-    if (!accounts.length) { setError("Belum ada akun. Silakan daftar terlebih dahulu."); return; }
-    const found = accounts.find((a) => a.email === email.trim().toLowerCase() || a.hp === email.trim());
-    if (!found) { setError("Akun tidak ditemukan. Daftar dulu sebelum login."); return; }
-    if (found.pass !== pass) { setError("Password salah."); return; }
-    onLogin(found);
-  };
-  return (
-    <ScreenShell>
-      <BrandHeader subtitle="Langkah E–F · Login ke beranda" />
-      <Text style={st.heading}>Masuk</Text>
-      <Text style={st.subCenter}>Gunakan akun yang sudah kamu daftarkan</Text>
-      <View style={st.card}>
-        {!accounts.length ? (
-          <View style={st.alertBox}>
-            <Text style={st.alertTitle}>Akun belum dibuat</Text>
-            <Text style={st.alertText}>Kamu harus daftar dulu sebelum bisa login.</Text>
-            <Btn label="Daftar Sekarang" onPress={() => onNavigate("Register")} style={{ marginTop: 10 }} />
-          </View>
-        ) : (
-          <>
-            <Input label="Email / No. HP" value={email} onChangeText={setEmail} placeholder="email@kampus.ac.id" autoCapitalize="none" />
-            <Input label="Password" value={pass} onChangeText={setPass} placeholder="••••••••" secureTextEntry />
-            {error ? <Text style={st.errorText}>{error}</Text> : null}
-            <Btn label="Masuk" onPress={submit} />
-          </>
-        )}
-        <TouchableOpacity onPress={() => onNavigate("Register")} style={{ marginTop: 14, alignItems: "center" }}>
-          <Text style={{ color: C.muted }}>Belum punya akun? <Text style={{ color: C.primary, fontWeight: "700" }}>Daftar</Text></Text>
-        </TouchableOpacity>
-      </View>
-      <Btn label="← Kembali" outline onPress={() => onNavigate("Welcome")} />
-    </ScreenShell>
-  );
-}
-
-function PilihPeranScreen({ user, onNavigate, onLogout }) {
-  return (
-    <ScreenShell>
-      <View style={st.profileBanner}>
-        <View style={{ flex: 1 }}>
-          <Text style={st.helloText}>Halo, {user?.nama?.split(" ")[0] || "Mahasiswa"} 👋</Text>
-          <Text style={st.helloSub}>{user?.kampus || "Kampus"} · {user?.email}</Text>
-        </View>
-        <TouchableOpacity onPress={onLogout}><Text style={st.logoutText}>Keluar</Text></TouchableOpacity>
-      </View>
-      <Text style={st.heading}>Pilih Peran</Text>
-      <Text style={st.subCenter}>Langkah G · jadi Penjastip atau Penitip</Text>
-      <TouchableOpacity style={[st.roleCard, { borderColor: C.primary }]} onPress={() => onNavigate("PenjastipDashboard")} activeOpacity={0.9}>
-        <View style={[st.roleIconWrap, { backgroundColor: C.primarySoft }]}><Text style={{ fontSize: 34 }}>🛵</Text></View>
-        <Text style={st.roleTitle}>Penjastip</Text>
-        <Text style={st.roleDesc}>Buka sesi jastip, tentukan toko, batas waktu, dan kapasitas order.</Text>
-        <SvcTag name="order-service" />
-      </TouchableOpacity>
-      <TouchableOpacity style={[st.roleCard, { borderColor: C.accent }]} onPress={() => onNavigate("PenitipBrowse")} activeOpacity={0.9}>
-        <View style={[st.roleIconWrap, { backgroundColor: C.accentSoft }]}><Text style={{ fontSize: 34 }}>📦</Text></View>
-        <Text style={st.roleTitle}>Penitip</Text>
-        <Text style={st.roleDesc}>Lihat katalog produk dengan foto asli dataset, pilih jastip, dan titip belanja.</Text>
-        <SvcTag name="catalog-service" />
-      </TouchableOpacity>
-    </ScreenShell>
-  );
-}
-
-function PenjastipDashboard({ onNavigate, sesiList, onBukaSesi }) {
-  const [toko, setToko] = useState(TOKO_OPTIONS[0]);
-  const [batas, setBatas] = useState("17:00");
-  const [kap, setKap] = useState("10");
-  const [error, setError] = useState("");
-  const [mine, setMine] = useState(null);
-  const buka = () => {
-    if (!toko || !batas) { setError("Isi toko dan batas waktu."); return; }
-    const sesi = { id: "S" + String(100 + sesiList.length + 1), penjastip: "Kamu", toko, batas, kapasitas: parseInt(kap, 10) || 10, diisi: 0 };
-    onBukaSesi(sesi); setMine(sesi); setError("");
-  };
-  return (
-    <ScreenShell>
-      <TopBar title="Dashboard Penjastip" right={<SvcTag name="order-service" />} onBack={() => onNavigate("PilihPeran")} />
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Buka Sesi Jastip</Text>
-        <Text style={st.mutedLine}>Langkah H–J · simpan toko, batas waktu, kapasitas</Text>
-        <Text style={st.label}>Pilih Toko</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-          {TOKO_OPTIONS.map((t) => (
-            <TouchableOpacity key={t} onPress={() => setToko(t)} style={[st.chip, toko === t && st.chipActive]}>
-              <Text style={[st.chipText, toko === t && st.chipTextActive]}>{t}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <Input label="Batas Waktu Order (HH:MM)" value={batas} onChangeText={setBatas} placeholder="17:00" />
-        <Input label="Kapasitas Order" value={kap} onChangeText={setKap} placeholder="10" keyboardType="numeric" />
-        {error ? <Text style={st.errorText}>{error}</Text> : null}
-        <Btn label="Buka Sesi Jastip" onPress={buka} />
-      </View>
-      {mine ? (
-        <View style={[st.card, st.successCard]}>
-          <Text style={st.cardTitle}>✅ Sesi kamu aktif</Text>
-          <Text style={st.infoRow}><Text style={st.infoKey}>Toko · </Text>{mine.toko}</Text>
-          <Text style={st.infoRow}><Text style={st.infoKey}>Batas · </Text>{mine.batas}</Text>
-          <Text style={st.infoRow}><Text style={st.infoKey}>Kapasitas · </Text>{mine.diisi}/{mine.kapasitas}</Text>
-          <Badge label="Tampil di aplikasi penitip" color={C.accent} bg={C.accentSoft} />
-        </View>
-      ) : null}
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Sesi Aktif di Sekitar</Text>
-        {sesiList.map((sesi) => (
-          <View key={sesi.id} style={st.sesiRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={st.sesiToko}>{sesi.toko}</Text>
-              <Text style={st.sesiInfo}>Oleh {sesi.penjastip} · batas {sesi.batas}</Text>
-            </View>
-            <Badge label={`${sesi.diisi}/${sesi.kapasitas}`} color={C.primary} />
-          </View>
-        ))}
-      </View>
-    </ScreenShell>
-  );
-}
-
-function PenitipBrowse({ onNavigate, onPilihBarang, sesiList }) {
-  const { width } = useWindowDimensions();
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("Semua");
-  const cats = ["Semua", "Makanan", "Minuman", "Buku", "Alat Tulis", "Elektronik", "Kebutuhan", "Aksesoris", "Kesehatan"];
-  const filtered = useMemo(
-    () => CATALOG.filter((b) => (filter === "Semua" || b.kategori === filter) && (b.nama.toLowerCase().includes(search.toLowerCase()) || b.toko.toLowerCase().includes(search.toLowerCase()))),
-    [search, filter]
-  );
-  const cols = width >= 1200 ? 4 : width >= 800 ? 3 : 2;
-  const cardWidth = Math.max(140, Math.floor((Math.min(width, 960) - 32) / cols) - 8);
-  return (
-    <SafeAreaView style={st.root} edges={["top", "left", "right"]}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
-      <TopBar title="Katalog Jastip" right={<SvcTag name="catalog-service" />} onBack={() => onNavigate("PilihPeran")} />
-      <View style={{ paddingHorizontal: 16, paddingTop: 8, maxWidth: 960, width: "100%", alignSelf: "center" }}>
-        <Text style={st.mutedLine}>Langkah K–L · toko, barang, harga acuan + foto dari JastipKampus_Gambar_Produk</Text>
-        <TextInput style={st.searchBar} placeholder="Cari barang atau toko…" placeholderTextColor="#94A3B8" value={search} onChangeText={setSearch} />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-          {cats.map((c) => (
-            <TouchableOpacity key={c} onPress={() => setFilter(c)} style={[st.chip, filter === c && st.chipActive]}>
-              <Text style={[st.chipText, filter === c && st.chipTextActive]}>{c}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-        <View style={st.sesiStrip}>
-          <Text style={st.sesiStripTitle}>Sesi jastip aktif · {sesiList.length}</Text>
-          <Text style={st.sesiStripSub}>{sesiList.map((s) => s.toko).slice(0, 3).join(" · ")}</Text>
-        </View>
-      </View>
-      <FlatList
-        key={`cols-${cols}`}
-        data={filtered}
-        numColumns={cols}
-        keyExtractor={(item) => String(item.id)}
-        style={{ flex: 1, width: "100%" }}
-        contentContainerStyle={{ padding: 10, paddingBottom: 30, maxWidth: 960, width: "100%", alignSelf: "center" }}
-        columnWrapperStyle={cols > 1 ? { justifyContent: "flex-start" } : undefined}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={[st.prodCard, { width: cardWidth }]} onPress={() => onPilihBarang(item)} activeOpacity={0.9}>
-            <View style={st.prodInner}>
-              <Image source={item.img} style={st.prodImg} resizeMode="cover" />
-              <View style={st.prodBody}>
-                <Text style={st.prodNama} numberOfLines={2}>{item.nama}</Text>
-                <Text style={st.prodToko} numberOfLines={1}>{item.toko}</Text>
-                <View style={st.prodFooter}>
-                  <Text style={st.prodHarga}>{rp(item.harga)}</Text>
-                  <Text style={st.prodSatuan}>/{item.satuan}</Text>
-                </View>
-                <Badge label={item.kategori} color={C.primaryDark} />
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-        ListEmptyComponent={<Text style={{ textAlign: "center", color: C.muted, marginTop: 40 }}>Tidak ada barang ditemukan.</Text>}
-      />
-    </SafeAreaView>
-  );
-}
-
-function FormTitipan({ barang, sesiList, onNavigate, onLanjut }) {
-  const [jumlah, setJumlah] = useState(1);
-  const [varian, setVarian] = useState("");
-  const [catatan, setCatatan] = useState("");
-  const related = sesiList.filter((s) => s.toko === barang.toko);
-  const options = related.length ? related : sesiList;
-  const [sesiDipilih, setSesiDipilih] = useState(options[0] || null);
-  const total = barang.harga * jumlah; const biaya = 5000;
-  return (
-    <ScreenShell>
-      <TopBar title="Detail Titipan" right={<SvcTag name="order-service" />} onBack={() => onNavigate("PenitipBrowse")} />
-      <View style={[st.card, st.rowCard]}>
-        <Image source={barang.img} style={st.detailImg} />
-        <View style={{ flex: 1 }}>
-          <Text style={st.cardTitle}>{barang.nama}</Text>
-          <Text style={st.prodToko}>{barang.toko}</Text>
-          <Text style={st.prodHarga}>{rp(barang.harga)} / {barang.satuan}</Text>
-          <Text style={st.mutedLine}>{barang.deskripsi}</Text>
-          <SvcTag name="catalog-service" />
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Pilih Sesi Jastip</Text>
-        <Text style={st.mutedLine}>Langkah M–O · cek sesi buka & kapasitas</Text>
-        {options.map((sesi) => (
-          <TouchableOpacity key={sesi.id} style={[st.sesiRow, sesiDipilih?.id === sesi.id && st.sesiSelected]} onPress={() => setSesiDipilih(sesi)}>
-            <View style={{ flex: 1 }}>
-              <Text style={st.sesiToko}>{sesi.toko}</Text>
-              <Text style={st.sesiInfo}>Batas {sesi.batas} · {sesi.diisi}/{sesi.kapasitas} order · {sesi.penjastip}</Text>
-            </View>
-            {sesiDipilih?.id === sesi.id ? <Badge label="Dipilih" color={C.primary} /> : null}
-          </TouchableOpacity>
-        ))}
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Detail Titipan</Text>
-        <Text style={st.mutedLine}>Langkah N · nama barang, jumlah, varian, catatan</Text>
-        <Text style={st.label}>Jumlah</Text>
-        <View style={st.qtyRow}>
-          <TouchableOpacity style={st.qtyBtn} onPress={() => setJumlah(Math.max(1, jumlah - 1))}><Text style={st.qtyBtnText}>−</Text></TouchableOpacity>
-          <Text style={st.qtyVal}>{jumlah}</Text>
-          <TouchableOpacity style={st.qtyBtn} onPress={() => setJumlah(jumlah + 1)}><Text style={st.qtyBtnText}>+</Text></TouchableOpacity>
-        </View>
-        <Input label="Varian / ukuran" value={varian} onChangeText={setVarian} placeholder="cth: less sugar, large, rasa keju" />
-        <Input label="Catatan" value={catatan} onChangeText={setCatatan} placeholder="Catatan ke penjastip (opsional)" multiline />
-        <View style={st.summaryBox}>
-          <View style={st.summaryRow}><Text style={st.summaryLabel}>Harga acuan</Text><Text style={st.summaryVal}>{rp(barang.harga)} × {jumlah}</Text></View>
-          <View style={st.summaryRow}><Text style={st.summaryLabel}>Biaya jasa titip</Text><Text style={st.summaryVal}>{rp(biaya)}</Text></View>
-          <View style={st.divider} />
-          <View style={st.summaryRow}><Text style={st.totalLabel}>Total estimasi</Text><Text style={st.totalVal}>{rp(total + biaya)}</Text></View>
-        </View>
-      </View>
-      <Text style={[st.mutedLine, { marginBottom: 8 }]}>Langkah Q · ingin tawar harga/jasa titip?</Text>
-      <View style={st.rowGap}>
-        <Btn label="💬 Tawar Harga" outline style={{ flex: 1, marginRight: 8 }} onPress={() => onNavigate("TawarHarga", { barang, jumlah, varian, catatan, sesi: sesiDipilih })} />
-        <Btn label="Lanjut Bayar" style={{ flex: 1 }} disabled={!sesiDipilih} onPress={() => onLanjut({ barang, jumlah, varian, catatan, sesi: sesiDipilih, total: total + biaya, tawaran: null })} />
-      </View>
-    </ScreenShell>
-  );
-}
-
-function TawarHargaScreen({ params, onNavigate, onLanjutBayar }) {
-  const { barang, jumlah, varian, catatan, sesi } = params;
-  const [tawaran, setTawaran] = useState(String(barang.harga));
-  const [status, setStatus] = useState(null);
-  return (
-    <ScreenShell>
-      <TopBar title="Proses Tawar" right={<SvcTag name="order-service" />} onBack={() => onNavigate("FormTitipan", params)} />
-      <View style={[st.card, st.rowCard]}>
-        <Image source={barang.img} style={st.thumbImg} />
-        <View style={{ flex: 1 }}>
-          <Text style={st.cardTitle}>{barang.nama}</Text>
-          <Text style={st.prodToko}>{barang.toko}</Text>
-          <Text style={st.mutedLine}>Harga acuan catalog-service: {rp(barang.harga)}</Text>
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Ajukan Tawaran</Text>
-        <Text style={st.mutedLine}>Langkah R–V · tawar, setuju/tolak, ubah, atau batalkan</Text>
-        <Input label={`Tawaran per ${barang.satuan}`} value={tawaran} onChangeText={setTawaran} keyboardType="numeric" />
-        {!status && <Btn label="Kirim Tawaran" onPress={() => setStatus("menunggu")} />}
-        {status === "menunggu" && (
-          <View>
-            <View style={st.warnBox}><Text style={st.warnText}>⏳ Menunggu konfirmasi penjastip…</Text></View>
-            <View style={st.rowGap}>
-              <Btn label="Simulasi Setuju" success style={{ flex: 1, marginRight: 8 }} onPress={() => setStatus("disetujui")} />
-              <Btn label="Simulasi Tolak" danger style={{ flex: 1 }} onPress={() => setStatus("ditolak")} />
-            </View>
-          </View>
-        )}
-        {status === "disetujui" && (
-          <View>
-            <View style={st.okBox}><Text style={st.okText}>✅ Tawaran disetujui. Lanjut proses jastip.</Text></View>
-            <Btn label="Lanjut Bayar →" style={{ marginTop: 12 }} onPress={() => onLanjutBayar({ barang, jumlah, varian, catatan, sesi, total: parseInt(tawaran, 10) * jumlah + 5000, tawaran: parseInt(tawaran, 10) })} />
-          </View>
-        )}
-        {status === "ditolak" && (
-          <View>
-            <View style={st.badBox}><Text style={st.badText}>❌ Tawaran ditolak. Ubah tawaran atau batalkan titipan.</Text></View>
-            <View style={st.rowGap}>
-              <Btn label="Ubah Tawaran" outline style={{ flex: 1, marginRight: 8 }} onPress={() => setStatus(null)} />
-              <Btn label="Batalkan" danger style={{ flex: 1 }} onPress={() => onNavigate("PenitipBrowse")} />
-            </View>
-          </View>
-        )}
-      </View>
-    </ScreenShell>
-  );
-}
-
-function PembayaranScreen({ order, onNavigate, onBayar }) {
-  const [metode, setMetode] = useState("QRIS");
-  const metodes = ["QRIS", "GoPay", "OVO", "Dana", "Transfer Bank"];
-  return (
-    <ScreenShell>
-      <TopBar title="Pembayaran" right={<SvcTag name="payment-service" />} onBack={() => onNavigate("FormTitipan", order)} />
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Ringkasan Order</Text>
-        <Text style={st.mutedLine}>Langkah U–X1 · total titipan & saldo tertahan</Text>
-        <View style={st.rowCard}>
-          <Image source={order.barang.img} style={st.thumbImg} />
-          <View style={{ flex: 1 }}>
-            <Text style={st.prodNama}>{order.barang.nama}</Text>
-            <Text style={st.prodToko}>{order.barang.toko}</Text>
-            <Text style={st.sesiInfo}>Sesi {order.sesi?.toko} · batas {order.sesi?.batas}</Text>
-            <Text style={st.prodHarga}>× {order.jumlah}{order.varian ? ` · ${order.varian}` : ""}</Text>
-          </View>
-        </View>
-        <View style={st.summaryBox}>
-          {order.tawaran ? <View style={st.summaryRow}><Text style={st.summaryLabel}>Harga disepakati</Text><Text style={st.summaryVal}>{rp(order.tawaran)}</Text></View> : null}
-          <View style={st.summaryRow}><Text style={st.totalLabel}>Total bayar</Text><Text style={st.totalVal}>{rp(order.total)}</Text></View>
-          <Text style={[st.mutedLine, { marginTop: 8 }]}>Dana ditahan escrow oleh payment-service sampai barang diterima.</Text>
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Metode Pembayaran</Text>
-        {metodes.map((m) => (
-          <TouchableOpacity key={m} style={[st.metodeRow, metode === m && st.metodeActive]} onPress={() => setMetode(m)}>
-            <View style={[st.radio, metode === m && st.radioOn]} />
-            <Text style={{ color: C.text, fontWeight: metode === m ? "700" : "500" }}>{m}</Text>
-          </TouchableOpacity>
-        ))}
-        <Btn label={`Bayar ${rp(order.total)} via ${metode}`} onPress={() => onBayar(metode)} style={{ marginTop: 8 }} />
-      </View>
-    </ScreenShell>
-  );
-}
-
-function TrackingScreen({ order, onNavigate }) {
-  const [step, setStep] = useState(0);
-  const steps = [
-    { key: "dititip", title: "Dititip", desc: "Order dikonfirmasi. Status dicatat tracking-service." },
-    { key: "dibelanjakan", title: "Dibelanjakan", desc: `Penjastip membeli barang di ${order.sesi?.toko}.` },
-    { key: "diantar", title: "Diantar", desc: "Penjastip mengantar barang ke penitip." },
-    { key: "diterima", title: "Diterima", desc: "Penitip konfirmasi terima. Dana dilepas ke penjastip." },
-  ];
-  return (
-    <ScreenShell>
-      <TopBar title="Tracking Titipan" right={<SvcTag name="tracking-service" />} onBack={() => onNavigate("PilihPeran")} />
-      <View style={[st.card, st.rowCard]}>
-        <Image source={order.barang.img} style={st.thumbImg} />
-        <View style={{ flex: 1 }}>
-          <Text style={st.prodNama}>{order.barang.nama}</Text>
-          <Text style={st.prodToko}>{order.sesi?.toko}</Text>
-          <Text style={st.prodHarga}>{rp(order.total)}</Text>
-          <Badge label={order.metode || "QRIS"} color={C.warn} bg={C.warnSoft} />
-        </View>
-      </View>
-      <View style={st.card}>
-        <Text style={st.cardTitle}>Status Pengiriman</Text>
-        <Text style={st.mutedLine}>Langkah Y–AI · dititip → dibelanjakan → diantar → diterima</Text>
-        {steps.map((stItem, i) => (
-          <View key={stItem.key} style={st.trackRow}>
-            <View style={[st.trackDot, i <= step && st.trackDotOn]}>
-              <Text style={{ color: "#fff", fontSize: 12, fontWeight: "700" }}>{i <= step ? "✓" : i + 1}</Text>
-            </View>
-            <View style={{ flex: 1, marginLeft: 12, paddingBottom: 14 }}>
-              <Text style={[st.trackLabel, i <= step && { color: C.primary, fontWeight: "800" }]}>{stItem.title}</Text>
-              {i === step ? <Text style={st.trackDesc}>{stItem.desc}</Text> : null}
-            </View>
-          </View>
-        ))}
-      </View>
-      {step < 3 ? (
-        <Btn label={`Simulasikan: ${steps[step + 1].title} →`} onPress={() => setStep((v) => Math.min(3, v + 1))} />
-      ) : (
-        <View style={[st.card, st.successCard]}>
-          <Text style={{ color: C.accent, fontWeight: "800", fontSize: 18, textAlign: "center" }}>🎉 Transaksi Selesai</Text>
-          <Text style={{ color: C.accent, textAlign: "center", marginTop: 6 }}>payment-service sudah melepaskan dana ke penjastip.</Text>
-        </View>
-      )}
-      <Btn label="Kembali ke Beranda" outline onPress={() => onNavigate("PilihPeran")} style={{ marginTop: 8 }} />
-    </ScreenShell>
-  );
+function Penitip({ token, user, offline, logout }) {
+  const [sessions, setSessions] = useState([]); const [chosen, setChosen] = useState(null); const [qty, setQty] = useState("1"); const [message, setMessage] = useState("");
+  async function refresh() { const data = await api.sessions(); setSessions(data.sessions || []); await storage.saveCache({ publicSessions: data.sessions || [] }); }
+  useEffect(() => { storage.loadCache().then((x) => x?.value?.publicSessions && setSessions(x.value.publicSessions)); if (!offline) refresh().catch((e) => setMessage(e.message)); }, [offline]);
+  const products = useMemo(() => sessions.flatMap((session) => (session.products || []).map((product) => ({ ...product, session }))), [sessions]);
+  async function order() { if (offline) return setMessage("Pembuatan titipan membutuhkan koneksi."); try { const key = `titipan-${user.id}-${Date.now()}`; const result = await api.createTitipan({ sesiId: chosen.session.id, barangId: chosen.id, qty: Number(qty), biayaJasa: 5000 }, token, key); const payment = await api.pay({ titipanId: result.id, jumlah: result.total, metode: "QRIS" }, `payment-${result.id}`, token); setMessage(`Berhasil. Titipan #${result.id}, pembayaran ${payment.status}.`); setChosen(null); await refresh(); } catch (e) { setMessage(e.message); } }
+  return <Shell title="Katalog Jastip" logout={logout} offline={offline}>{message ? <Text style={message.startsWith("Berhasil") ? s.success : s.error}>{message}</Text> : null}{!products.length ? <Card><Text style={s.muted}>Belum ada sesi aktif atau produk yang tersedia.</Text></Card> : products.map((x) => <Pressable key={`${x.session.id}-${x.id}`} onPress={() => setChosen(x)} style={s.catalog}><Photo product={x} large /><Text style={s.cardTitle}>{x.nama}</Text><Text style={s.muted}>{x.toko_nama} - {money(x.harga)}/{x.satuan}</Text><Text style={s.muted}>Sesi #{x.session.id}, sisa kapasitas {x.session.kapasitas_tersisa}</Text></Pressable>)}{chosen ? <Card title={`Titip ${chosen.nama}`}><Input label="Jumlah" keyboardType="numeric" value={qty} onChangeText={setQty} /><Button title={`Titip dan bayar ${money(chosen.harga * Number(qty || 0) + 5000)}`} onPress={order} /><Button secondary title="Batal" onPress={() => setChosen(null)} /></Card> : null}</Shell>;
 }
 
 export default function App() {
-  const [screen, setScreen] = useState("Welcome");
-  const [params, setParams] = useState({});
-  const [accounts, setAccounts] = useState([]);
-  const [user, setUser] = useState(null);
-  const [sesiList, setSesiList] = useState(DEFAULT_SESI);
-  const go = useCallback((target, p) => { setScreen(target); if (p !== undefined) setParams(p || {}); }, []);
-  const handleRegister = (akun) => { setAccounts((prev) => [...prev.filter((a) => a.email !== akun.email), akun]); go("Login"); };
-  const handleLogin = (akun) => { setUser(akun); go("PilihPeran"); };
-  const handleLogout = () => { setUser(null); go("Welcome"); };
+  const [auth, setAuth] = useState(null); const [offline, setOffline] = useState(false); const [ready, setReady] = useState(false);
+  useEffect(() => { storage.loadAuth().then(async (x) => { if (x?.token) { try { await api.me(x.token); setAuth(x); } catch { await storage.clearAll(); } } setReady(true); }); return NetInfo.addEventListener((x) => setOffline(!(x.isConnected && x.isInternetReachable !== false))); }, []);
+  async function logged(value) { setAuth(value); await storage.saveAuth(value); }
+  async function logout() { setAuth(null); await storage.clearAuth(); }
+  if (!ready) return <View style={[s.root, { justifyContent: "center" }]}><ActivityIndicator color={C.blue} /></View>;
+  if (!auth) return <Auth onAuth={logged} />;
+  if (auth.user.role === "admin") return <AdminDashboard token={auth.token} user={auth.user} offline={offline} logout={logout} />;
+  return auth.user.role === "penjastip" ? <Penjastip token={auth.token} user={auth.user} offline={offline} logout={logout} /> : <Penitip token={auth.token} user={auth.user} offline={offline} logout={logout} />;
+}
 
-  let current = null;
-  if (screen === "Welcome") current = <WelcomeScreen onNavigate={go} hasAccount={accounts.length > 0} />;
-  else if (screen === "Register") current = <RegisterScreen onNavigate={go} onRegister={handleRegister} />;
-  else if (screen === "Login") current = <LoginScreen onNavigate={go} onLogin={handleLogin} accounts={accounts} />;
-  else if (screen === "PilihPeran") current = <PilihPeranScreen user={user} onNavigate={go} onLogout={handleLogout} />;
-  else if (screen === "PenjastipDashboard") current = (
-    <PenjastipDashboard onNavigate={go} sesiList={sesiList} onBukaSesi={(sesi) => setSesiList((prev) => [sesi, ...prev.filter((x) => x.id !== sesi.id)])} />
-  );
-  else if (screen === "PenitipBrowse") current = (
-    <PenitipBrowse onNavigate={go} sesiList={sesiList} onPilihBarang={(barang) => go("FormTitipan", { barang })} />
-  );
-  else if (screen === "FormTitipan" && params.barang) current = (
-    <FormTitipan barang={params.barang} sesiList={sesiList} onNavigate={(t, p) => go(t, p || params)} onLanjut={(order) => go("Pembayaran", order)} />
-  );
-  else if (screen === "TawarHarga" && params.barang) current = (
-    <TawarHargaScreen params={params} onNavigate={(t, p) => go(t, p || params)} onLanjutBayar={(order) => go("Pembayaran", order)} />
-  );
-  else if (screen === "Pembayaran" && params.barang) current = (
-    <PembayaranScreen order={params} onNavigate={(t, p) => go(t, p || params)} onBayar={(metode) => go("Tracking", { ...params, metode })} />
-  );
-  else if (screen === "Tracking" && params.barang) current = <TrackingScreen order={params} onNavigate={go} />;
-  else current = (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 20 }}>
-      <Text style={{ color: C.muted, marginBottom: 12 }}>Memuat…</Text>
-      <Btn label="Ke Beranda" outline onPress={() => go(user ? "PilihPeran" : "Welcome")} style={{ minWidth: 160 }} />
-    </View>
-  );
-  return (
-      <SafeAreaProvider>
-        <View style={st.root}>{current}</View>
-      </SafeAreaProvider>
-    );
-  }
-
-  const st = StyleSheet.create({
-    root: {
-      flex: 1,
-      backgroundColor: C.bg,
-      minHeight: Platform.OS === "web" ? "100vh" : undefined,
-      width: "100%",
-    },
-    screen: { flex: 1, backgroundColor: C.bg, width: "100%" },
-    container: { padding: 16, paddingBottom: 40, maxWidth: 720, width: "100%", alignSelf: "center", flexGrow: 1 },
-  card: { backgroundColor: C.surface, borderRadius: 18, padding: 16, marginBottom: 14, borderWidth: 1, borderColor: C.border, shadowColor: "#0F172A", shadowOpacity: 0.05, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 2 },
-  cardTitle: { fontSize: 16, fontWeight: "800", color: C.text, marginBottom: 6 },
-  topBar: { backgroundColor: C.surface, paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: C.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
-  topBarLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  topBarTitle: { fontSize: 17, fontWeight: "800", color: C.text },
-  backBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.light, alignItems: "center", justifyContent: "center", marginRight: 8 },
-  backBtnText: { fontSize: 18, color: C.text, fontWeight: "700" },
-  heading: { fontSize: 26, fontWeight: "800", color: C.text, textAlign: "center", marginBottom: 4 },
-  sub: { fontSize: 14, color: C.muted, textAlign: "center", marginTop: 6, lineHeight: 20 },
-  subCenter: { fontSize: 14, color: C.muted, textAlign: "center", marginBottom: 18 },
-  brandWrap: { alignItems: "center", marginBottom: 10, marginTop: 8 },
-  logoCircle: { width: 58, height: 58, borderRadius: 29, backgroundColor: C.primary, alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  logoIcon: { fontSize: 28 },
-  appTitle: { fontSize: 24, fontWeight: "900", color: C.primary },
-  label: { fontSize: 13, fontWeight: "700", color: C.ink, marginBottom: 6 },
-  input: { backgroundColor: "#F8FAFC", borderRadius: 12, borderWidth: 1, borderColor: C.border, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: C.text },
-  btn: { borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, alignItems: "center", borderWidth: 1.5 },
-  btnText: { fontSize: 15, fontWeight: "800" },
-  badge: { alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, marginTop: 6 },
-  badgeText: { fontSize: 11, fontWeight: "700" },
-  svcTag: { alignSelf: "flex-start", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-  svcText: { fontSize: 11, fontWeight: "700" },
-  mutedLine: { fontSize: 12, color: C.muted, lineHeight: 18, marginBottom: 8 },
-  errorText: { color: C.danger, fontWeight: "600", marginBottom: 8, fontSize: 13 },
-  heroPanel: { backgroundColor: C.primary, borderRadius: 24, padding: 22, marginBottom: 14 },
-  heroEyebrow: { color: "#BFDBFE", fontWeight: "800", fontSize: 11, letterSpacing: 1.2, marginBottom: 8 },
-  heroTitle: { color: "#fff", fontSize: 28, fontWeight: "900", lineHeight: 34 },
-  heroDesc: { color: "#DBEAFE", marginTop: 10, lineHeight: 21, fontSize: 14 },
-  heroStats: { flexDirection: "row", marginTop: 18 },
-  statBox: { flex: 1, backgroundColor: "rgba(255,255,255,0.14)", borderRadius: 14, paddingVertical: 12, alignItems: "center", marginHorizontal: 4 },
-  statNum: { color: "#fff", fontWeight: "900", fontSize: 18 },
-  statLabel: { color: "#DBEAFE", fontSize: 11, marginTop: 2 },
-  stepRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  stepDot: { width: 28, height: 28, borderRadius: 14, backgroundColor: C.primarySoft, alignItems: "center", justifyContent: "center", marginRight: 10 },
-  stepDotText: { color: C.primary, fontWeight: "800", fontSize: 12 },
-  stepText: { color: C.text, flex: 1, fontSize: 13, lineHeight: 18 },
-  alertBox: { backgroundColor: C.warnSoft, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: "#F6D7A8" },
-  alertTitle: { color: C.warn, fontWeight: "800", fontSize: 15 },
-  alertText: { color: "#9A5B12", marginTop: 4, lineHeight: 18 },
-  profileBanner: { backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: C.border, marginBottom: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  helloText: { fontSize: 18, fontWeight: "800", color: C.text },
-  helloSub: { color: C.muted, marginTop: 3, fontSize: 12 },
-  logoutText: { color: C.danger, fontWeight: "700" },
-  roleCard: { backgroundColor: C.surface, borderRadius: 22, padding: 20, marginBottom: 14, borderWidth: 2, alignItems: "center" },
-  roleIconWrap: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  roleTitle: { fontSize: 22, fontWeight: "900", color: C.text, marginBottom: 6 },
-  roleDesc: { fontSize: 13, color: C.muted, textAlign: "center", marginBottom: 10, lineHeight: 19 },
-  searchBar: { backgroundColor: C.surface, borderRadius: 14, borderWidth: 1, borderColor: C.border, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: C.text, marginBottom: 10 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: C.light, marginRight: 8, borderWidth: 1, borderColor: "transparent" },
-  chipActive: { backgroundColor: C.primary, borderColor: C.primary },
-  chipText: { fontSize: 12, color: C.muted, fontWeight: "600" },
-  chipTextActive: { color: "#fff", fontWeight: "700" },
-  sesiStrip: { backgroundColor: C.primarySoft, borderRadius: 14, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: "#C9DBFF" },
-  sesiStripTitle: { color: C.primaryDark, fontWeight: "800", fontSize: 13 },
-  sesiStripSub: { color: C.muted, fontSize: 12, marginTop: 2 },
-  prodCard: { padding: 6 },
-  prodInner: { backgroundColor: C.surface, borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: C.border },
-  prodImg: { width: "100%", height: 130, backgroundColor: C.light },
-  prodBody: { padding: 10 },
-  prodNama: { fontSize: 13, fontWeight: "800", color: C.text, minHeight: 34 },
-  prodToko: { fontSize: 11, color: C.muted, marginTop: 2 },
-  prodFooter: { flexDirection: "row", alignItems: "flex-end", marginTop: 6, marginBottom: 2 },
-  prodHarga: { fontSize: 14, fontWeight: "900", color: C.primary },
-  prodSatuan: { fontSize: 11, color: C.muted, marginLeft: 2, marginBottom: 1 },
-  rowCard: { flexDirection: "row", alignItems: "flex-start" },
-  detailImg: { width: 100, height: 100, borderRadius: 14, backgroundColor: C.light, marginRight: 12 },
-  thumbImg: { width: 72, height: 72, borderRadius: 12, backgroundColor: C.light, marginRight: 12 },
-  infoRow: { fontSize: 13, color: C.text, marginBottom: 4 },
-  infoKey: { fontWeight: "700", color: C.muted },
-  sesiRow: { backgroundColor: C.light, borderRadius: 12, padding: 12, marginBottom: 8, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "transparent" },
-  sesiSelected: { backgroundColor: C.primarySoft, borderColor: C.primary },
-  sesiToko: { fontWeight: "800", color: C.text, fontSize: 13 },
-  sesiInfo: { color: C.muted, fontSize: 12, marginTop: 2 },
-  qtyRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
-  qtyBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: C.primary, alignItems: "center", justifyContent: "center" },
-  qtyBtnText: { color: "#fff", fontSize: 22, lineHeight: 26, fontWeight: "600" },
-  qtyVal: { fontSize: 20, fontWeight: "800", color: C.text, minWidth: 48, textAlign: "center", marginHorizontal: 12 },
-  summaryBox: { backgroundColor: C.light, borderRadius: 14, padding: 14, marginTop: 4 },
-  summaryRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
-  summaryLabel: { fontSize: 12, color: C.muted },
-  summaryVal: { fontSize: 13, fontWeight: "700", color: C.text },
-  totalLabel: { fontSize: 14, fontWeight: "800", color: C.text },
-  totalVal: { fontSize: 18, fontWeight: "900", color: C.primary },
-  divider: { height: 1, backgroundColor: C.border, marginVertical: 8 },
-  rowGap: { flexDirection: "row", marginBottom: 8 },
-  metodeRow: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: C.border, marginBottom: 8 },
-  metodeActive: { borderColor: C.primary, backgroundColor: C.primarySoft },
-  radio: { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: C.primary, backgroundColor: "transparent", marginRight: 10 },
-  radioOn: { backgroundColor: C.primary },
-  trackRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 4 },
-  trackDot: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "#CBD5E1" },
-  trackDotOn: { backgroundColor: C.primary },
-  trackLabel: { fontSize: 13, fontWeight: "700", color: C.muted },
-  trackDesc: { fontSize: 12, color: C.muted, marginTop: 2, lineHeight: 17 },
-  successCard: { backgroundColor: C.accentSoft, borderColor: "#9AE6C4" },
-  warnBox: { backgroundColor: C.warnSoft, borderRadius: 12, padding: 12, marginBottom: 10 },
-  warnText: { color: "#9A5B12", fontWeight: "700" },
-  okBox: { backgroundColor: C.accentSoft, borderRadius: 12, padding: 12 },
-  okText: { color: C.accent, fontWeight: "700" },
-  badBox: { backgroundColor: C.dangerSoft, borderRadius: 12, padding: 12, marginBottom: 10 },
-  badText: { color: C.danger, fontWeight: "700" },
-});
+const s = StyleSheet.create({ root: { flex: 1, backgroundColor: C.bg }, top: { padding: 18, backgroundColor: C.card, flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderColor: C.line }, title: { fontSize: 22, fontWeight: "900", color: C.ink }, content: { padding: 14, paddingBottom: 50, width: "100%", maxWidth: 1400, alignSelf: "center" }, card: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 18, padding: 15, marginBottom: 14 }, cardTitle: { color: C.ink, fontWeight: "900", fontSize: 18, marginBottom: 10 }, label: { color: C.ink, fontWeight: "700", marginBottom: 6 }, input: { borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 12, color: C.ink, backgroundColor: "#f8fafc", minWidth: 180 }, button: { backgroundColor: C.blue, borderRadius: 12, padding: 13, alignItems: "center", marginVertical: 5, flexGrow: 1 }, secondary: { backgroundColor: C.card, borderWidth: 1, borderColor: C.blue }, buttonText: { color: "white", fontWeight: "800" }, row: { flexDirection: "row", gap: 7, flexWrap: "wrap" }, wrap: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginBottom: 12 }, chip: { borderWidth: 1, borderColor: C.line, paddingHorizontal: 11, paddingVertical: 8, borderRadius: 999 }, chipOn: { backgroundColor: C.blue, borderColor: C.blue }, chipText: { color: C.ink }, chipTextOn: { color: "white", fontWeight: "700" }, list: { borderTopWidth: 1, borderColor: C.line, paddingVertical: 11 }, strong: { color: C.ink, fontWeight: "800" }, muted: { color: C.muted, marginTop: 3 }, error: { color: C.red, fontWeight: "700", marginBottom: 10 }, success: { color: C.green, fontWeight: "700", marginBottom: 10 }, offline: { backgroundColor: "#f59e0b", color: "white", padding: 8, textAlign: "center", fontWeight: "700" }, product: { flexDirection: "row", gap: 10, borderTopWidth: 1, borderColor: C.line, paddingVertical: 12 }, photo: { width: 100, height: 100, borderRadius: 12, backgroundColor: "#e2e8f0" }, placeholder: { alignItems: "center", justifyContent: "center" }, placeholderText: { color: C.muted, textAlign: "center", padding: 8 }, preview: { width: "100%", height: 180, borderRadius: 14, marginBottom: 8, backgroundColor: "#e2e8f0" }, check: { padding: 10, borderBottomWidth: 1, borderColor: C.line }, catalog: { backgroundColor: C.card, borderRadius: 18, overflow: "hidden", padding: 12, marginBottom: 14, borderWidth: 1, borderColor: C.line }, adminLayout: { flexDirection: "row", alignItems: "flex-start", gap: 18 }, adminMain: { flex: 1, minWidth: 0 }, adminNav: { flexDirection: "row", flexWrap: "wrap", gap: 7, marginBottom: 14 }, adminSidebar: { width: 190, flexDirection: "column", flexShrink: 0 }, navItem: { borderRadius: 10, paddingHorizontal: 13, paddingVertical: 11, backgroundColor: C.card, borderWidth: 1, borderColor: C.line }, navOn: { backgroundColor: C.blue, borderColor: C.blue }, navText: { color: C.ink, fontWeight: "700" }, navTextOn: { color: "white", fontWeight: "800" }, stats: { flexDirection: "column", gap: 10, marginBottom: 14 }, statsWide: { flexDirection: "row", flexWrap: "wrap" }, stat: { backgroundColor: C.card, borderWidth: 1, borderColor: C.line, borderRadius: 16, padding: 16, minWidth: 145, flexGrow: 1 }, statValue: { color: C.blue, fontSize: 28, fontWeight: "900" } });
