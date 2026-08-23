@@ -290,14 +290,14 @@ Status titipan dicatat secara berurutan oleh `tracking-service`.
 
 | Method | Endpoint | Service | Fungsi |
 | :---: | --- | --- | --- |
-| `GET` | `/catalog` | `catalog-service` | Mengambil daftar toko, barang, dan harga acuan |
-| `POST` | `/titipan` | `order-service` | Membuat titipan baru |
-| `POST` | `/payments` | `payment-service` | Membuat transaksi pembayaran |
+| `GET` | `/v1/items` | `catalog-service` | Mengambil daftar toko, barang, dan harga acuan |
+| `POST` | `/v1/titipan` | `order-service` | Membuat titipan baru |
+| `POST` | `/v1/payments` | `payment-service` | Membuat transaksi pembayaran |
 
 ### ⚡ Endpoint Paling Kritis
 
 ```
-POST /titipan
+POST /v1/titipan
 ```
 
 Endpoint ini berkaitan langsung dengan **kapasitas penjastip**. Sistem wajib memastikan:
@@ -317,54 +317,57 @@ jastip-kampus/
 ├── 📄 .gitignore
 ├── 📄 README.md
 ├── 📄 openapi.yaml
+├── 📄 docker-compose.yml
 │
 ├── 📁 docs/
 │   ├── ARSITEKTUR.md
 │   ├── ENDPOINTS.md
-│   └── Flowchart.jpeg
+│   ├── TESTING.md
+│   └── LAPORAN-UJI.md
 │
 └── 📁 services/
-    └── catalog-service/
-        ├── index.js
-        ├── package.json
-        └── package-lock.json
+  ├── catalog-service/
+  ├── order-service/
+  ├── payment-service/
+  └── tracking-service/
 ```
 
 > `node_modules/` tidak disimpan di Git — sudah terdaftar di `.gitignore`.
 
 ---
 
-## 10. Menjalankan Catalog Service
+## 10. Menjalankan Sistem (Compose + Gateway)
 
 ### Prasyarat
 
-- Node.js versi 16 ke atas
-- npm
+- Docker + Docker Compose
+- Node.js + npm (untuk script bantu)
 
 ### Langkah Menjalankan
 
-**Step 1 — Masuk ke folder service:**
+**Step 1 — Jalankan semua service:**
 
 ```bash
-cd services/catalog-service
+docker compose up -d --build
+docker compose ps
 ```
 
-**Step 2 — Install dependency:**
+**Step 2 — Seed data demo workbook:**
 
 ```bash
-npm install
+npm run demo:reset-and-seed -- --confirm-reset
 ```
 
-**Step 3 — Jalankan service:**
+**Step 3 — Verifikasi gateway sehat:**
 
 ```bash
-node index.js
+curl http://localhost:8080/health
 ```
 
-**Output jika berhasil:**
+**Step 4 — Verifikasi alur E2E otomatis:**
 
-```
-catalog-service berjalan di :3001
+```bash
+node scripts/smoke-test.mjs
 ```
 
 ---
@@ -374,13 +377,12 @@ catalog-service berjalan di :3001
 ### 🟢 Health Check
 
 ```bash
-curl http://localhost:3001/health
+curl http://localhost:8080/health
 ```
 
 ```json
 {
-  "status": "ok",
-  "service": "catalog-service"
+  "status": "ok"
 }
 ```
 
@@ -389,7 +391,7 @@ curl http://localhost:3001/health
 ### 📦 Mengambil Semua Item
 
 ```bash
-curl http://localhost:3001/items
+curl http://localhost:8080/v1/items
 ```
 
 ---
@@ -397,7 +399,7 @@ curl http://localhost:3001/items
 ### 🔍 Mengambil Item Berdasarkan ID
 
 ```bash
-curl http://localhost:3001/items/1
+curl http://localhost:8080/v1/sessions?page=1&limit=20
 ```
 
 ---
@@ -425,7 +427,7 @@ Sistem wajib menegakkan aturan berikut setiap saat:
 | # | Aturan | Kondisi yang Harus Terpenuhi |
 | :---: | --- | --- |
 | 1 | Kapasitas tidak boleh terlampaui | `jumlah titipan ≤ kapasitas` |
-| 2 | Titipan hanya saat sesi aktif | `sesi = OPEN` |
+| 2 | Titipan hanya saat sesi aktif | `status sesi = buka` |
 | 3 | Kapasitas harus tersedia | `kapasitas tersisa > 0` |
 | 4 | Dana ditahan hingga transaksi selesai | Dana dilepas setelah penitip konfirmasi terima |
 | 5 | Status tracking harus berurutan | `DITITIP → DIBELANJAKAN → DIANTAR → DITERIMA` |
@@ -438,43 +440,38 @@ Sistem wajib menegakkan aturan berikut setiap saat:
 | --- | --- | --- |
 | Runtime | **Node.js** | Lingkungan eksekusi JavaScript |
 | Framework | **Express.js** | Framework REST API |
+| Database | **PostgreSQL** | Penyimpanan per-service |
+| Cache/Event | **Redis** | Cache dan event transport |
+| Gateway | **Nginx** | Routing dan rate limiting |
 | API Contract | **OpenAPI 3.0.3** | Kontrak dan dokumentasi API |
 | Version Control | **Git + GitHub** | Manajemen kode sumber |
 | Editor | **Visual Studio Code** | IDE pengembangan |
-
-> 🔜 Database dan komponen scalability akan ditambahkan pada tahap berikutnya.
 
 ---
 
 ## 15. Status Pengembangan
 
-### ✅ Pertemuan 1 — Setup Awal
+### ✅ Status Runtime Saat Ini
 
 | Komponen | Status |
 | --- | :---: |
-| Repository & branch `setup-awal` | ✅ |
-| Struktur folder `services/` | ✅ |
-| `catalog-service` dengan Express.js | ✅ |
-| Endpoint `/items`, `/items/:id`, `/health` | ✅ |
-| Model DDD & Bounded Context | ✅ |
-| Identifikasi endpoint kritis | ✅ |
-| `openapi.yaml` | ✅ |
-| Dokumentasi arsitektur | ✅ |
+| PostgreSQL + Redis aktif | ✅ |
+| 4 service (`catalog`, `order`, `payment`, `tracking`) | ✅ |
+| Gateway Nginx + endpoint `/v1/*` | ✅ |
+| Kontrak `openapi.yaml` valid | ✅ |
+| Smoke test E2E | ✅ |
+| Dokumen QA (testing, laporan uji, template bukti) | ✅ |
 
 ---
 
-### 🔲 Roadmap Tahap Berikutnya
+### 🔲 Roadmap Lanjutan (Opsional)
 
 | Komponen | Status |
 | --- | :---: |
-| Database (PostgreSQL / MySQL) | 🔲 |
-| `order-service` | 🔲 |
-| `payment-service` | 🔲 |
-| `tracking-service` | 🔲 |
-| Komunikasi antar-service (event / API) | 🔲 |
-| Pengamanan kapasitas (concurrency handling) | 🔲 |
-| Load testing | 🔲 |
-| Scalability testing | 🔲 |
+| CI/CD pipeline otomatis penuh | 🔲 |
+| Observability (metrics + tracing) | 🔲 |
+| Hardening security untuk production | 🔲 |
+| Tuning performa lanjutan berbasis load test | 🔲 |
 
 ---
 
@@ -483,7 +480,8 @@ Sistem wajib menegakkan aturan berikut setiap saat:
 Project ini dikembangkan sebagai proyek pembelajaran arsitektur **Microservices** dengan studi kasus nyata **Jastip Kampus**.
 
 **Fokus utama:** menjaga **konsistensi kapasitas titipan penjastip** ketika terjadi banyak permintaan secara bersamaan — menguji ketahanan sistem terhadap kondisi *high concurrency*.
-# Admin dashboard
+
+## Admin dashboard
 
 Akun admin tidak dapat dibuat dari registrasi publik. Jalankan order-service sekali agar migrasi diterapkan, lalu dari root project gunakan PowerShell:
 
@@ -494,4 +492,4 @@ $env:ADMIN_PASSWORD="ganti-dengan-password-kuat"
 npm run bootstrap:admin
 ```
 
-Jika service memakai lokasi database khusus, set juga `DB_PATH` ke file `order.db` yang sama. Pada Docker, jalankan bootstrap di container order-service dengan ketiga environment variable tersebut. Setelah login dari Expo/web, role admin otomatis membuka dashboard responsif.
+Untuk runtime Docker/Compose, jalankan perintah bootstrap pada service order dengan environment admin yang sama. Setelah login dari Expo/web, role admin otomatis membuka dashboard responsif.
