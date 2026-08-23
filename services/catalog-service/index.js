@@ -102,6 +102,11 @@ app.get("/v1/stores/me", auth, allow("penjastip"), async (req, res) => { const {
 
 async function createProduct(req, res, ownerId) {
   const storeId = Number(req.body.tokoId); const harga = Number(req.body.harga); const stok = Number(req.body.stok);
+  console.log("DEBUG CREATE PRODUCT:", {
+  jwtSub: req.user?.sub,
+  ownerId,
+  storeId
+	});
   const store = await pool.query("SELECT * FROM stores WHERE id=$1 AND owner_id=$2 AND aktif", [storeId, ownerId]);
   if (!store.rows[0]) { cleanFile(req.file?.filename); return res.status(403).json({ error: "toko aktif bukan milik owner" }); }
   if (!req.body.nama || !req.body.kategori || !req.body.satuan || !Number.isInteger(harga) || harga < 0 || !Number.isInteger(stok) || stok < 0) { cleanFile(req.file?.filename); return res.status(400).json({ error: "data produk tidak valid" }); }
