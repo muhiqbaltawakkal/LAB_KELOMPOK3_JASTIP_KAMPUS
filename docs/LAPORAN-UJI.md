@@ -184,3 +184,53 @@ Hentikan:
 ```bash
 docker compose down
 ```
+
+---
+
+## Ringkasan Hasil Uji Aktual (2026-08-23)
+
+| Area Uji | Perintah | Hasil | Status |
+|---|---|---|---|
+| Health gateway | `curl -sS http://localhost:8080/health` | Respons sehat (`status: ok`) | ✅ Lulus |
+| E2E smoke | `node scripts/smoke-test.mjs` | `ok: true`, jalur langsung + tawar, escrow `dilepas` | ✅ Lulus |
+| Unit test catalog | `docker compose exec -T catalog-service npm test` | `pass 1`, `fail 0` | ✅ Lulus |
+| Unit test order | `docker compose exec -T order-service-1 npm test` | `pass 1`, `fail 0` | ✅ Lulus |
+| Unit test payment | `docker compose exec -T payment-service npm test` | `pass 1`, `fail 0` | ✅ Lulus |
+| Unit test tracking | `docker compose exec -T tracking-service npm test` | `pass 1`, `fail 0` | ✅ Lulus |
+| OpenAPI lint | `npx @redocly/cli lint openapi.yaml` | valid, tanpa warning/error | ✅ Lulus |
+
+## Ringkasan Uji Beban
+
+Rujukan angka rinci: `docs/BASELINE.md`.
+
+| Endpoint | p95 (indikatif) | Error transport | Catatan |
+|---|---:|---:|---|
+| `GET /v1/items` | < 200 ms | 0 | Stabil untuk baseline baca |
+| `GET /v1/sessions` | < 50 ms | 0 | Non-2xx dominan dari throttle/rate-limit |
+
+Kesimpulan uji beban:
+1. Tidak ditemukan oversell pada skenario kapasitas atomik.
+2. Proteksi rate limiting aktif sesuai desain gateway.
+3. Error transport tetap 0 pada pengukuran baseline yang dilaporkan.
+
+## Pemetaan Tugas Per Peran pada Siklus Uji
+
+| Peran | Tanggung Jawab Uji | Bukti |
+|---|---|---|
+| ⚙️ Backend/API Engineer | Menjaga endpoint inti dan alur bisnis E2E berjalan | `scripts/smoke-test.mjs`, `services/*/index.js` |
+| 🚢 Infrastructure & DevOps | Menjalankan compose, healthcheck, gateway, restart terkontrol | `docker-compose.yml`, `nginx/nginx.conf` |
+| 🗄️ Data & Persistence Engineer | Menjaga migrasi, seed, dan konsistensi status domain | `database/migrations/*.sql`, `dataset/*` |
+| 📊 QA, Load-Test & Dokumentasi | Menjalankan test/lint/load, merangkum bukti hasil, finalisasi dokumen | `docs/TESTING.md`, `docs/BASELINE.md`, dokumen ini |
+
+## Catatan Insiden dan Mitigasi
+
+Insiden yang sempat muncul saat verifikasi ulang:
+1. Gateway sempat mengembalikan `502 Bad Gateway` setelah reset/recreate container.
+
+Mitigasi yang diterapkan:
+1. Verifikasi seluruh service `healthy` pada `docker compose ps`.
+2. Restart gateway: `docker compose restart nginx`.
+3. Ulang smoke test dan seluruh validasi kualitas hingga lulus.
+
+Status akhir:
+1. Seluruh gate pengujian untuk submit modul berada pada status lulus.

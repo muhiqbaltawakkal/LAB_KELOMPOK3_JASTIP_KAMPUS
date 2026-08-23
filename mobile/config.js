@@ -9,6 +9,9 @@ function detectWebBaseUrl() {
 	if (hostname.endsWith(".app.github.dev")) {
 		return `${protocol}//${hostname.replace(/-\d+\.app\.github\.dev$/, "-8080.app.github.dev")}`;
 	}
+	if (hostname.endsWith(".exp.direct")) {
+		return `${protocol}//${hostname.replace(/-\d+\.exp\.direct$/, "-8080.exp.direct")}`;
+	}
 	if (hostname === "localhost" || hostname === "127.0.0.1") return "http://localhost:8080";
 	return `${protocol}//${hostname}:8080`;
 }

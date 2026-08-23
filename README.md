@@ -39,6 +39,51 @@ Scan QR baru yang ditampilkan. Port `8080` harus memiliki visibility **Public** 
 Expo Go dapat mengakses API. Web dan Expo Go menggunakan penyimpanan sesi yang
 berbeda, sehingga login perlu dilakukan sekali pada masing-masing perangkat.
 
+### Checklist jalankan sistem (Web + Expo Go)
+
+Gunakan urutan ini agar semua anggota tim menjalankan stack yang sama dan hasilnya konsisten:
+
+1. Infrastructure & DevOps menyalakan seluruh service:
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+2. Data & Persistence Engineer reset dan seed data demo:
+
+```bash
+npm run demo:reset-and-seed -- --confirm-reset
+```
+
+3. Infrastructure & DevOps memastikan gateway dapat diakses dari luar Codespaces:
+
+```bash
+gh codespace ports visibility 8080:public -c "$CODESPACE_NAME"
+curl https://$CODESPACE_NAME-8080.app.github.dev/health
+```
+
+4. Backend/API Engineer memverifikasi login API:
+
+```bash
+curl -X POST https://$CODESPACE_NAME-8080.app.github.dev/v1/login \
+  -H 'content-type: application/json' \
+  -d '{"email":"andi.rizki@unismuh.ac.id","password":"Penjastip2026!"}'
+```
+
+5. QA dan Dokumentasi menjalankan klien mobile/web Expo:
+
+```bash
+cd mobile
+npm run start:codespaces
+```
+
+6. Uji login web: buka URL web Expo dari terminal Metro, lalu login.
+7. Uji login HP (Expo Go): scan QR yang sama, lalu login akun yang sama atau akun demo lain.
+8. Jika web berhasil tetapi HP gagal konek API, lakukan urutan berikut: tutup paksa Expo Go, buka lagi, scan ulang QR terbaru, pastikan port `8080` tetap `Public`, lalu jalankan ulang `npm run start:codespaces` dari folder `mobile`.
+
+Rujukan sinkronisasi peran detail ada di [PERAN.md](PERAN.md).
+
 Password semua akun demo adalah `Penjastip2026!` (jangan digunakan di produksi). Empat akun berlabel Penjastip:
 
 | Nama | Email |

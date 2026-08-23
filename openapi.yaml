@@ -3,8 +3,13 @@ info:
   title: Jastip Kampus API
   version: 2.0.0
   description: Kontrak gateway katalog, sesi jastip, titipan, escrow, dan tracking. Dibekukan 2026-08-22 untuk serah artefak.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
-  - url: http://localhost:8080
+  - url: https://api.jastip-kampus.local
+security:
+  - bearerAuth: []
 components:
   securitySchemes:
     bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
@@ -31,6 +36,7 @@ components:
 paths:
   /v1/stores:
     post:
+      operationId: createStore
       summary: Buat toko milik penjastip
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -50,11 +56,15 @@ paths:
         "403": { description: Bukan penjastip }
   /v1/stores/me:
     get:
+      operationId: listMyStores
       summary: Daftar toko milik akun aktif
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: Daftar toko } }
+      responses:
+        "200": { description: Daftar toko }
+        "401": { description: Token tidak valid }
   /v1/products:
     post:
+      operationId: createProduct
       summary: Tambah produk dengan foto
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -78,11 +88,15 @@ paths:
         "413": { description: Foto melebihi 5 MB }
   /v1/products/me:
     get:
+      operationId: listMyProducts
       summary: Seluruh produk milik akun aktif
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: Daftar produk aktif dan nonaktif } }
+      responses:
+        "200": { description: Daftar produk aktif dan nonaktif }
+        "401": { description: Token tidak valid }
   /v1/products/{id}:
     patch:
+      operationId: updateProduct
       summary: Ubah produk atau ganti foto
       security: [{ bearerAuth: [] }]
       parameters:
@@ -94,6 +108,7 @@ paths:
         "200": { description: Produk diperbarui }
         "404": { description: Produk tidak ditemukan atau bukan milik pengguna }
     delete:
+      operationId: disableProduct
       summary: Nonaktifkan produk
       security: [{ bearerAuth: [] }]
       parameters:
@@ -103,25 +118,44 @@ paths:
           schema: { type: integer }
       responses:
         "204": { description: Produk dinonaktifkan }
+        "404": { description: Produk tidak ditemukan atau bukan milik pengguna }
   /health:
     get:
+      operationId: gatewayHealth
       summary: Cek kesehatan gateway
-      responses: { "200": { description: Layanan sehat } }
+      security: []
+      responses:
+        "200": { description: Layanan sehat }
+        "400": { description: Permintaan tidak valid }
   /v1/items:
     get:
+      operationId: listItems
       summary: Daftar barang katalog
-      responses: { "200": { description: Daftar barang } }
+      security: []
+      responses:
+        "200": { description: Daftar barang }
+        "400": { description: Permintaan tidak valid }
   /v1/toko:
     get:
+      operationId: listStoresPublic
       summary: Daftar toko aktif
-      responses: { "200": { description: Daftar toko } }
+      security: []
+      responses:
+        "200": { description: Daftar toko }
+        "400": { description: Permintaan tidak valid }
   /v1/login:
     post:
+      operationId: loginUser
       summary: Terbitkan JWT pengembangan
-      responses: { "200": { description: JWT diterbitkan } }
+      security: []
+      responses:
+        "200": { description: JWT diterbitkan }
+        "401": { description: Email atau password salah }
   /v1/register:
     post:
+      operationId: registerUser
       summary: Daftarkan akun penitip atau penjastip
+      security: []
       requestBody:
         required: true
         content:
@@ -138,7 +172,9 @@ paths:
         "409": { description: Email telah terdaftar }
   /v1/sessions:
     get:
+      operationId: listOpenSessions
       summary: Daftar sesi jastip terbuka
+      security: []
       parameters:
         - in: query
           name: page
@@ -150,7 +186,9 @@ paths:
           description: Ukuran halaman
       responses:
         "200": { description: Daftar sesi }
+        "400": { description: Parameter pagination tidak valid }
     post:
+      operationId: createSession
       summary: Buka sesi jastip
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -164,6 +202,7 @@ paths:
         "403": { description: Bukan penjastip }
   /v1/titipan:
     post:
+      operationId: createTitipan
       summary: Reservasi kapasitas dan buat titipan
       security: [{ bearerAuth: [] }]
       parameters:
@@ -194,27 +233,50 @@ paths:
               description: Lama tunggu (detik) sebelum mencoba lagi
   /v1/titipan/me:
     get:
+      operationId: listMyTitipan
       summary: Daftar titipan milik akun
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: Riwayat titipan } }
+      responses:
+        "200": { description: Riwayat titipan }
+        "401": { description: Token tidak valid }
   /v1/titipan/{id}/cancel:
     post:
+      operationId: cancelTitipan
       summary: Batalkan titipan dan lepaskan kapasitas tepat sekali
       security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
       responses: { "200": { description: Dibatalkan }, "409": { description: Tidak dapat dibatalkan } }
   /v1/titipan/{id}/offers:
     post:
+      operationId: reviseOffer
       summary: Revisi tawaran biaya jasa
       security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
       responses: { "201": { description: Tawaran dibuat }, "409": { description: Reservasi/titipan tidak valid } }
   /v1/offers/{id}:
     patch:
+      operationId: decideOffer
       summary: Penjastip menerima atau menolak tawaran
       security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
       responses: { "200": { description: Keputusan tersimpan }, "409": { description: Transisi tidak valid } }
   /v1/payments:
     post:
+      operationId: createPayment
       summary: Tahan dana titipan dalam escrow
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: header
           name: Idempotency-Key
@@ -226,46 +288,123 @@ paths:
         "503": { description: Order service tidak tersedia }
   /v1/tracking/{titipanId}:
     get:
+      operationId: getTracking
       summary: Riwayat tracking
+      security: [{ bearerAuth: [] }]
       parameters:
         - in: path
           name: titipanId
           required: true
           schema: { type: integer }
-      responses: { "200": { description: Riwayat status } }
+      responses:
+        "200": { description: Riwayat status }
+        "404": { description: Titipan tidak ditemukan }
   /v1/tracking:
     post:
+      operationId: advanceTracking
       summary: Tambahkan status berikutnya
+      security: [{ bearerAuth: [] }]
       responses:
         "201": { description: Status dicatat }
         "409": { description: Transisi tidak berurutan }
   /v1/tracking/{titipanId}/confirm-received:
     post:
+      operationId: confirmReceived
       summary: Penitip mengonfirmasi diterima dan memicu pelepasan escrow
       security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: titipanId
+          required: true
+          schema: { type: integer }
       responses: { "201": { description: Barang diterima }, "409": { description: Barang belum diantar } }
   /v1/admin/users:
     get:
+      operationId: adminListUsers
       summary: Daftar akun dengan pencarian, filter, dan pagination
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: Daftar akun }, "403": { description: Bukan admin } }
+      responses:
+        "200": { description: Daftar akun }
+        "403": { description: Bukan admin }
     post:
+      operationId: adminCreateUser
       summary: Buat akun oleh admin, termasuk admin tambahan
       security: [{ bearerAuth: [] }]
-      responses: { "201": { description: Akun dibuat }, "409": { description: Email sudah digunakan } }
+      responses:
+        "201": { description: Akun dibuat }
+        "409": { description: Email sudah digunakan }
   /v1/admin/users/{id}:
-    get: { summary: Detail akun, security: [{ bearerAuth: [] }], responses: { "200": { description: Detail akun } } }
-    patch: { summary: Ubah profil, role, password, atau status akun, security: [{ bearerAuth: [] }], responses: { "200": { description: Akun diperbarui }, "409": { description: Melanggar perlindungan admin terakhir } } }
-    delete: { summary: Nonaktifkan akun, security: [{ bearerAuth: [] }], responses: { "204": { description: Akun dinonaktifkan }, "409": { description: Admin sendiri atau admin terakhir } } }
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    get:
+      operationId: adminGetUser
+      summary: Detail akun
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Detail akun }
+        "404": { description: Akun tidak ditemukan }
+    patch:
+      operationId: adminUpdateUser
+      summary: Ubah profil, role, password, atau status akun
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Akun diperbarui }
+        "409": { description: Melanggar perlindungan admin terakhir }
+    delete:
+      operationId: adminDeleteUser
+      summary: Nonaktifkan akun
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Akun dinonaktifkan }
+        "409": { description: Admin sendiri atau admin terakhir }
   /v1/admin/stores:
-    get: { summary: Daftar seluruh toko, security: [{ bearerAuth: [] }], responses: { "200": { description: Daftar toko } } }
-    post: { summary: Buat toko dengan owner penjastip aktif, security: [{ bearerAuth: [] }], responses: { "201": { description: Toko dibuat } } }
-  /v1/admin/stores/{id}:
-    patch: { summary: Ubah toko atau owner, security: [{ bearerAuth: [] }], responses: { "200": { description: Toko diperbarui } } }
-    delete: { summary: Nonaktifkan toko dan produknya, security: [{ bearerAuth: [] }], responses: { "204": { description: Toko dinonaktifkan }, "409": { description: Masih memiliki sesi aktif } } }
-  /v1/admin/products:
-    get: { summary: Daftar seluruh produk, security: [{ bearerAuth: [] }], responses: { "200": { description: Daftar produk } } }
+    get:
+      operationId: adminListStores
+      summary: Daftar seluruh toko
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Daftar toko }
+        "403": { description: Bukan admin }
     post:
+      operationId: adminCreateStore
+      summary: Buat toko dengan owner penjastip aktif
+      security: [{ bearerAuth: [] }]
+      responses:
+        "201": { description: Toko dibuat }
+        "409": { description: Owner tidak valid }
+  /v1/admin/stores/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    patch:
+      operationId: adminUpdateStore
+      summary: Ubah toko atau owner
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Toko diperbarui }
+        "404": { description: Toko tidak ditemukan }
+    delete:
+      operationId: adminDeleteStore
+      summary: Nonaktifkan toko dan produknya
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Toko dinonaktifkan }
+        "409": { description: Masih memiliki sesi aktif }
+  /v1/admin/products:
+    get:
+      operationId: adminListProducts
+      summary: Daftar seluruh produk
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Daftar produk }
+        "403": { description: Bukan admin }
+    post:
+      operationId: adminCreateProduct
       summary: Buat produk; foto JPG, PNG, atau WEBP maksimal 5 MB
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -282,17 +421,66 @@ paths:
                 stok: { type: integer, minimum: 0 }
                 satuan: { type: string }
                 foto: { type: string, format: binary }
-      responses: { "201": { description: Produk dibuat }, "413": { description: Foto terlalu besar } }
+      responses:
+        "201": { description: Produk dibuat }
+        "413": { description: Foto terlalu besar }
   /v1/admin/products/{id}:
-    patch: { summary: Ubah produk atau ganti foto, security: [{ bearerAuth: [] }], responses: { "200": { description: Produk diperbarui } } }
-    delete: { summary: Nonaktifkan produk, security: [{ bearerAuth: [] }], responses: { "204": { description: Produk dinonaktifkan } } }
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    patch:
+      operationId: adminUpdateProduct
+      summary: Ubah produk atau ganti foto
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Produk diperbarui }
+        "404": { description: Produk tidak ditemukan }
+    delete:
+      operationId: adminDeleteProduct
+      summary: Nonaktifkan produk
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Produk dinonaktifkan }
+        "404": { description: Produk tidak ditemukan }
   /v1/admin/sessions:
-    get: { summary: Daftar seluruh sesi, security: [{ bearerAuth: [] }], responses: { "200": { description: Daftar sesi } } }
+    get:
+      operationId: adminListSessions
+      summary: Daftar seluruh sesi
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Daftar sesi }
+        "403": { description: Bukan admin }
   /v1/admin/orders:
-    get: { summary: Daftar seluruh titipan, security: [{ bearerAuth: [] }], responses: { "200": { description: Daftar titipan } } }
+    get:
+      operationId: adminListOrders
+      summary: Daftar seluruh titipan
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Daftar titipan }
+        "403": { description: Bukan admin }
   /v1/admin/payments:
-    get: { summary: Daftar seluruh pembayaran, security: [{ bearerAuth: [] }], responses: { "200": { description: Daftar pembayaran } } }
+    get:
+      operationId: adminListPayments
+      summary: Daftar seluruh pembayaran
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Daftar pembayaran }
+        "403": { description: Bukan admin }
   /v1/admin/tracking:
-    get: { summary: Daftar seluruh event tracking, security: [{ bearerAuth: [] }], responses: { "200": { description: Daftar event } } }
+    get:
+      operationId: adminListTracking
+      summary: Daftar seluruh event tracking
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Daftar event }
+        "403": { description: Bukan admin }
   /v1/admin/audit:
-    get: { summary: Audit aksi admin, security: [{ bearerAuth: [] }], responses: { "200": { description: Daftar audit } } }
+    get:
+      operationId: adminListAudit
+      summary: Audit aksi admin
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: Daftar audit }
+        "403": { description: Bukan admin }

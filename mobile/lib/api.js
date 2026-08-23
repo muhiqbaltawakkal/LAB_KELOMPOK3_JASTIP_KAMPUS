@@ -6,6 +6,9 @@ function fromWebLocation() {
   if (hostname.endsWith(".app.github.dev")) {
     return `${protocol}//${hostname.replace(/-\d+\.app\.github\.dev$/, "-8080.app.github.dev")}`;
   }
+  if (hostname.endsWith(".exp.direct")) {
+    return `${protocol}//${hostname.replace(/-\d+\.exp\.direct$/, "-8080.exp.direct")}`;
+  }
   if (hostname === "localhost" || hostname === "127.0.0.1") {
     return "http://localhost:8080";
   }
@@ -21,6 +24,9 @@ function fromExpoHostUri() {
   if (!hostUri) return null;
   const host = String(hostUri).split(":")[0];
   if (!host) return null;
+  if (host.endsWith(".exp.direct")) {
+    return `https://${host.replace(/-\d+\.exp\.direct$/, "-8080.exp.direct")}`;
+  }
   return `http://${host}:8080`;
 }
 

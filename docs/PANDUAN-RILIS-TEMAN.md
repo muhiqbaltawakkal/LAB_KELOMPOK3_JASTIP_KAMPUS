@@ -72,3 +72,52 @@ Buka Pull Request dari `release/admin-dashboard` menuju `main`. Merge hanya sete
 ## Docker
 
 Salin `.env.example` menjadi `.env`, ganti kedua secret dengan nilai acak berbeda minimal 32 karakter, lalu jalankan `docker compose up --build`. Jangan commit `.env`.
+
+## 5. Gate Rilis Per Peran (Wajib)
+
+Sebelum PR dibuka, semua peran wajib menandai bagian masing-masing:
+
+### ⚙️ Backend/API Engineer
+
+- [ ] Endpoint kritis tervalidasi: `POST /v1/titipan`, `POST /v1/payments`, `POST /v1/tracking/{id}/confirm-received`.
+- [ ] Smoke test E2E lulus: `node scripts/smoke-test.mjs`.
+- [ ] Tidak ada perubahan endpoint yang menyimpang dari `openapi.yaml`.
+
+### 🚢 Infrastructure & DevOps
+
+- [ ] `docker compose up -d --build` berhasil.
+- [ ] Semua container `healthy` pada `docker compose ps`.
+- [ ] Gateway merespons sehat pada `GET /health`.
+- [ ] Jika sempat 502 setelah reset, lakukan `docker compose restart nginx` lalu verifikasi ulang.
+
+### 🗄️ Data & Persistence Engineer
+
+- [ ] Migrasi sinkron dengan runtime (termasuk status tracking).
+- [ ] Seed valid, tidak ada JSON rusak/duplikat.
+- [ ] Konsistensi stok/kapasitas tervalidasi oleh skenario uji.
+
+### 📊 QA, Load-Test & Dokumentasi
+
+- [ ] Unit test per service lulus:
+	- `docker compose exec -T catalog-service npm test`
+	- `docker compose exec -T order-service-1 npm test`
+	- `docker compose exec -T payment-service npm test`
+	- `docker compose exec -T tracking-service npm test`
+- [ ] Lint OpenAPI lulus: `npx @redocly/cli lint openapi.yaml`.
+- [ ] Laporan uji, testing guide, dan template bukti PR terbarui.
+
+## 6. Lampiran Bukti yang Harus Dibawa Saat Submit
+
+1. Output terminal health, smoke test, unit test, dan lint OpenAPI.
+2. Screenshot login web dan Expo Go.
+3. Tautan PR + hasil review.
+4. Dokumen final yang sudah diisi:
+	 - `docs/LAPORAN-UJI.md`
+	 - `docs/TESTING.md`
+	 - `docs/TEMPLATE-BUKTI-PR-REVIEW.md`
+
+## 7. Kriteria Siap Merge
+
+1. Tidak ada error blocking.
+2. Semua gate per peran tercentang.
+3. Bukti review sudah ada minimal satu approval reviewer.
