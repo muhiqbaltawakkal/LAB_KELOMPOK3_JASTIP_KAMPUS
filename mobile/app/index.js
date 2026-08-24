@@ -33,7 +33,7 @@ function Penjastip({ token, user, offline, logout }) {
   const [store, setStore] = useState({ nama: "", alamat: "", kategori: "" });
   const [product, setProduct] = useState({ tokoId: "", nama: "", kategori: "", harga: "", stok: "", satuan: "pcs", foto: null });
   const [session, setSession] = useState({ storeId: "", productIds: [], batas: "17:00", kapasitas: "10", biayaJasaPerUnit: "5000" });
-  async function refresh() { const [a, b, c, d] = await Promise.all([api.myStores(token), api.myProducts(token), api.mySessions(token), api.penjastipTitipan(token)]); const mine=d.titipan||[]; const tracking=Object.fromEntries(await Promise.all(mine.map(async(x)=>[x.id,(await api.tracking(x.id,token).catch(()=>({events:[]}))).events||[]]))); setStores(a.stores || []); setProducts(b.products || []); setSessions(c.sessions || []); setOrders(mine); setOrderTracking(tracking); await storage.saveCache({ owner: user.id, stores: a.stores, products: b.products, sessions: c.sessions, penjastipOrders:mine, orderTracking:tracking }); }
+  async function refresh() { const [a, b, c, d] = await Promise.all([api.myStores(token), api.myProducts(token), api.mySessions(token), api.penjastipTitipan(token)]); const mine=d.titipan||[]; const tracking={}; for(const x of mine){tracking[x.id]=(await api.tracking(x.id,token).catch(()=>({events:[]}))).events||[];} setStores(a.stores || []); setProducts(b.products || []); setSessions(c.sessions || []); setOrders(mine); setOrderTracking(tracking); await storage.saveCache({ owner: user.id, stores: a.stores, products: b.products, sessions: c.sessions, penjastipOrders:mine, orderTracking:tracking }); }
   useEffect(() => { storage.loadCache().then((x) => { if (x?.value?.owner === user.id) { setStores(x.value.stores || []); setProducts(x.value.products || []); setSessions(x.value.sessions || []); setOrders(x.value.penjastipOrders||[]); setOrderTracking(x.value.orderTracking||{}); } }); if (!offline) refresh().catch((e) => setError(e.message)); }, [offline]);
   async function run(action) { if (offline) return setError("Aksi ini membutuhkan koneksi internet."); setBusy(true); setError(""); try { await action(); await refresh(); } catch (e) { setError(e.message); } finally { setBusy(false); } }
   async function pick(camera) { const permission = camera ? await ImagePicker.requestCameraPermissionsAsync() : await ImagePicker.requestMediaLibraryPermissionsAsync(); if (!permission.granted) return setError("Izin foto ditolak. Aktifkan melalui Pengaturan."); const result = camera ? await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: .8 }) : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: .8 }); if (!result.canceled) setProduct((x) => ({ ...x, foto: result.assets[0] })); }
@@ -96,9 +96,108 @@ function Penitip({ token, user, offline, logout }) {
   let content;
   if(tab==="Sesi")content=<>{products.length?products.map(x=><Pressable key={`${x.session.id}-${x.id}`} onPress={()=>{setChosen(x);setTab("Detail")}} style={s.catalog}><Photo product={x} large/><Text style={s.cardTitle}>{x.nama}</Text><Text style={s.muted}>{x.session.store_name} · {money(x.harga)}/{x.satuan}</Text><Text style={s.muted}>Sisa kapasitas {x.session.kapasitas_tersisa} · jasa {money(x.session.biaya_jasa_per_unit)}/unit</Text></Pressable>):<Card><Text style={s.muted}>Belum ada sesi aktif.</Text></Card>}</>;
   if(tab==="Detail")content=chosen?<Card title={chosen.nama}><Photo product={chosen} large/><Text style={s.muted}>Deadline {new Date(chosen.session.batas_waktu).toLocaleString("id-ID")}</Text><Input label="Jumlah" keyboardType="numeric" value={qty} onChangeText={setQty}/><Input label="Varian" value={variant} onChangeText={setVariant}/><Input label="Catatan" value={note} onChangeText={setNote}/><Button title="Titip langsung" onPress={()=>create("langsung")}/><Input label="Tawaran jasa per unit" keyboardType="numeric" value={offer} onChangeText={setOffer}/><Button secondary title="Ajukan tawaran" onPress={()=>create("tawar")}/></Card>:<Card><Text>Pilih produk dari daftar sesi.</Text></Card>;
-  if(tab==="Tawaran & Bayar")content=<>{orders.map(x=><Card key={x.id} title={`Titipan #${x.id}`}><Text style={s.muted}>{x.product_name} · {x.status} · {money(x.total)}</Text>{x.latest_offer?<Text style={s.muted}>Tawaran ronde {x.latest_offer.round}: {money(x.latest_offer.amount_per_unit)} ({x.latest_offer.status})</Text>:null}{x.status==="menunggu_pembayaran"?<Button disabled={busy} title="Bayar escrow simulasi" onPress={()=>pay(x)}/>:null}{x.status==="tawaran_ditolak"?<><Input label="Revisi biaya jasa per unit" keyboardType="numeric" value={revisions[x.id]||""} onChangeText={v=>setRevisions({...revisions,[x.id]:v})}/><View style={s.row}><Button disabled={busy} title="Kirim revisi" onPress={()=>revise(x)}/><Button secondary disabled={busy} title="Batalkan titipan" onPress={()=>cancel(x)}/></View></>:null}<Text style={s.muted}>Pembayaran: {payments[x.id]?.status||"belum ada"}</Text><Button secondary title="Lihat tracking" onPress={()=>showTracking(x)}/></Card>)}</>;
+  if(tab==="Tawaran & Bayar")content=<>{orders.map(x=>{
+  const lastTracking=(historyTracking[x.id]||[]).at(-1)?.status;
+
+  return <Card key={x.id} title={`Titipan #${x.id}`}>
+    <Text style={s.muted}>
+      {x.product_name} · {x.status} · {money(x.total)}
+    </Text>
+
+    {x.latest_offer?
+      <Text style={s.muted}>
+        Tawaran ronde {x.latest_offer.round}: {money(x.latest_offer.amount_per_unit)} ({x.latest_offer.status})
+      </Text>
+    :null}
+
+    {x.status==="menunggu_pembayaran"?
+      <Button
+        disabled={busy}
+        title="Bayar escrow simulasi"
+        onPress={()=>pay(x)}
+      />
+    :null}
+
+    {x.status==="tawaran_ditolak"?
+      <>
+        <Input
+          label="Revisi biaya jasa per unit"
+          keyboardType="numeric"
+          value={revisions[x.id]||""}
+          onChangeText={v=>setRevisions({...revisions,[x.id]:v})}
+        />
+
+        <View style={s.row}>
+          <Button
+            disabled={busy}
+            title="Kirim revisi"
+            onPress={()=>revise(x)}
+          />
+
+          <Button
+            secondary
+            disabled={busy}
+            title="Batalkan titipan"
+            onPress={()=>cancel(x)}
+          />
+        </View>
+      </>
+    :null}
+
+    <Text style={s.muted}>
+      Pembayaran: {payments[x.id]?.status||"belum ada"}
+    </Text>
+
+    <Text style={s.muted}>
+      Tracking: {lastTracking||"belum ada"}
+    </Text>
+
+    {lastTracking==="diantar"?
+      <Button
+        disabled={busy}
+        title="Konfirmasi barang diterima"
+        onPress={()=>confirm(x)}
+      />
+    :null}
+
+    {lastTracking==="diterima"?
+      <Text style={s.success}>
+        Barang telah diterima.
+        Escrow: {payments[x.id]?.status||"diproses"}.
+      </Text>
+    :null}
+
+    <Button
+      secondary
+      title="Lihat tracking"
+      onPress={()=>showTracking(x)}
+    />
+  </Card>
+})}</>;
   if(tab==="Tracking")content=<Card title={chosen?`Tracking #${chosen.id}`:"Tracking"}>{events.length?events.map(e=><View key={e.id} style={s.list}><Text style={s.strong}>{e.status}</Text><Text style={s.muted}>{new Date(e.created_at).toLocaleString("id-ID")} {e.note||""}</Text></View>):<Text style={s.muted}>Belum ada event tracking.</Text>}{events.at(-1)?.status==="diantar"?<Button disabled={busy} title="Konfirmasi barang diterima" onPress={()=>confirm(chosen)}/>:null}{events.at(-1)?.status==="diterima"?<Text style={s.success}>Barang telah diterima. Escrow: {payments[chosen?.id]?.status||"diproses"}.</Text>:null}</Card>;
-  if(tab==="Riwayat")content=<>{orders.length?orders.map(x=>{const tracking=(historyTracking[x.id]||[]).at(-1)?.status;return <Card key={x.id} title={`#${x.id} · ${x.product_name}`}><Text style={s.muted}>{x.store_name} · qty {x.qty} · {money(x.total)}</Text><Text style={s.muted}>Titipan: {x.status} · Pembayaran: {payments[x.id]?.status||"belum ada"} · Tracking: {tracking||"belum ada"}</Text>{x.latest_offer?<Text style={s.muted}>Tawaran terakhir ronde {x.latest_offer.round}: {money(x.latest_offer.amount_per_unit)} ({x.latest_offer.status})</Text>:null}{x.status==="selesai"&&payments[x.id]?.status==="dilepas"?<Text style={s.success}>Transaksi selesai · dana telah dilepas.</Text>:null}</Card>}):<Card><Text style={s.muted}>Riwayat kosong. Data terakhir tetap tersedia saat offline.</Text></Card>}</>;
+  if(tab==="Riwayat")content=<>{orders.length?orders.map(x=>{
+  const tracking=(historyTracking[x.id]||[]).at(-1)?.status;
+  const paymentStatus =
+    payments[x.id]?.status ||
+    (x.status==="dibayar" ? "tertahan" :
+     x.status==="selesai" ? "dilepas" :
+     "belum ada");
+
+  return <Card key={x.id} title={`#${x.id} · ${x.product_name}`}>
+    <Text style={s.muted}>
+      {x.store_name} · qty {x.qty} · {money(x.total)}
+    </Text>
+    <Text style={s.muted}>
+      Titipan: {x.status} · Pembayaran: {paymentStatus} · Tracking: {tracking||"belum ada"}
+    </Text>
+    {x.latest_offer?<Text style={s.muted}>
+      Tawaran terakhir ronde {x.latest_offer.round}: {money(x.latest_offer.amount_per_unit)} ({x.latest_offer.status})
+    </Text>:null}
+    {x.status==="selesai"&&paymentStatus==="dilepas"?
+      <Text style={s.success}>Transaksi selesai · dana telah dilepas.</Text>
+    :null}
+  </Card>
+}):<Card><Text style={s.muted}>Riwayat kosong. Data terakhir tetap tersedia saat offline.</Text></Card>}</>;
   return <Shell title="Jastip Kampus · Penitip" logout={logout} offline={offline}><View style={s.wrap}>{tabs.map(x=><Pressable key={x} onPress={()=>setTab(x)} style={[s.chip,tab===x&&s.chipOn]}><Text style={tab===x?s.chipTextOn:s.chipText}>{x}</Text></Pressable>)}</View>{message?<Text style={s.success}>{message}</Text>:null}{busy?<ActivityIndicator color={C.blue}/>:null}{content}</Shell>
 }
 
