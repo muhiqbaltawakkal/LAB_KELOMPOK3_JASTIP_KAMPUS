@@ -201,8 +201,6 @@ function Penitip({ token, user, offline, logout }) {
   return <Shell title="Jastip Kampus · Penitip" logout={logout} offline={offline}><View style={s.wrap}>{tabs.map(x=><Pressable key={x} onPress={()=>setTab(x)} style={[s.chip,tab===x&&s.chipOn]}><Text style={tab===x?s.chipTextOn:s.chipText}>{x}</Text></Pressable>)}</View>{message?<Text style={s.success}>{message}</Text>:null}{busy?<ActivityIndicator color={C.blue}/>:null}{content}</Shell>
 }
 
-function ModeChooser({ user, choose, logout }) { return <Shell title={`Halo, ${user.nama}`} logout={logout}><Card title="Pilih mode aplikasi"><Text style={s.muted}>Mode dapat diganti kembali tanpa membuat akun baru.</Text><Button title="Masuk sebagai Penitip" onPress={() => choose("penitip")} /><Button secondary title="Masuk sebagai Penjastip" onPress={() => choose("penjastip")} /></Card></Shell>; }
-
 export default function App() {
   const [auth, setAuth] = useState(null); const [offline, setOffline] = useState(false); const [ready, setReady] = useState(false);
   const [activeMode, setActiveMode] = useState(null);
@@ -213,9 +211,9 @@ export default function App() {
   if (!ready) return <View style={[s.root, { justifyContent: "center" }]}><ActivityIndicator color={C.blue} /></View>;
   if (!auth) return <Auth onAuth={logged} />;
   if (auth.user.roles?.includes("admin")) return <AdminDashboard token={auth.token} user={auth.user} offline={offline} logout={logout} />;
-  if (!activeMode) return <ModeChooser user={auth.user} choose={setActiveMode} logout={logout} />;
+  const resolvedMode = activeMode || "penitip";
   const back = () => setActiveMode(null);
-  return activeMode === "penjastip" ? <Penjastip token={auth.token} user={auth.user} offline={offline} logout={back} /> : <Penitip token={auth.token} user={auth.user} offline={offline} logout={back} />;
+  return resolvedMode === "penjastip" ? <Penjastip token={auth.token} user={auth.user} offline={offline} logout={back} /> : <Penitip token={auth.token} user={auth.user} offline={offline} logout={back} />;
 }
 
 const s = StyleSheet.create({
