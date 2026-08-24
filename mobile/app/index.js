@@ -212,8 +212,7 @@ export default function App() {
   if (!auth) return <Auth onAuth={logged} />;
   if (auth.user.roles?.includes("admin")) return <AdminDashboard token={auth.token} user={auth.user} offline={offline} logout={logout} />;
   const resolvedMode = activeMode || "penitip";
-  const back = () => setActiveMode(null);
-  return resolvedMode === "penjastip" ? <Penjastip token={auth.token} user={auth.user} offline={offline} logout={back} /> : <Penitip token={auth.token} user={auth.user} offline={offline} logout={back} />;
+  return resolvedMode === "penjastip" ? <Penjastip token={auth.token} user={auth.user} offline={offline} logout={logout} /> : <Penitip token={auth.token} user={auth.user} offline={offline} logout={logout} />;
 }
 
 const s = StyleSheet.create({
