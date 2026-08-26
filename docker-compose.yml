@@ -27,7 +27,7 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: unless-stopped
-    networks: [data]
+    networks: [data, data-admin]        # <-- BERUBAH: jadi jembatan dua tier
     environment:
       POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-postgres-dev-only}
@@ -47,7 +47,7 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    networks: [data]
+    networks: [data, data-admin]        # <-- BERUBAH
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 3s
@@ -109,10 +109,10 @@ services:
       <<: *order-env
       SERVICE_SCOPE: penjastip
 
-  # Network terpisah: hanya nginx yang bisa menjangkau container admin.
+  # Tidak berbagi network apa pun dengan container order lain; hanya nginx dan DB yang menjangkau.
   order-admin:
     <<: *order-base
-    networks: [admin, data]
+    networks: [admin, data-admin]       # <-- BERUBAH: dulu [admin, data]
     environment:
       <<: *order-env
       SERVICE_SCOPE: admin
@@ -204,6 +204,7 @@ networks:
   app:
   admin:
   data:
+  data-admin:                           # <-- BERUBAH: network baru
 
 volumes:
   postgres-data:

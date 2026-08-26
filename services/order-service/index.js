@@ -20,6 +20,24 @@ const rolesFor = (accountType) => accountType === "admin" ? ["admin"] : ["peniti
 const publicUser = (row) => ({ id: row.id, nama: row.nama, email: row.email, noHp: row.no_hp, kampus: row.kampus, accountType: row.account_type, role: row.account_type === "admin" ? "admin" : "penjastip", roles: rolesFor(row.account_type), aktif: row.aktif });
 const pageArgs = (req) => { const page = Math.max(1, parseInt(req.query.page, 10) || 1); const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20)); return { page, limit, offset: (page - 1) * limit }; };
 
+const SERVICE_SCOPE = process.env.SERVICE_SCOPE || "all";
+const SCOPE_ROUTES = {
+  auth:      [/^\/v1\/register$/, /^\/v1\/login$/, /^\/v1\/me$/],
+  penitip:   [/^\/v1\/titipan(\/|$)/, /^\/v1\/sessions(\/|$)/],
+  penjastip: [/^\/v1\/sessions(\/|$)/, /^\/v1\/penjastip(\/|$)/, /^\/v1\/offers(\/|$)/],
+  admin:     [/^\/v1\/admin(\/|$)/],
+  internal:  [/^\/internal(\/|$)/],
+};
+
+// Tiap container hanya melayani endpoint milik jenis user-nya (pola bulkhead).
+app.use((req, res, next) => {
+  if (SERVICE_SCOPE === "all" || req.path === "/health") return next();
+  const allowed = SCOPE_ROUTES[SERVICE_SCOPE] || [];
+  if (allowed.some((pattern) => pattern.test(req.path))) return next();
+  log("warn", "endpoint di luar scope container", { rid: req.rid, path: req.path, scope: SERVICE_SCOPE });
+  res.status(404).json({ error: "endpoint tidak dilayani container ini", scope: SERVICE_SCOPE });
+});
+
 let redis;
 async function startRedis() {
   try { redis = createClient({ url: process.env.REDIS_URL || "redis://localhost:6379" }); redis.on("error", () => {}); await redis.connect(); }
