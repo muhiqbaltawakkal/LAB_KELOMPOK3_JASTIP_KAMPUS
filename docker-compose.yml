@@ -1,6 +1,33 @@
+x-order-env: &order-env
+  DATABASE_URL: postgresql://order_app:${ORDER_DB_PASSWORD:-order-dev-only}@postgres:5432/order_db
+  REDIS_URL: redis://redis:6379
+  CATALOG_URL: http://catalog-service:3001
+  JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
+  SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+  DEMO_MANIFEST: /seed-data/demo-seed.js
+
+x-order-base: &order-base
+  build: ./services/order-service
+  restart: unless-stopped
+  networks: [app, data]
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    catalog-service: { condition: service_started }
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://localhost:3002/health"]
+    interval: 5s
+    timeout: 3s
+    retries: 12
+  deploy:
+    resources:
+      limits: { cpus: "0.75", memory: 512M }
+
 services:
   postgres:
     image: postgres:17-alpine
+    restart: unless-stopped
+    networks: [data, data-admin]        # <-- BERUBAH: jadi jembatan dua tier
     environment:
       POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-postgres-dev-only}
@@ -19,6 +46,8 @@ services:
 
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    networks: [data, data-admin]        # <-- BERUBAH
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 3s
@@ -27,12 +56,14 @@ services:
 
   catalog-service:
     build: ./services/catalog-service
+    restart: unless-stopped
+    networks: [app, data]
     environment:
       DATABASE_URL: postgresql://catalog_app:${CATALOG_DB_PASSWORD:-catalog-dev-only}@postgres:5432/catalog_db
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
-      ORDER_URL: http://order-service-1:3002
+      ORDER_URL: http://order-internal:3002
       UPLOAD_DIR: /data/uploads
     volumes:
       - catalog-uploads:/data/uploads
@@ -48,38 +79,69 @@ services:
       timeout: 3s
       retries: 12
 
-  order-service-1: &order-service
-    build: ./services/order-service
+  # ============ ORDER SERVICE: 1 image, container dipisah per jenis user ============
+
+  order-auth:
+    <<: *order-base
     environment:
-      DATABASE_URL: postgresql://order_app:${ORDER_DB_PASSWORD:-order-dev-only}@postgres:5432/order_db
-      REDIS_URL: redis://redis:6379
-      CATALOG_URL: http://catalog-service:3001
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
-      DEMO_MANIFEST: /seed-data/demo-seed.js
+      <<: *order-env
+      SERVICE_SCOPE: auth
+
+  order-penitip-1:
+    <<: *order-base
+    environment:
+      <<: *order-env
+      SERVICE_SCOPE: penitip
+  order-penitip-2:
+    <<: *order-base
+    environment:
+      <<: *order-env
+      SERVICE_SCOPE: penitip
+
+  order-penjastip-1:
+    <<: *order-base
+    environment:
+      <<: *order-env
+      SERVICE_SCOPE: penjastip
+  order-penjastip-2:
+    <<: *order-base
+    environment:
+      <<: *order-env
+      SERVICE_SCOPE: penjastip
+
+  # Tidak berbagi network apa pun dengan container order lain; hanya nginx dan DB yang menjangkau.
+  order-admin:
+    <<: *order-base
+    networks: [admin, data-admin]       # <-- BERUBAH: dulu [admin, data]
+    environment:
+      <<: *order-env
+      SERVICE_SCOPE: admin
+      ADMIN_NAME: ${ADMIN_NAME:-Administrator}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@jastip.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    deploy:
+      resources:
+        limits: { cpus: "0.50", memory: 384M }
+
+  order-internal:
+    <<: *order-base
+    environment:
+      <<: *order-env
+      SERVICE_SCOPE: internal
     volumes:
       - ./database:/seed:ro
       - ./dataset:/seed-data:ro
-    depends_on:
-      postgres: { condition: service_healthy }
-      redis: { condition: service_healthy }
-      catalog-service: { condition: service_started }
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3002/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 12
-  order-service-2:
-    <<: *order-service
-  order-service-3:
-    <<: *order-service
+
+  # ============ SERVICE LAIN ============
 
   payment-service:
     build: ./services/payment-service
+    restart: unless-stopped
+    networks: [app, data]
     environment:
       DATABASE_URL: postgresql://payment_app:${PAYMENT_DB_PASSWORD:-payment-dev-only}@postgres:5432/payment_db
       REDIS_URL: redis://redis:6379
-      ORDER_URL: http://order-service-1:3002
+      ORDER_URL: http://order-internal:3002
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
       DEMO_MANIFEST: /seed-data/demo-seed.js
@@ -97,10 +159,12 @@ services:
 
   tracking-service:
     build: ./services/tracking-service
+    restart: unless-stopped
+    networks: [app, data]
     environment:
       DATABASE_URL: postgresql://tracking_app:${TRACKING_DB_PASSWORD:-tracking-dev-only}@postgres:5432/tracking_db
       REDIS_URL: redis://redis:6379
-      ORDER_URL: http://order-service-1:3002
+      ORDER_URL: http://order-internal:3002
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
       SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
       DEMO_MANIFEST: /seed-data/demo-seed.js
@@ -117,17 +181,30 @@ services:
       retries: 12
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    networks: [edge, app, admin]
+    ports: ["8080:8080"]
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    ports: ["8080:8080"]
     depends_on:
-      - catalog-service
-      - order-service-1
-      - order-service-2
-      - order-service-3
-      - payment-service
-      - tracking-service
+      catalog-service: { condition: service_healthy }
+      order-auth: { condition: service_healthy }
+      order-penitip-1: { condition: service_healthy }
+      order-penitip-2: { condition: service_healthy }
+      order-penjastip-1: { condition: service_healthy }
+      order-penjastip-2: { condition: service_healthy }
+      order-admin: { condition: service_healthy }
+      order-internal: { condition: service_healthy }
+      payment-service: { condition: service_healthy }
+      tracking-service: { condition: service_healthy }
+
+networks:
+  edge:
+  app:
+  admin:
+  data:
+  data-admin:                           # <-- BERUBAH: network baru
 
 volumes:
   postgres-data:

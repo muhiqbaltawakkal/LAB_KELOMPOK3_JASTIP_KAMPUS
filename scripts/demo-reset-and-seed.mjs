@@ -15,7 +15,7 @@ const run=(args)=>{const result=spawnSync("docker",["compose",...args],{cwd:root
 console.log("Reset demo: menghapus hanya volume yang didefinisikan docker-compose project ini...");
 run(["down","--volumes","--remove-orphans"]);
 run(["up","--build","--wait"]);
-for(const [service,mode] of [["order-service-1","order"],["catalog-service","catalog"],["payment-service","payment"],["tracking-service","tracking"]]){
+for(const [service,mode] of [["order-internal","order"],["catalog-service","catalog"],["payment-service","payment"],["tracking-service","tracking"]]){
   run(["exec","-T","-w","/app",service,"node","/seed/demo-seed-runner.js",mode]);
 }
 run(["exec","-T","redis","redis-cli","FLUSHALL"]);
