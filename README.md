@@ -17,6 +17,43 @@
 
 Jastip Kampus adalah platform layanan **titip-beli antar mahasiswa**. Mahasiswa dapat membuka layanan jastip, memilih barang, melakukan pembayaran, dan melacak status titipan hingga barang diterima.
 
+## Jalur Lokal Paling Cepat (Semua Laptop)
+
+Jalankan dari root repository:
+
+```bash
+npm run start:local
+```
+
+Perintah ini otomatis:
+1. menyiapkan `.env` lokal dengan nilai valid,
+2. menyalakan seluruh backend lewat Docker Compose,
+3. menampilkan status container,
+4. melakukan auto-repair (reset volume dev) bila terdeteksi mismatch startup.
+
+Jika ingin menonaktifkan auto-repair:
+
+```bash
+npm run start:local -- --no-auto-repair
+```
+
+Setelah backend siap:
+
+```bash
+npm run demo:reset-and-seed -- --confirm-reset
+curl http://localhost:8080/health
+```
+
+Untuk mobile:
+
+```bash
+cd mobile
+npm install
+npm run start:lan
+```
+
+Catatan: nilai `.env` bawaan repository dikhususkan untuk pengembangan lokal. Ganti semua secret/password sebelum deployment publik.
+
 ## Reset dan seed demo workbook
 
 Perintah berikut bersifat destruktif dan hanya untuk Codespaces/lingkungan demo. Perintah menghapus volume PostgreSQL, Redis, serta upload milik Compose project ini, lalu memasukkan tepat 9 akun, 20 toko, 34 produk/foto, 5 sesi, 7 titipan, 6 pembayaran, dan 15 event tracking.
@@ -29,6 +66,17 @@ npm run demo:reset-and-seed -- --confirm-reset
 
 Gunakan launcher khusus agar aplikasi di ponsel mengakses gateway Codespaces,
 bukan `localhost` milik ponsel:
+
+Cara paling aman untuk semua anggota tim (jalan masing-masing Codespace):
+
+```bash
+npm run setup:codespaces
+```
+
+Perintah ini otomatis:
+1. menyalakan backend docker compose,
+2. membuka port 8080 menjadi Public,
+3. menjalankan pengecekan `doctor:codespaces`.
 
 ```bash
 cd mobile

@@ -16,6 +16,18 @@ npm install
 npx expo start
 ```
 
+Alternatif tanpa ngrok (lebih stabil saat tunnel bermasalah):
+
+```bash
+npm run start:lan
+```
+
+Jika `npx expo start --tunnel` error seperti `Cannot read properties of undefined (reading 'body')`, gunakan launcher aman berikut (otomatis fallback ke LAN):
+
+```bash
+npm run start:tunnel-safe
+```
+
 Pindai QR code dengan aplikasi Expo Go di HP.
 
 ## Konfigurasi URL API
@@ -38,6 +50,14 @@ Untuk GitHub Codespaces gunakan launcher berikut (otomatis set URL API):
 ```bash
 npm run start:codespaces
 ```
+
+Cek kesiapan backend + akses publik sebelum start:
+
+```bash
+npm run doctor:codespaces
+```
+
+Launcher Codespaces akan mencoba `--tunnel` terlebih dulu, lalu otomatis fallback ke `--lan` jika ngrok sedang gangguan.
 
 Contoh URL API valid:
 

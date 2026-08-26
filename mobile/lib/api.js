@@ -40,6 +40,26 @@ function isLoopback(url) {
   }
 }
 
+function hostnameOf(url) {
+  if (!url) return null;
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+}
+
+function sameHost(a, b) {
+  const ah = hostnameOf(a);
+  const bh = hostnameOf(b);
+  return Boolean(ah && bh && ah === bh);
+}
+
+function isPublicTunnelHost(url) {
+  const host = hostnameOf(url);
+  return Boolean(host && (host.endsWith(".app.github.dev") || host.endsWith(".exp.direct")));
+}
+
 const configured =
   process.env.EXPO_PUBLIC_API_URL ||
   Constants.expoConfig?.extra?.apiUrl;
@@ -48,11 +68,18 @@ const webDetected = fromWebLocation();
 const expoDetected = fromExpoHostUri();
 const autoDetected = webDetected || expoDetected;
 
+const staleConfiguredPublicHost =
+  isPublicTunnelHost(configured) &&
+  ((webDetected && !sameHost(configured, webDetected)) ||
+    (expoDetected && !sameHost(configured, expoDetected)));
+
 // Jika Expo Go mendeteksi host Metro dan konfigurasi memaksa localhost,
 // gunakan host Metro supaya perangkat fisik tetap bisa menjangkau API.
-export const API_URL = expoDetected && isLoopback(configured)
-  ? expoDetected
-  : configured || autoDetected || "http://localhost:8080";
+export const API_URL = staleConfiguredPublicHost
+  ? autoDetected || configured || "http://localhost:8080"
+  : expoDetected && isLoopback(configured)
+    ? expoDetected
+    : configured || autoDetected || "http://localhost:8080";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

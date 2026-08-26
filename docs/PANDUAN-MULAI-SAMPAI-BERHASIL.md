@@ -21,6 +21,43 @@ node -v
 npm -v
 ```
 
+## Jalur Cepat (Direkomendasikan Tim)
+
+Untuk laptop lokal (Windows/macOS/Linux), gunakan jalur ini dulu:
+
+```bash
+npm run start:local
+```
+
+Script ini otomatis menyiapkan `.env` valid lalu menyalakan semua service backend.
+Jika ada mismatch data lama (contoh: password DB berbeda dengan volume PostgreSQL lama), script melakukan auto-repair sekali dengan reset volume dev agar stack kembali sehat.
+
+Jika ingin langsung sinkron lintas peran (infra + data + backend + QA) gunakan satu perintah ini dari root:
+
+```bash
+npm run sync:all -- --confirm-reset
+```
+
+Perintah ini otomatis:
+
+1. Menyalakan stack docker compose.
+2. Reset + seed dataset resmi (termasuk foto produk).
+3. Menjalankan smoke test end-to-end sampai escrow dilepas.
+4. (Codespaces) validasi konektivitas mobile.
+
+Setelah itu jalankan mobile dengan:
+
+```bash
+cd mobile
+npx expo start --tunnel --clear
+```
+
+Jika ngrok sedang gangguan sementara, pakai fallback stabil:
+
+```bash
+npm run start:codespaces
+```
+
 ## 2. Clone Repository
 
 ```bash
@@ -28,25 +65,27 @@ git clone https://github.com/muhiqbaltawakkal/LAB_KELOMPOK3_JASTIP_KAMPUS.git
 cd LAB_KELOMPOK3_JASTIP_KAMPUS
 ```
 
-## 3. Set Secret Environment (Wajib)
+## 3. Set Secret Environment (Opsional)
 
-Service menolak startup kalau secret terlalu pendek.
+Tidak wajib export manual jika memakai `npm run start:local`, karena script tersebut akan memperbaiki atau membuat `.env` otomatis dengan nilai valid untuk dev.
 
-Linux/macOS:
-
-```bash
-export JWT_SECRET='0123456789abcdef0123456789abcdef'
-export SERVICE_TOKEN='fedcba9876543210fedcba9876543210'
-```
-
-PowerShell:
-
-```powershell
-$env:JWT_SECRET='0123456789abcdef0123456789abcdef'
-$env:SERVICE_TOKEN='fedcba9876543210fedcba9876543210'
-```
+Jika tetap ingin set manual, pastikan `JWT_SECRET` dan `SERVICE_TOKEN` minimal 32 karakter.
 
 ## 4. Jalankan Semua Service Backend
+
+Direkomendasikan:
+
+```bash
+npm run start:local
+```
+
+Nonaktifkan auto-repair (opsional):
+
+```bash
+npm run start:local -- --no-auto-repair
+```
+
+Alternatif manual:
 
 ```bash
 docker compose up -d --build

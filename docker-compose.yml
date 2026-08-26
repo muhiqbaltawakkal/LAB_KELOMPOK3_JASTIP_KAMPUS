@@ -30,8 +30,8 @@ services:
     environment:
       DATABASE_URL: postgresql://catalog_app:${CATALOG_DB_PASSWORD:-catalog-dev-only}@postgres:5432/catalog_db
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-0123456789abcdef0123456789abcdef}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token-fedcba9876543210fedcba9876543210}
       ORDER_URL: http://order-service-1:3002
       UPLOAD_DIR: /data/uploads
     volumes:
@@ -54,8 +54,8 @@ services:
       DATABASE_URL: postgresql://order_app:${ORDER_DB_PASSWORD:-order-dev-only}@postgres:5432/order_db
       REDIS_URL: redis://redis:6379
       CATALOG_URL: http://catalog-service:3001
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-0123456789abcdef0123456789abcdef}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token-fedcba9876543210fedcba9876543210}
       DEMO_MANIFEST: /seed-data/demo-seed.js
     volumes:
       - ./database:/seed:ro
@@ -80,8 +80,8 @@ services:
       DATABASE_URL: postgresql://payment_app:${PAYMENT_DB_PASSWORD:-payment-dev-only}@postgres:5432/payment_db
       REDIS_URL: redis://redis:6379
       ORDER_URL: http://order-service-1:3002
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-0123456789abcdef0123456789abcdef}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token-fedcba9876543210fedcba9876543210}
       DEMO_MANIFEST: /seed-data/demo-seed.js
     volumes:
       - ./database:/seed:ro
@@ -101,8 +101,8 @@ services:
       DATABASE_URL: postgresql://tracking_app:${TRACKING_DB_PASSWORD:-tracking-dev-only}@postgres:5432/tracking_db
       REDIS_URL: redis://redis:6379
       ORDER_URL: http://order-service-1:3002
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET wajib diisi}
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?SERVICE_TOKEN wajib diisi}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-0123456789abcdef0123456789abcdef}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token-fedcba9876543210fedcba9876543210}
       DEMO_MANIFEST: /seed-data/demo-seed.js
     volumes:
       - ./database:/seed:ro

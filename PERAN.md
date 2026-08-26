@@ -28,6 +28,32 @@
 | 🗄️ Data & Persistence Engineer | Migrasi aman, seed valid, skema dan index sinkron dengan kebutuhan query |
 | 📊 QA, Load-Test & Dokumentasi | Smoke test lulus, skenario regresi, pembaruan README/dokumen uji |
 
+## Sinkronisasi Folder dengan Peran
+
+| Folder/File | Penanggung Jawab Utama | Fokus Sinkronisasi |
+|---|---|---|
+| `docs/ADR-*`, `docs/ARSITEKTUR*.md`, `openapi.yaml` | 🏗️ Arsitek Sistem | Konsistensi kontrak API, arsitektur, dan keputusan desain |
+| `services/*/index.js`, `services/*/db.js` | ⚙️ Backend/API Engineer | Endpoint, validasi input, state bisnis penitip-penjastip |
+| `docker-compose.yml`, `nginx/nginx.conf`, `scripts/setup-codespaces.mjs` | 🚢 Infrastructure & DevOps | Kesehatan compose, gateway, port visibility, startup stabil |
+| `database/migrations/*`, `dataset/demo-seed.js`, `database/demo-seed-runner.js` | 🗄️ Data & Persistence Engineer | Struktur data, seed, konsistensi ID produk/toko/sesi, gambar |
+| `scripts/smoke-test.mjs`, `docs/TESTING.md`, `docs/LAPORAN-UJI.md`, `AI-LOG.MD` | 📊 QA, Load-Test & Dokumentasi | Regresi alur penuh, bukti uji, update dokumentasi |
+| `mobile/app/index.js`, `mobile/lib/api.js`, `mobile/scripts/*` | Kolaborasi Backend + DevOps + QA | Koneksi API, tombol/menu, sinkron data sesi/riwayat/foto |
+
+## Perintah Standar Sinkronisasi Tim
+
+Gunakan satu perintah berikut dari root agar stack, dataset, dan alur fitur tersinkron:
+
+```bash
+npm run sync:all -- --confirm-reset
+```
+
+Output dinyatakan siap jika:
+
+1. Semua service `docker compose ps` berstatus healthy.
+2. Seed demo selesai (akun, toko, produk, sesi, pembayaran, tracking terisi).
+3. `scripts/smoke-test.mjs` lulus (`"ok": true`).
+4. (Codespaces) `doctor:codespaces` lulus.
+
 ## Alur Sinkronisasi Antar Peran
 
 1. Arsitek Sistem menetapkan kontrak perubahan dan dampak lintas service.

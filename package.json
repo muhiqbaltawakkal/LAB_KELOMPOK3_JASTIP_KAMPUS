@@ -4,6 +4,12 @@
   "scripts": {
     "bootstrap:admin": "npm --prefix services/order-service run bootstrap:admin",
     "demo:reset-and-seed": "node scripts/demo-reset-and-seed.mjs",
+    "setup:local": "node scripts/setup-local.mjs",
+    "start:local": "node scripts/start-local.mjs",
+    "sync:all": "node scripts/sync-all.mjs",
+    "doctor:codespaces": "npm --prefix mobile run doctor:codespaces",
+    "setup:codespaces": "node scripts/setup-codespaces.mjs",
+    "start:codespaces": "npm --prefix mobile run start:codespaces",
     "test": "node --test scripts/demo-manifest.test.mjs && npm --prefix services/catalog-service test && npm --prefix services/order-service test && npm --prefix services/payment-service test && npm --prefix services/tracking-service test",
     "test:web": "npm --prefix mobile run export:web"
   }

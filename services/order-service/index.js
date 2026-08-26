@@ -84,30 +84,13 @@ app.post("/v1/login", async (req, res) => { await ready; const { rows } = await 
 app.get("/v1/me", auth, async (req, res) => { const { rows } = await pool.query("SELECT * FROM users WHERE id=$1", [req.user.sub]); res.json({ user: publicUser(rows[0]) }); });
 
 async function attachProducts(rows) {
-  const ids = [...new Set(rows.flatMap((row) => row.product_ids || []))];
-
-  if (!ids.length) {
-    return rows.map((row) => ({ ...row, products: [] }));
-  }
-
-  const result = await jsonFetch(
-    `${CATALOG_URL}/v1/items?ids=${ids.join(",")}`
-  );
-
-  if (!result.ok) {
-    return rows.map((row) => ({
-      ...row,
-      products: [],
-      catalogUnavailable: true
-    }));
-  }
-
-  return rows.map((row) => ({
-    ...row,
-    products: result.body.items.filter((p) =>
-      row.product_ids.map(Number).includes(Number(p.id))
-    )
-  }));
+  const ids = [...new Set(rows.flatMap((row) => row.product_ids || []).map((id) => Number(id)).filter(Number.isInteger))];
+  if (!ids.length) return rows.map((row) => ({ ...row, products: [] }));
+  const result = await jsonFetch(`${CATALOG_URL}/v1/items?ids=${ids.join(",")}`); if (!result.ok) return rows.map((row) => ({ ...row, products: [], catalogUnavailable: true }));
+  return rows.map((row) => {
+    const productIds = new Set((row.product_ids || []).map((id) => Number(id)).filter(Number.isInteger));
+    return { ...row, products: result.body.items.filter((p) => productIds.has(Number(p.id))) };
+  });
 }
 const sessionSelect = `SELECT s.*,COALESCE(array_agg(sp.product_id) FILTER(WHERE sp.product_id IS NOT NULL),'{}') product_ids,(s.kapasitas_maksimal-s.kapasitas_terpakai) kapasitas_tersisa FROM sessions s LEFT JOIN session_products sp ON sp.session_id=s.id`;
 app.get("/v1/sessions", async (req, res) => { await expireReservations(); const { page, limit, offset } = pageArgs(req); const { rows } = await pool.query(`${sessionSelect} WHERE s.status='buka' AND s.batas_waktu>now() GROUP BY s.id ORDER BY s.batas_waktu LIMIT $1 OFFSET $2`, [limit, offset]); const total = await pool.query("SELECT count(*)::int n FROM sessions WHERE status='buka' AND batas_waktu>now()"); res.json({ sessions: await attachProducts(rows), pagination: { page, limit, total: total.rows[0].n } }); });
